@@ -383,36 +383,5 @@ document.querySelectorAll(".card").forEach(card => {
   <p id="orderMessage"></p>
  </div>
 </div>
-
-<script>
-document.getElementById("codForm").addEventListener("submit", async function(e){
- e.preventDefault();
-
- const form=this;
- const button=document.getElementById("orderButton");
- const message=document.getElementById("orderMessage");
-
- button.disabled=true;
- button.innerText="Please wait...";
-
- try{
-  const response=await fetch("/",{
-   method:"POST",
-   headers:{"Content-Type":"application/x-www-form-urlencoded"},
-   body:new URLSearchParams(new FormData(form)).toString()
-  });
-
-  if(!response.ok) throw new Error("Order failed");
-
-  message.innerText="Order placed successfully! Thank you.";
-  form.reset();
- }catch(error){
-  message.innerText="Order submit nahi hua. Please try again.";
- }finally{
-  button.disabled=false;
-  button.innerText="PLACE ORDER";
- }
-});
-</script>
 </body>
 </html>
