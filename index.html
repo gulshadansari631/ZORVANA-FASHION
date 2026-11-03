@@ -1,218 +1,211 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZORVANA FASHION - Style That Speaks</title>
+<title>ZORVANA FASHION | Style That Speaks</title>
+
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:Arial,sans-serif;background:#f1f3f6;color:#212121}
-header{background:#2874f0;color:white;padding:13px 5%;display:flex;align-items:center;gap:25px;flex-wrap:wrap}
-.logo{font-size:23px;font-weight:bold;white-space:nowrap}
+header{background:#2874f0;color:white;padding:13px 5%;position:sticky;top:0;z-index:10}
+.top{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}
+.logo{font-size:24px;font-weight:bold;white-space:nowrap}
 .logo span{color:#ffe500}
-.search{flex:1;min-width:180px;display:flex}
-.search input{width:100%;padding:12px;border:0;outline:0;border-radius:3px}
-nav{display:flex;gap:20px;flex-wrap:wrap}
-nav a,.header-btn{color:white;text-decoration:none;font-weight:bold;font-size:14px}
-.header-btn{white-space:nowrap}
-.categories{background:white;display:flex;justify-content:space-around;padding:18px 5%;gap:12px;overflow-x:auto}
-.cat{min-width:90px;text-align:center;cursor:pointer;font-size:13px;font-weight:bold}
-.cat:hover{color:#2874f0}
-.cat-icon{font-size:25px;margin-bottom:7px}
-.banner{margin:12px;background:#fff;min-height:300px;display:flex;align-items:center;justify-content:space-between;overflow:hidden}
-.banner-text{padding:35px;max-width:48%}
-.banner-text h1{font-size:38px;color:#172337;margin-bottom:12px}
-.banner-text p{color:#555;margin-bottom:20px}
-.shop{background:#fb641b;color:white;border:0;padding:13px 25px;font-weight:bold;cursor:pointer}
-.banner img{width:52%;height:300px;object-fit:cover}
-.section{background:white;margin:12px;padding:22px}
-.section-title{font-size:22px;margin-bottom:22px}
+.search{flex:1;min-width:170px}
+.search input{width:100%;padding:12px;border:0;border-radius:4px;outline:0;font-size:14px}
+.actions{display:flex;gap:18px}
+.actions a{color:white;text-decoration:none;font-weight:bold}
+nav{display:flex;gap:25px;margin-top:14px;overflow-x:auto}
+nav a{color:white;text-decoration:none;white-space:nowrap;font-size:14px}
+nav a:hover{color:#ffe500}
+.banner{margin:15px auto;max-width:1400px;width:96%;min-height:300px;background:linear-gradient(90deg,#172337dd,#17233722),url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1400') center/cover;display:flex;align-items:center;color:white;padding:35px}
+.banner h1{font-size:38px;margin-bottom:12px}
+.banner p{font-size:16px;margin-bottom:20px}
+.shop{background:#fb641b;color:white;border:0;padding:13px 25px;font-weight:bold;border-radius:3px;cursor:pointer}
+.categories,.section{background:white;margin:15px auto;padding:22px;max-width:1400px;width:96%}
+.heading{font-size:22px;margin-bottom:20px}
+.cat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.cat{background:#f1f3f6;padding:20px 8px;text-align:center;font-weight:bold;cursor:pointer;border-radius:4px}
+.cat:hover{background:#dceaff;color:#2874f0}
 .products{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:15px}
-.card{border:1px solid #eee;padding:10px;text-align:center;position:relative;background:white}
-.card img{width:100%;height:165px;object-fit:contain}
+.card{border:1px solid #eee;padding:10px;background:white;position:relative;border-radius:5px}
+.card img{width:100%;height:180px;object-fit:contain;background:#fafafa}
 .card h3{font-size:14px;margin:10px 0}
-.price{font-size:17px;font-weight:bold}
+.price{font-size:18px;font-weight:bold;margin:7px 0}
 .old{color:#888;text-decoration:line-through;font-size:12px;margin-left:5px}
-.discount{color:#388e3c;font-size:12px;margin:7px}
-.card button{width:100%;padding:10px;margin-top:7px;border:0;cursor:pointer;font-weight:bold}
-.cart{background:#2874f0;color:white}
+.discount{color:#388e3c;font-size:12px;margin-left:5px}
+.card button{width:100%;padding:10px;margin-top:8px;border:0;border-radius:3px;cursor:pointer;font-weight:bold}
 .buy{background:#fb641b;color:white}
-.heart{position:absolute;right:12px;top:10px;font-size:22px;cursor:pointer}
-footer{background:#172337;color:white;text-align:center;padding:30px;margin-top:15px}
-footer p{margin-top:8px;color:#ddd;font-size:13px}
+.cart{background:#2874f0;color:white}
+.heart{position:absolute;right:15px;top:12px;background:white;border:0;font-size:22px;cursor:pointer}
+footer{background:#172337;color:white;text-align:center;padding:30px;margin-top:20px}
+footer p{margin-top:8px;font-size:13px}
+.no-result{text-align:center;padding:30px;display:none}
 @media(max-width:700px){
-header{gap:12px;padding:12px}
-.logo{width:100%;text-align:center}
-.search{order:2;flex-basis:100%}
-nav{order:3;justify-content:center;width:100%;gap:14px}
-.header-btn{font-size:12px}
-.categories{justify-content:flex-start}
-.banner{min-height:190px}
-.banner-text{padding:15px;max-width:55%}
-.banner-text h1{font-size:23px}
-.banner-text p{font-size:12px}
-.banner img{height:190px;width:45%}
-.section{padding:12px}
-.section-title{font-size:18px}
-.products{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.card img{height:145px}
+ header{padding:12px}
+ .top{gap:10px}
+ .logo{font-size:21px}
+ .actions{font-size:13px}
+ nav{gap:20px}
+ .banner{min-height:190px;padding:20px}
+ .banner h1{font-size:25px}
+ .banner p{font-size:13px}
+ .categories,.section{padding:13px}
+ .heading{font-size:18px}
+ .cat-grid{grid-template-columns:repeat(2,1fr)}
+ .products{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+ .card{padding:7px}
+ .card img{height:145px}
+ .card h3{font-size:13px}
+ .price{font-size:16px}
 }
 </style>
 </head>
+
 <body>
 
 <header>
+<div class="top">
 <div class="logo">ZORVANA <span>FASHION</span></div>
 <div class="search">
-<input id="search" type="search" placeholder="Search for products, brands and more...">
+<input type="search" id="search" placeholder="Search your favourite fashion..." oninput="filterProducts()">
+</div>
+<div class="actions">
+<a href="#products">♡ Wishlist</a>
+<a href="#products">🛒 Cart <span id="count">0</span></a>
+</div>
 </div>
 <nav>
 <a href="#">Home</a>
-<a href="#men">Men</a>
-<a href="#women">Women</a>
-<a href="#shoes">Shoes</a>
-<a href="#watches">Watches</a>
+<a href="#products" onclick="showCategory('Men')">Men</a>
+<a href="#products" onclick="showCategory('Women')">Women</a>
+<a href="#products" onclick="showCategory('Shoes')">Shoes</a>
+<a href="#products" onclick="showCategory('Watches')">Watches</a>
+<a href="#products" onclick="showCategory('Accessories')">Accessories</a>
 </nav>
-<a class="header-btn" href="#wishlist">♡ Wishlist</a>
-<a class="header-btn" href="#cart">🛒 Cart (<span id="count">0</span>)</a>
 </header>
 
-<div class="categories">
-<div class="cat" onclick="filter('all')"><div class="cat-icon">🛍️</div>All Products</div>
-<div class="cat" onclick="filter('men')"><div class="cat-icon">👔</div>Men</div>
-<div class="cat" onclick="filter('women')"><div class="cat-icon">👗</div>Women</div>
-<div class="cat" onclick="filter('shoes')"><div class="cat-icon">👟</div>Shoes</div>
-<div class="cat" onclick="filter('watches')"><div class="cat-icon">⌚</div>Watches</div>
-<div class="cat" onclick="filter('accessories')"><div class="cat-icon">👜</div>Accessories</div>
-</div>
-
 <section class="banner">
-<div class="banner-text">
+<div>
 <h1>STYLE THAT SPEAKS.</h1>
-<p>Discover the latest fashion trends. Look good, feel confident.</p>
-<button class="shop" onclick="document.getElementById('products').scrollIntoView()">SHOP NOW →</button>
-</div>
-<img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=900" alt="Fashion collection">
-</section>
-
-<section class="section" id="men">
-<h2 class="section-title">🔥 Trending Men's Fashion</h2>
-<div class="products">
-<div class="card" data-category="men">
-<div class="heart" onclick="wish(this)">♡</div>
-<img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400">
-<h3>Classic Men's T-Shirt</h3>
-<div class="price">₹599 <span class="old">₹999</span></div>
-<div class="discount">40% OFF</div>
-<button class="cart" onclick="addCart('Classic T-Shirt')">ADD TO CART</button>
-<button class="buy" onclick="buy('Classic T-Shirt')">BUY NOW</button>
-</div>
-<div class="card" data-category="men">
-<div class="heart" onclick="wish(this)">♡</div>
-<img src="https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=400">
-<h3>Premium Casual Shirt</h3>
-<div class="price">₹899 <span class="old">₹1499</span></div>
-<div class="discount">40% OFF</div>
-<button class="cart" onclick="addCart('Casual Shirt')">ADD TO CART</button>
-<button class="buy" onclick="buy('Casual Shirt')">BUY NOW</button>
-</div>
-<div class="card" data-category="men">
-<div class="heart" onclick="wish(this)">♡</div>
-<img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400">
-<h3>Fashion Outfit</h3>
-<div class="price">₹1199</div>
-<div class="discount">Special Price</div>
-<button class="cart" onclick="addCart('Fashion Outfit')">ADD TO CART</button>
-<button class="buy" onclick="buy('Fashion Outfit')">BUY NOW</button>
-</div>
-<div class="card" data-category="shoes">
-<div class="heart" onclick="wish(this)">♡</div>
-<img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400">
-<h3>Sport Sneakers</h3>
-<div class="price">₹1299</div>
-<div class="discount">30% OFF</div>
-<button class="cart" onclick="addCart('Sport Sneakers')">ADD TO CART</button>
-<button class="buy" onclick="buy('Sport Sneakers')">BUY NOW</button>
-</div>
-<div class="card" data-category="watches">
-<div class="heart" onclick="wish(this)">♡</div>
-<img src="https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=400">
-<h3>Classic Watch</h3>
-<div class="price">₹999</div>
-<div class="discount">Best Deal</div>
-<button class="cart" onclick="addCart('Classic Watch')">ADD TO CART</button>
-<button class="buy" onclick="buy('Classic Watch')">BUY NOW</button>
-</div>
+<p>Discover the latest trends. Upgrade your style.</p>
+<button class="shop" onclick="document.getElementById('products').scrollIntoView()">SHOP NOW</button>
 </div>
 </section>
 
-<section class="section" id="women">
-<h2 class="section-title">✨ Women's Fashion</h2>
-<div class="products">
-<div class="card" data-category="women">
-<div class="heart" onclick="wish(this)">♡</div>
-<img src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=400">
+<section class="categories">
+<h2 class="heading">SHOP BY CATEGORY</h2>
+<div class="cat-grid">
+<div class="cat" onclick="showCategory('Men')">MEN'S FASHION</div>
+<div class="cat" onclick="showCategory('Women')">WOMEN'S FASHION</div>
+<div class="cat" onclick="showCategory('Shoes')">SHOES</div>
+<div class="cat" onclick="showCategory('Watches')">WATCHES</div>
+<div class="cat" onclick="showCategory('Accessories')">ACCESSORIES</div>
+</div>
+</section>
+
+<section class="section" id="products">
+<h2 class="heading" id="productTitle">TRENDING PRODUCTS</h2>
+
+<div class="products" id="productGrid">
+
+<div class="card" data-category="Men" data-name="Men's Classic T Shirt">
+<button class="heart" onclick="this.innerHTML='♥'">♡</button>
+<img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400" alt="Men T Shirt">
+<h3>Men's Classic T-Shirt</h3>
+<div class="price">₹599 <span class="old">₹999</span><span class="discount">40% off</span></div>
+<button class="cart" onclick="addCart()">ADD TO CART</button>
+<button class="buy" onclick="buy('Men Classic T Shirt')">BUY NOW</button>
+</div>
+
+<div class="card" data-category="Women" data-name="Women's Fashion Dress">
+<button class="heart" onclick="this.innerHTML='♥'">♡</button>
+<img src="https://images.unsplash.com/photo-1539008835657-9e8e9680c956?w=400" alt="Women's Dress">
 <h3>Women's Fashion Dress</h3>
-<div class="price">₹899</div>
-<div class="discount">Special Price</div>
-<button class="cart" onclick="addCart('Women Dress')">ADD TO CART</button>
-<button class="buy" onclick="buy('Women Dress')">BUY NOW</button>
+<div class="price">₹899 <span class="old">₹1499</span><span class="discount">40% off</span></div>
+<button class="cart" onclick="addCart()">ADD TO CART</button>
+<button class="buy" onclick="buy('Womens Fashion Dress')">BUY NOW</button>
 </div>
-<div class="card" data-category="women">
-<div class="heart" onclick="wish(this)">♡</div>
-<img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=400">
-<h3>Fashion Collection</h3>
-<div class="price">₹1499</div>
-<div class="discount">Trending Now</div>
-<button class="cart" onclick="addCart('Fashion Collection')">ADD TO CART</button>
-<button class="buy" onclick="buy('Fashion Collection')">BUY NOW</button>
+
+<div class="card" data-category="Shoes" data-name="Premium Sports Sneakers">
+<button class="heart" onclick="this.innerHTML='♥'">♡</button>
+<img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400" alt="Sports Shoes">
+<h3>Premium Sports Sneakers</h3>
+<div class="price">₹1,299 <span class="old">₹1999</span><span class="discount">35% off</span></div>
+<button class="cart" onclick="addCart()">ADD TO CART</button>
+<button class="buy" onclick="buy('Sports Sneakers')">BUY NOW</button>
 </div>
-<div class="card" data-category="accessories">
-<div class="heart" onclick="wish(this)">♡</div>
-<img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400">
-<h3>Women's Handbag</h3>
-<div class="price">₹799</div>
-<div class="discount">Best Deal</div>
-<button class="cart" onclick="addCart('Handbag')">ADD TO CART</button>
-<button class="buy" onclick="buy('Handbag')">BUY NOW</button>
+
+<div class="card" data-category="Watches" data-name="Classic Wrist Watch">
+<button class="heart" onclick="this.innerHTML='♥'">♡</button>
+<img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400" alt="Watch">
+<h3>Classic Wrist Watch</h3>
+<div class="price">₹999 <span class="old">₹1599</span><span class="discount">37% off</span></div>
+<button class="cart" onclick="addCart()">ADD TO CART</button>
+<button class="buy" onclick="buy('Classic Wrist Watch')">BUY NOW</button>
 </div>
+
+<div class="card" data-category="Accessories" data-name="Stylish Sunglasses">
+<button class="heart" onclick="this.innerHTML='♥'">♡</button>
+<img src="https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=400" alt="Sunglasses">
+<h3>Stylish Sunglasses</h3>
+<div class="price">₹499 <span class="old">₹799</span><span class="discount">37% off</span></div>
+<button class="cart" onclick="addCart()">ADD TO CART</button>
+<button class="buy" onclick="buy('Stylish Sunglasses')">BUY NOW</button>
 </div>
+
+</div>
+<div class="no-result" id="noResult">No products found.</div>
 </section>
 
 <footer>
 <h2>ZORVANA FASHION</h2>
 <p>Style That Speaks.</p>
-<p>Premium Fashion | Quality | Style</p>
 <p>© 2026 ZORVANA FASHION. All Rights Reserved.</p>
 </footer>
 
 <script>
 let cartCount=0;
-function addCart(name){
-cartCount++;
-document.getElementById('count').innerText=cartCount;
-alert(name+' added to cart!');
+
+function addCart(){
+ cartCount++;
+ document.getElementById('count').innerText=cartCount;
+ alert('Product added to cart!');
 }
-function buy(name){
-alert('You selected '+name+'. Checkout and COD will be connected in the next steps.');
+
+function buy(product){
+ const url='https://www.flipkart.com/search?q='+encodeURIComponent(product);
+ window.open(url,'_blank');
 }
-function wish(el){
-el.innerText=el.innerText==='♡'?'♥':'♡';
-el.style.color=el.innerText==='♥'?'red':'black';
+
+function showCategory(category){
+ document.getElementById('search').value='';
+ document.getElementById('productTitle').innerText=category.toUpperCase()+' PRODUCTS';
+ let cards=document.querySelectorAll('.card');
+ let found=0;
+ cards.forEach(card=>{
+  let show=card.dataset.category===category;
+  card.style.display=show?'block':'none';
+  if(show)found++;
+ });
+ document.getElementById('noResult').style.display=found?'none':'block';
 }
-function filter(category){
-document.querySelectorAll('.card').forEach(card=>{
-card.style.display=category==='all'||card.dataset.category===category?'block':'none';
-});
+
+function filterProducts(){
+ let value=document.getElementById('search').value.toLowerCase();
+ let cards=document.querySelectorAll('.card');
+ let found=0;
+ cards.forEach(card=>{
+  let show=card.dataset.name.toLowerCase().includes(value);
+  card.style.display=show?'block':'none';
+  if(show)found++;
+ });
+ document.getElementById('noResult').style.display=found?'none':'block';
+ document.getElementById('productTitle').innerText='SEARCH RESULTS';
 }
-document.getElementById('search').addEventListener('input',function(){
-let value=this.value.toLowerCase();
-document.querySelectorAll('.card').forEach(card=>{
-card.style.display=card.innerText.toLowerCase().includes(value)?'block':'none';
-});
-});
 </script>
+
 </body>
 </html>
