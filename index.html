@@ -163,6 +163,8 @@ footer p{margin-top:8px;font-size:13px}
 <footer>
 function buy(product){
  document.getElementById("checkoutProduct").value = product;
+ document.getElementById("checkoutSize").value = selectedSize || "Not selected";
+ document.getElementById("productModal").style.display = "none";
  document.getElementById("checkoutModal").style.display = "block";
 }
 
