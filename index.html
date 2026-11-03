@@ -206,6 +206,101 @@ function filterProducts(){
  document.getElementById('productTitle').innerText='SEARCH RESULTS';
 }
 </script>
+ 
+<style>
+.product-modal {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:#0009;
+  z-index:9999;
+  overflow:auto;
+  padding:20px;
+}
+.product-detail {
+  background:white;
+  color:#222;
+  max-width:450px;
+  margin:25px auto;
+  padding:18px;
+  border-radius:12px;
+}
+.product-detail img {
+  width:100%;
+  height:260px;
+  object-fit:contain;
+}
+.product-detail button {
+  padding:12px;
+  margin:5px 2px;
+  border:1px solid #ddd;
+  border-radius:5px;
+  cursor:pointer;
+}
+.detail-price {
+  color:#16833c;
+  font-size:25px;
+  font-weight:bold;
+}
+</style>
+
+<div class="product-modal" id="productModal">
+  <div class="product-detail">
+    <button onclick="closeProduct()" style="float:right">✕ Close</button>
+    <img id="detailImage" src="" alt="Product">
+    <h2 id="detailName"></h2>
+    <p>⭐ <span id="detailRating">Rating not added</span></p>
+    <p class="detail-price" id="detailPrice"></p>
+    <p id="detailExtra"></p>
+
+    <h3>Select Size</h3>
+    <div id="detailSizes">
+      <button onclick="selectSize(this)">S</button>
+      <button onclick="selectSize(this)">M</button>
+      <button onclick="selectSize(this)">L</button>
+      <button onclick="selectSize(this)">XL</button>
+      <button onclick="selectSize(this)">XXL</button>
+    </div>
+
+    <h3>Product Information</h3>
+    <p id="detailDescription">Product details and material information.</p>
+
+    <button onclick="addCart()">ADD TO CART</button>
+    <button onclick="buy(document.getElementById('detailName').innerText)"
+      style="background:#ff641b;color:white">BUY NOW</button>
+  </div>
+</div>
+
+<script>
+let selectedSize = "";
+
+function selectSize(btn) {
+  selectedSize = btn.innerText;
+  document.querySelectorAll("#detailSizes button")
+    .forEach(b => b.style.background = "");
+  btn.style.background = "#bde5ff";
+}
+
+function closeProduct() {
+  document.getElementById("productModal").style.display = "none";
+}
+
+document.querySelectorAll(".card").forEach(card => {
+  card.addEventListener("click", function(e) {
+    if(e.target.closest("button")) return;
+
+    let img = card.querySelector("img");
+    let name = card.dataset.name || card.querySelector("h3")?.innerText || "Product";
+    let price = card.querySelector(".price")?.innerText || "";
+
+    document.getElementById("detailImage").src = img?.src || "";
+    document.getElementById("detailName").innerText = name;
+    document.getElementById("detailPrice").innerText = price;
+    document.getElementById("productModal").style.display = "block";
+  });
+});
+</script>
+
 
 </body>
 </html>
