@@ -1,0 +1,129 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZORVANA FASHION | Style That Speaks</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial,sans-serif;background:#fff;color:#171717}
+header{background:#111;color:white;padding:18px 5%;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px}
+.logo{font-size:24px;font-weight:bold;letter-spacing:2px}
+.logo span{color:#c8a76a}
+nav{display:flex;gap:20px;flex-wrap:wrap}
+nav a{color:white;text-decoration:none;font-size:14px}
+.actions{display:flex;gap:15px}
+.actions a{color:white;text-decoration:none}
+.search{background:#f3f3f3;padding:15px 5%;text-align:center}
+.search input{width:90%;max-width:600px;padding:13px;border:1px solid #ddd;border-radius:5px}
+.hero{min-height:420px;background:linear-gradient(90deg,#111b,#1113),url('https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1400') center/cover;display:flex;align-items:center;padding:50px 8%;color:white}
+.hero h1{font-size:48px;margin-bottom:15px}
+.hero p{font-size:17px;margin-bottom:25px}
+.btn{display:inline-block;background:#c8a76a;color:#111;padding:14px 28px;text-decoration:none;font-weight:bold;border:0;cursor:pointer}
+.categories{padding:45px 5%;text-align:center}
+.categories h2,.products h2{font-size:28px;margin-bottom:25px}
+.cat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:15px}
+.cat{background:#f5f3ef;padding:25px 8px;font-weight:bold}
+.products{padding:35px 5%;text-align:center}
+.product-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.card{border:1px solid #eee;text-align:left;padding-bottom:15px}
+.card img{width:100%;height:220px;object-fit:cover}
+.card h3,.card p{margin:10px}
+.card button{margin:5px 10px;padding:10px;background:#111;color:white;border:0;cursor:pointer}
+footer{background:#111;color:white;text-align:center;padding:30px;margin-top:40px}
+@media(max-width:650px){
+header{justify-content:center}
+nav{justify-content:center}
+.hero{min-height:320px}
+.hero h1{font-size:34px}
+.cat-grid{grid-template-columns:repeat(2,1fr)}
+.product-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+.card img{height:170px}
+}
+</style>
+</head>
+<body>
+
+<header>
+<div class="logo">ZORVANA <span>FASHION</span></div>
+<nav>
+<a href="#">Home</a>
+<a href="#men">Men</a>
+<a href="#women">Women</a>
+<a href="#shoes">Shoes</a>
+<a href="#accessories">Accessories</a>
+</nav>
+<div class="actions">
+<a href="#">♡ Wishlist</a>
+<a href="#">🛒 Cart</a>
+</div>
+</header>
+
+<div class="search">
+<input type="search" placeholder="Search your favourite fashion...">
+</div>
+
+<section class="hero">
+<div>
+<h1>STYLE THAT SPEAKS.</h1>
+<p>Discover the latest trends. Upgrade your style.</p>
+<a href="#products" class="btn">SHOP NOW</a>
+</div>
+</section>
+
+<section class="categories">
+<h2>SHOP BY CATEGORY</h2>
+<div class="cat-grid">
+<div class="cat" id="men">MEN'S FASHION</div>
+<div class="cat" id="women">WOMEN'S FASHION</div>
+<div class="cat" id="shoes">SHOES</div>
+<div class="cat">WATCHES</div>
+<div class="cat" id="accessories">ACCESSORIES</div>
+</div>
+</section>
+
+<section class="products" id="products">
+<h2>FEATURED COLLECTION</h2>
+<div class="product-grid">
+<div class="card">
+<img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500" alt="T-shirt">
+<h3>Classic Men's T-Shirt</h3>
+<p>₹599</p>
+<button onclick="addCart('Classic T-Shirt')">Add to Cart</button>
+</div>
+<div class="card">
+<img src="https://images.unsplash.com/photo-1548624149-f3221c7a4f4a?w=500" alt="Fashion">
+<h3>Women's Fashion</h3>
+<p>₹899</p>
+<button onclick="addCart('Women Fashion')">Add to Cart</button>
+</div>
+<div class="card">
+<img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500" alt="Shoes">
+<h3>Premium Sneakers</h3>
+<p>₹1,299</p>
+<button onclick="addCart('Premium Sneakers')">Add to Cart</button>
+</div>
+<div class="card">
+<img src="https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=500" alt="Watch">
+<h3>Classic Watch</h3>
+<p>₹999</p>
+<button onclick="addCart('Classic Watch')">Add to Cart</button>
+</div>
+</div>
+</section>
+
+<footer>
+<h2>ZORVANA FASHION</h2>
+<p>Style That Speaks.</p>
+<p>© 2026 ZORVANA FASHION. All Rights Reserved.</p>
+</footer>
+
+<script>
+function addCart(name){
+alert(name+" added to cart!");
+}
+</script>
+
+</body>
+</html>
