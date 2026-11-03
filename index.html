@@ -301,6 +301,119 @@ document.querySelectorAll(".card").forEach(card => {
 });
 </script>
 
+<style>
+#checkoutModal{
+ display:none;
+ position:fixed;
+ inset:0;
+ background:#0009;
+ z-index:10000;
+ overflow:auto;
+ padding:20px;
+}
+.checkout-box{
+ background:white;
+ color:#222;
+ max-width:420px;
+ margin:30px auto;
+ padding:20px;
+ border-radius:12px;
+}
+.checkout-box input,
+.checkout-box textarea,
+.checkout-box select{
+ width:100%;
+ padding:12px;
+ margin:8px 0;
+ border:1px solid #ccc;
+ border-radius:6px;
+ box-sizing:border-box;
+}
+.checkout-box button{
+ padding:12px;
+ border:0;
+ border-radius:6px;
+ background:#ff641b;
+ color:white;
+ width:100%;
+ margin-top:10px;
+}
+</style>
 
+<div id="checkoutModal">
+ <div class="checkout-box">
+  <button onclick="document.getElementById('checkoutModal').style.display='none'">✕ Close</button>
+
+  <h2>Place Your Order</h2>
+  <p>Payment Method: Cash on Delivery</p>
+
+  <form name="orders" method="POST" data-netlify="true" id="codForm">
+   <input type="hidden" name="form-name" value="orders">
+
+   <label>Product</label>
+   <input type="text" name="product" id="checkoutProduct" readonly required>
+
+   <label>Select Size (if applicable)</label>
+   <select name="size" id="checkoutSize">
+    <option value="Not selected">Not selected</option>
+    <option>S</option>
+    <option>M</option>
+    <option>L</option>
+    <option>XL</option>
+    <option>XXL</option>
+    <option>Not applicable</option>
+   </select>
+
+   <label>Your Name</label>
+   <input type="text" name="customer_name" placeholder="Enter your name" required>
+
+   <label>Mobile Number</label>
+   <input type="tel" name="phone" placeholder="10 digit mobile number" pattern="[0-9]{10}" required>
+
+   <label>Full Delivery Address</label>
+   <textarea name="address" placeholder="House no, street, village, district" required></textarea>
+
+   <label>PIN Code</label>
+   <input type="text" name="pincode" placeholder="6 digit PIN code" pattern="[0-9]{6}" required>
+
+   <input type="hidden" name="payment" value="Cash on Delivery">
+
+   <button type="submit" id="orderButton">PLACE ORDER</button>
+  </form>
+
+  <p id="orderMessage"></p>
+ </div>
+</div>
+
+<script>
+document.getElementById("codForm").addEventListener("submit", async function(e){
+ e.preventDefault();
+
+ const form=this;
+ const button=document.getElementById("orderButton");
+ const message=document.getElementById("orderMessage");
+
+ button.disabled=true;
+ button.innerText="Please wait...";
+
+ try{
+  const response=await fetch("/",{
+   method:"POST",
+   headers:{"Content-Type":"application/x-www-form-urlencoded"},
+   body:new URLSearchParams(new FormData(form)).toString()
+  });
+
+  if(!response.ok) throw new Error("Order failed");
+
+  message.innerText="Order placed successfully! Thank you.";
+  form.reset();
+ }catch(error){
+  message.innerText="Order submit nahi hua. Please try again.";
+ }finally{
+  button.disabled=false;
+  button.innerText="PLACE ORDER";
+ }
+});
+</script>
 </body>
 </html>
