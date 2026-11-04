@@ -60,7 +60,7 @@ modal.innerHTML = `
   <button id="googleLogin">Continue with Google</button>
   <hr>
   <h3>Login with Mobile OTP</h3>
-  <input id="authPhone" type="tel" placeholder="+91 9876543210">
+  <input id="authPhone" type="tel" maxlength="10" placeholder="Enter 10 digit mobile number">
   <div id="recaptcha-container"></div>
   <button id="sendOTP">SEND OTP</button>
   <input id="authOTP" placeholder="Enter OTP" inputmode="numeric">
@@ -95,12 +95,14 @@ document.getElementById("googleLogin").onclick = async () => {
 
 document.getElementById("sendOTP").onclick = async () => {
   try {
-    const phone = document.getElementById("authPhone").value.trim();
+  const mobile = document.getElementById("authPhone").value.trim();
 
-    if (!/^\+91[0-9]{10}$/.test(phone)) {
-      showMessage("Enter mobile number with +91");
-      return;
-    }
+if (!/^[6-9][0-9]{9}$/.test(mobile)) {
+  showMessage("Enter a valid 10 digit Indian mobile number");
+  return;
+}
+
+const phone = "+91" + mobile;
 
     if (!recaptchaVerifier) {
       recaptchaVerifier = new RecaptchaVerifier(
