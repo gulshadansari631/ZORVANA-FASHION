@@ -348,7 +348,7 @@ document.querySelectorAll(".card").forEach(card => {
   <h2>Place Your Order</h2>
   <p>Payment Method: Cash on Delivery</p>
 
-  <form name="orders" method="POST" data-netlify="true" action="/order-success.html">
+  <form name="orders" method="POST" action="/api/orders">
    <input type="hidden" name="form-name" value="orders">
 
    <label>Product</label>
