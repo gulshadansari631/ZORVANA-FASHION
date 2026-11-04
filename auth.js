@@ -5,8 +5,7 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
-  RecaptchaVerifier,
-  signInWithPhoneNumber,
+  
   onAuthStateChanged,
   signOut
 } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
@@ -25,9 +24,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 let currentUser = null;
-let confirmationResult = null;
-let recaptchaVerifier = null;
-
 const style = document.createElement("style");
 style.textContent = `
 #zorvanaAuth{padding:12px;text-align:center;background:#fff}
@@ -59,13 +55,7 @@ modal.innerHTML = `
   <h2>Customer Login</h2>
   <button id="googleLogin">Continue with Google</button>
   <hr>
-  <h3>Login with Mobile OTP</h3>
-  <input id="authPhone" type="tel" maxlength="10" placeholder="Enter 10 digit mobile number">
-  <div id="recaptcha-container"></div>
-  <button id="sendOTP">SEND OTP</button>
-  <input id="authOTP" placeholder="Enter OTP" inputmode="numeric">
-  <button id="verifyOTP">VERIFY OTP</button>
-  <p id="authMessage"></p>
+  
  </div>
 `;
 document.body.appendChild(modal);
@@ -93,57 +83,6 @@ document.getElementById("googleLogin").onclick = async () => {
   }
 };
 
-document.getElementById("sendOTP").onclick = async () => {
-  try {
-  const mobile = document.getElementById("authPhone").value.trim();
-
-if (!/^[6-9][0-9]{9}$/.test(mobile)) {
-  showMessage("Enter a valid 10 digit Indian mobile number");
-  return;
-}
-
-const phone = "+91" + mobile;
-
-    if (!recaptchaVerifier) {
-      recaptchaVerifier = new RecaptchaVerifier(
-        auth,
-        "recaptcha-container",
-        { size: "normal" }
-      );
-    }
-
-    confirmationResult = await signInWithPhoneNumber(
-      auth,
-      phone,
-      recaptchaVerifier
-    );
-
-    showMessage("OTP sent successfully!");
-  } catch (error) {
-    showMessage(error.message);
-    if (recaptchaVerifier) {
-      await recaptchaVerifier.clear();
-      recaptchaVerifier = null;
-    }
-  }
-};
-
-document.getElementById("verifyOTP").onclick = async () => {
-  try {
-    if (!confirmationResult) {
-      showMessage("Please request OTP first.");
-      return;
-    }
-
-    const otp = document.getElementById("authOTP").value.trim();
-    await confirmationResult.confirm(otp);
-
-    modal.style.display = "none";
-    showMessage("Login successful!");
-  } catch (error) {
-    showMessage("Invalid OTP. Please try again.");
-  }
-};
 
 onAuthStateChanged(auth, user => {
   currentUser = user;
