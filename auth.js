@@ -553,3 +553,184 @@ document.getElementById("myOrdersBtn").onclick = async () => {
     box.textContent = error.message;
   }
 };
+
+// CHECKOUT SAVED ADDRESS SECTION
+
+const checkoutForm = document.querySelector('form[name="orders"]');
+
+if (checkoutForm) {
+  const addressPanel = document.createElement("div");
+  addressPanel.id = "checkoutAddressPanel";
+  addressPanel.style.cssText =
+    "background:#f5f6f8;padding:14px;margin:12px 0;border-radius:12px;text-align:left";
+
+  checkoutForm.before(addressPanel);
+
+  function checkoutAddressKey() {
+    return "zorvanaAddresses_" + (currentUser ? currentUser.uid : "guest");
+  }
+
+  function fillCheckoutAddress(a) {
+    checkoutForm.querySelector('[name="customer_name"]').value = a.name;
+    checkoutForm.querySelector('[name="phone"]').value = a.phone;
+    checkoutForm.querySelector('[name="address"]').value = a.address;
+    checkoutForm.querySelector('[name="state"]').value = a.state;
+    checkoutForm.querySelector('[name="district"]').value = a.district;
+    checkoutForm.querySelector('[name="pincode"]').value = a.pincode;
+  }
+
+  function showCheckoutAddresses() {
+    const addresses = JSON.parse(
+      localStorage.getItem(checkoutAddressKey()) || "[]"
+    );
+
+    addressPanel.innerHTML = `
+      <h3>Delivering to</h3>
+      <div id="checkoutAddressList"></div>
+      <button type="button" id="checkoutAddAddress"
+        style="width:100%;padding:12px;background:#2874f0;color:white;border:0;border-radius:6px;margin-top:10px">
+        + ADD NEW ADDRESS
+      </button>
+      <div id="checkoutNewAddress"></div>
+    `;
+
+    const list = document.getElementById("checkoutAddressList");
+
+    if (!addresses.length) {
+      list.innerHTML = "<p>No saved address found. Add a delivery address.</p>";
+    }
+
+    addresses.forEach((a, index) => {
+      const card = document.createElement("div");
+      card.style.cssText =
+        "background:white;border:1px solid #ddd;border-radius:9px;padding:12px;margin:10px 0";
+
+      const title = document.createElement("b");
+      title.textContent = a.name + (a.isDefault ? " ✓ DEFAULT" : "");
+
+      const details = document.createElement("p");
+      details.textContent =
+        a.address + ", " + a.district + ", " + a.state + " - " + a.pincode;
+
+      const phone = document.createElement("p");
+      phone.textContent = "Phone: " + a.phone;
+
+      const select = document.createElement("button");
+      select.type = "button";
+      select.textContent = "DELIVER TO THIS ADDRESS";
+      select.style.cssText =
+        "width:100%;padding:10px;background:#16853c;color:white;border:0;border-radius:5px";
+      select.onclick = () => {
+        fillCheckoutAddress(a);
+        addresses.forEach(x => x.isDefault = false);
+        addresses[index].isDefault = true;
+        localStorage.setItem(checkoutAddressKey(), JSON.stringify(addresses));
+        showCheckoutAddresses();
+      };
+
+      const change = document.createElement("button");
+      change.type = "button";
+      change.textContent = "CHANGE";
+      change.style.cssText =
+        "padding:9px 16px;background:#2874f0;color:white;border:0;border-radius:5px;margin-top:8px";
+      change.onclick = () => showCheckoutAddressForm(index);
+
+      card.append(title, details, phone, select, change);
+      list.appendChild(card);
+    });
+
+    document.getElementById("checkoutAddAddress").onclick = () => {
+      showCheckoutAddressForm(-1);
+    };
+
+    if (addresses.length) {
+      const selected = addresses.find(a => a.isDefault) || addresses[0];
+      fillCheckoutAddress(selected);
+    }
+  }
+
+  function showCheckoutAddressForm(editIndex = -1) {
+    const box = document.getElementById("checkoutNewAddress");
+    const addresses = JSON.parse(
+      localStorage.getItem(checkoutAddressKey()) || "[]"
+    );
+    const old = editIndex >= 0 ? addresses[editIndex] : {};
+
+    box.innerHTML = `
+      <h3>${editIndex >= 0 ? "Change Address" : "Add New Address"}</h3>
+      <input id="coName" placeholder="Full Name">
+      <input id="coPhone" placeholder="Mobile Number" maxlength="10">
+      <input id="coPin" placeholder="PIN Code" maxlength="6">
+      <input id="coState" placeholder="State">
+      <input id="coDistrict" placeholder="District / City">
+      <textarea id="coAddress" placeholder="House No., Street, Area and Landmark"></textarea>
+      <button type="button" id="coSave"
+        style="width:100%;padding:12px;background:#2874f0;color:white;border:0;border-radius:6px">
+        SAVE ADDRESS
+      </button>
+      <button type="button" id="coCancel"
+        style="width:100%;padding:10px;background:#777;color:white;border:0;border-radius:6px;margin-top:6px">
+        CANCEL
+      </button>
+    `;
+
+    const fields = {
+      coName: old.name,
+      coPhone: old.phone,
+      coPin: old.pincode,
+      coState: old.state,
+      coDistrict: old.district,
+      coAddress: old.address
+    };
+
+    Object.entries(fields).forEach(([id, value]) => {
+      const field = document.getElementById(id);
+      field.value = value || "";
+      field.style.cssText =
+        "width:100%;box-sizing:border-box;padding:11px;margin:6px 0;border:1px solid #ccc;border-radius:6px";
+    });
+
+    document.getElementById("coCancel").onclick = () => {
+      box.innerHTML = "";
+    };
+
+    document.getElementById("coSave").onclick = () => {
+      const a = {
+        name: document.getElementById("coName").value.trim(),
+        phone: document.getElementById("coPhone").value.trim(),
+        pincode: document.getElementById("coPin").value.trim(),
+        state: document.getElementById("coState").value.trim(),
+        district: document.getElementById("coDistrict").value.trim(),
+        address: document.getElementById("coAddress").value.trim(),
+        isDefault: editIndex >= 0 ? !!old.isDefault : addresses.length === 0
+      };
+
+      if (Object.values(a).some(v => v === "")) {
+        alert("Please fill all address details.");
+        return;
+      }
+
+      if (!/^[0-9]{10}$/.test(a.phone)) {
+        alert("Enter a valid 10 digit mobile number.");
+        return;
+      }
+
+      if (!/^[0-9]{6}$/.test(a.pincode)) {
+        alert("Enter a valid 6 digit PIN code.");
+        return;
+      }
+
+      if (editIndex >= 0) {
+        addresses[editIndex] = a;
+      } else {
+        addresses.push(a);
+      }
+
+      localStorage.setItem(checkoutAddressKey(), JSON.stringify(addresses));
+      fillCheckoutAddress(a);
+      showCheckoutAddresses();
+    };
+  }
+
+  showCheckoutAddresses();
+}
