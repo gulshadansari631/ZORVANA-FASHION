@@ -1,11 +1,14 @@
 
 async function verifyCustomer(request) {
-  const auth = request.headers.get("Authorization") || "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  const authHeader = request.headers.get("Authorization") || "";
+  const token = authHeader.startsWith("Bearer ")
+    ? authHeader.slice(7)
+    : "";
+
   if (!token) return null;
 
   const response = await fetch(
-    "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=AIzaSyDhCeF2z7VtPggUnwB9u7C-meNhZB-_7h0",
+    "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=AIzaSyDhCeF2z7VtPggUnW9u7C-meNhZB-_7h0",
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -14,6 +17,7 @@ async function verifyCustomer(request) {
   );
 
   if (!response.ok) return null;
+
   const data = await response.json();
   return data.users?.[0]?.localId || null;
 }
@@ -27,25 +31,43 @@ function verifyAdmin(request, env) {
   );
 }
 
+// Calculate expected delivery 8 days after order confirmation
+function getExpectedDelivery(orderDate) {
+  if (!orderDate) return null;
+
+  const date = new Date(orderDate);
+
+  if (Number.isNaN(date.getTime())) return null;
+
+  date.setDate(date.getDate() + 8);
+
+  return date.toISOString().slice(0, 10);
+}
+
 export async function onRequest(context) {
   const { request, env } = context;
 
-  // CUSTOMER: Save order
+  // CUSTOMER: SAVE ORDER
   if (request.method === "POST") {
     try {
       const customerUid = await verifyCustomer(request);
+
       if (!customerUid) {
-        return Response.json({ error: "Please login first" }, { status: 401 });
+        return Response.json(
+          { error: "Please login first" },
+          { status: 401 }
+        );
       }
 
       const form = await request.formData();
 
       const result = await env.DB.prepare(`
         INSERT INTO orders (
-  product, size, customer_name, phone, address,
-  state, district, pincode, payment, status, customer_uid,
-  product_image, product_price
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Confirmed', ?, ?, ?)
+          product, size, customer_name, phone, address,
+          state, district, pincode, payment, status,
+          customer_uid, product_image, product_price
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Confirmed', ?, ?, ?)
       `).bind(
         form.get("product"),
         form.get("size"),
@@ -67,15 +89,19 @@ export async function onRequest(context) {
       `).bind(result.meta.last_row_id).run();
 
       return Response.redirect(
-        new URL("/order-success.html", request.url), 303
+        new URL("/order-success.html", request.url),
+        303
       );
 
     } catch (error) {
-      return Response.json({ error: "Order save failed" }, { status: 500 });
+      return Response.json(
+        { error: "Order save failed" },
+        { status: 500 }
+      );
     }
   }
 
-  // ADMIN OR CUSTOMER: Get orders and tracking
+  // ADMIN OR CUSTOMER: GET ORDERS
   if (request.method === "GET") {
     try {
       let result;
@@ -84,10 +110,15 @@ export async function onRequest(context) {
         result = await env.DB.prepare(
           "SELECT * FROM orders ORDER BY id DESC"
         ).all();
+
       } else {
         const customerUid = await verifyCustomer(request);
+
         if (!customerUid) {
-          return Response.json({ error: "Unauthorized" }, { status: 401 });
+          return Response.json(
+            { error: "Unauthorized" },
+            { status: 401 }
+          );
         }
 
         result = await env.DB.prepare(
@@ -98,24 +129,41 @@ export async function onRequest(context) {
       const orders = result.results || [];
 
       for (const order of orders) {
-        const history = await env.DB.prepare(
-          "SELECT status, updated_at FROM order_tracking WHERE order_id = ? ORDER BY id ASC"
-        ).bind(order.id).all();
+        const history = await env.DB.prepare(`
+          SELECT status, updated_at
+          FROM order_tracking
+          WHERE order_id = ?
+          ORDER BY id ASC
+        `).bind(order.id).all();
 
         order.tracking = history.results || [];
+
+        const firstUpdate = order.tracking[0];
+
+        order.order_date = firstUpdate?.updated_at || null;
+
+        order.expected_delivery = getExpectedDelivery(
+          order.order_date
+        );
       }
 
       return Response.json(orders);
 
     } catch (error) {
-      return Response.json({ error: "Could not load orders" }, { status: 500 });
+      return Response.json(
+        { error: "Could not load orders" },
+        { status: 500 }
+      );
     }
   }
 
-  // ADMIN: Update status and save history
+  // ADMIN: UPDATE ORDER STATUS
   if (request.method === "PATCH") {
     if (!verifyAdmin(request, env)) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+      return Response.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     try {
@@ -123,12 +171,22 @@ export async function onRequest(context) {
       const id = Number(body.id);
 
       const allowed = [
-        "Confirmed", "Shipped",
-        "Out for Delivery", "Delivered", "Cancelled"
+        "Confirmed",
+        "Shipped",
+        "Out for Delivery",
+        "Delivered",
+        "Cancelled"
       ];
 
-      if (!Number.isInteger(id) || id <= 0 || !allowed.includes(body.status)) {
-        return Response.json({ error: "Invalid request" }, { status: 400 });
+      if (
+        !Number.isInteger(id) ||
+        id <= 0 ||
+        !allowed.includes(body.status)
+      ) {
+        return Response.json(
+          { error: "Invalid request" },
+          { status: 400 }
+        );
       }
 
       const result = await env.DB.prepare(
@@ -136,7 +194,10 @@ export async function onRequest(context) {
       ).bind(body.status, id).run();
 
       if (!result.meta.changes) {
-        return Response.json({ error: "Order not found" }, { status: 404 });
+        return Response.json(
+          { error: "Order not found" },
+          { status: 404 }
+        );
       }
 
       await env.DB.prepare(`
@@ -147,9 +208,14 @@ export async function onRequest(context) {
       return Response.json({ success: true });
 
     } catch (error) {
-      return Response.json({ error: "Update failed" }, { status: 500 });
+      return Response.json(
+        { error: "Update failed" },
+        { status: 500 }
+      );
     }
   }
 
-  return new Response("Method not allowed", { status: 405 });
+  return new Response("Method not allowed", {
+    status: 405
+  });
 }
