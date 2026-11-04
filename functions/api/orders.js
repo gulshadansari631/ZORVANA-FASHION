@@ -2,7 +2,6 @@
 async function verifyCustomer(request) {
   const auth = request.headers.get("Authorization") || "";
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-
   if (!token) return null;
 
   const response = await fetch(
@@ -15,7 +14,6 @@ async function verifyCustomer(request) {
   );
 
   if (!response.ok) return null;
-
   const data = await response.json();
   return data.users?.[0]?.localId || null;
 }
@@ -32,11 +30,10 @@ function verifyAdmin(request, env) {
 export async function onRequest(context) {
   const { request, env } = context;
 
-  // CUSTOMER: Save new order
+  // CUSTOMER: Save order
   if (request.method === "POST") {
     try {
       const customerUid = await verifyCustomer(request);
-
       if (!customerUid) {
         return Response.json({ error: "Please login first" }, { status: 401 });
       }
@@ -46,8 +43,9 @@ export async function onRequest(context) {
       const result = await env.DB.prepare(`
         INSERT INTO orders (
           product, size, customer_name, phone, address,
-          state, district, pincode, payment, customer_uid
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          state, district, pincode, payment, customer_uid,
+          product_image, product_price
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(
         form.get("product"),
         form.get("size"),
@@ -58,19 +56,18 @@ export async function onRequest(context) {
         form.get("district"),
         form.get("pincode"),
         form.get("payment") || "Cash on Delivery",
-        customerUid
+        customerUid,
+        form.get("product_image"),
+        form.get("product_price")
       ).run();
-
-      const orderId = result.meta.last_row_id;
 
       await env.DB.prepare(`
         INSERT INTO order_tracking (order_id, status)
         VALUES (?, 'Pending')
-      `).bind(orderId).run();
+      `).bind(result.meta.last_row_id).run();
 
       return Response.redirect(
-        new URL("/order-success.html", request.url),
-        303
+        new URL("/order-success.html", request.url), 303
       );
 
     } catch (error) {
@@ -78,29 +75,27 @@ export async function onRequest(context) {
     }
   }
 
-  // ADMIN OR CUSTOMER: View orders with tracking history
+  // ADMIN OR CUSTOMER: Get orders and tracking
   if (request.method === "GET") {
     try {
-      let orders;
+      let result;
 
       if (verifyAdmin(request, env)) {
-        const result = await env.DB.prepare(
+        result = await env.DB.prepare(
           "SELECT * FROM orders ORDER BY id DESC"
         ).all();
-        orders = result.results || [];
       } else {
         const customerUid = await verifyCustomer(request);
-
         if (!customerUid) {
           return Response.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const result = await env.DB.prepare(
+        result = await env.DB.prepare(
           "SELECT * FROM orders WHERE customer_uid = ? ORDER BY id DESC"
         ).bind(customerUid).all();
-
-        orders = result.results || [];
       }
+
+      const orders = result.results || [];
 
       for (const order of orders) {
         const history = await env.DB.prepare(
@@ -117,7 +112,7 @@ export async function onRequest(context) {
     }
   }
 
-  // ADMIN: Update order status and save tracking history
+  // ADMIN: Update status and save history
   if (request.method === "PATCH") {
     if (!verifyAdmin(request, env)) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -125,25 +120,20 @@ export async function onRequest(context) {
 
     try {
       const body = await request.json();
+      const id = Number(body.id);
 
       const allowed = [
-        "Confirmed",
-        "Shipped",
-        "Out for Delivery",
-        "Delivered",
-        "Cancelled"
+        "Confirmed", "Shipped",
+        "Out for Delivery", "Delivered", "Cancelled"
       ];
 
-      const orderId = Number(body.id);
-
-      if (!Number.isInteger(orderId) || orderId <= 0 ||
-          !allowed.includes(body.status)) {
+      if (!Number.isInteger(id) || id <= 0 || !allowed.includes(body.status)) {
         return Response.json({ error: "Invalid request" }, { status: 400 });
       }
 
       const result = await env.DB.prepare(
         "UPDATE orders SET status = ? WHERE id = ?"
-      ).bind(body.status, orderId).run();
+      ).bind(body.status, id).run();
 
       if (!result.meta.changes) {
         return Response.json({ error: "Order not found" }, { status: 404 });
@@ -152,7 +142,7 @@ export async function onRequest(context) {
       await env.DB.prepare(`
         INSERT INTO order_tracking (order_id, status)
         VALUES (?, ?)
-      `).bind(orderId, body.status).run();
+      `).bind(id, body.status).run();
 
       return Response.json({ success: true });
 
