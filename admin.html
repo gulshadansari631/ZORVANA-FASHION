@@ -19,6 +19,8 @@ button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:whi
 .status{font-weight:bold;margin:10px 0}
 .actions{display:flex;gap:8px;flex-wrap:wrap}
 .confirm{background:#16853c}
+.shipped{background:#2874f0}
+.out{background:#e67e22}
 .cancel{background:#d93025}
 .delivered{background:#6c45b5}
 #message{color:#d93025;margin-top:10px}
@@ -124,6 +126,7 @@ function showOrders(data){
   return;
  }
  box.innerHTML="";
+
  data.forEach(o=>{
   const div=document.createElement("div");
   div.className="order";
@@ -140,8 +143,10 @@ function showOrders(data){
    <p class="status">Status: ${safe(o.status||"Pending")}</p>
    <div class="actions">
     <button class="confirm" onclick="updateStatus(${Number(o.id)},'Confirmed')">Confirm</button>
-    <button class="cancel" onclick="updateStatus(${Number(o.id)},'Cancelled')">Cancel</button>
+    <button class="shipped" onclick="updateStatus(${Number(o.id)},'Shipped')">Shipped</button>
+    <button class="out" onclick="updateStatus(${Number(o.id)},'Out for Delivery')">Out for Delivery</button>
     <button class="delivered" onclick="updateStatus(${Number(o.id)},'Delivered')">Delivered</button>
+    <button class="cancel" onclick="updateStatus(${Number(o.id)},'Cancelled')">Cancel</button>
    </div>`;
   box.appendChild(div);
  });
