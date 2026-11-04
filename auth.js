@@ -300,7 +300,6 @@ function showAddressForm(editIndex = -1) {
   };
 }
 
-document.getElementById("savedAddressBtn").onclick = renderAddresses;
 
 
 document.getElementById("logoutBtn").onclick = async () => {
