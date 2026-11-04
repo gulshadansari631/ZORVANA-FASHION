@@ -5,10 +5,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ZORVANA FASHION | Style That Speaks</title>
-
-<style>
+ <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style> 
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:Arial,sans-serif;background:#f1f3f6;color:#212121}
+body{font-family:'Poppins',Arial,sans-serif;
 header{background:#2874f0;color:white;padding:13px 5%;position:sticky;top:0;z-index:10}
 .top{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}
 .logo{font-size:24px;font-weight:bold;white-space:nowrap}
@@ -370,6 +372,50 @@ document.querySelectorAll(".card").forEach(card => {
 
    <label>Full Delivery Address</label>
    <textarea name="address" placeholder="House no, street, village, district" required></textarea>
+   <label>State</label>
+<input list="stateList" name="state" id="stateInput" placeholder="Search or type State" required>
+<datalist id="stateList">
+<option value="Bihar">
+<option value="Uttar Pradesh">
+<option value="Jharkhand">
+<option value="West Bengal">
+<option value="Delhi">
+<option value="Maharashtra">
+<option value="Rajasthan">
+<option value="Madhya Pradesh">
+<option value="Haryana">
+<option value="Punjab">
+<option value="Assam">
+<option value="Odisha">
+<option value="Gujarat">
+<option value="Karnataka">
+<option value="Kerala">
+<option value="Tamil Nadu">
+<option value="Telangana">
+<option value="Andhra Pradesh">
+<option value="Chhattisgarh">
+<option value="Himachal Pradesh">
+<option value="Uttarakhand">
+<option value="Goa">
+<option value="Manipur">
+<option value="Meghalaya">
+<option value="Mizoram">
+<option value="Nagaland">
+<option value="Tripura">
+<option value="Sikkim">
+<option value="Arunachal Pradesh">
+<option value="Jammu and Kashmir">
+<option value="Ladakh">
+<option value="Puducherry">
+<option value="Chandigarh">
+<option value="Andaman and Nicobar Islands">
+<option value="Lakshadweep">
+<option value="Dadra and Nagar Haveli and Daman and Diu">
+</datalist>
+
+<label>District</label>
+<input list="districtList" name="district" id="districtInput" placeholder="Search or type District" required>
+<datalist id="districtList"></datalist>
 
    <label>PIN Code</label>
    <input type="text" name="pincode" placeholder="6 digit PIN code" pattern="[0-9]{6}" required>
@@ -381,6 +427,44 @@ document.querySelectorAll(".card").forEach(card => {
 
   <p id="orderMessage"></p>
  </div>
+ 
+
+<script>
+const DATA_URL = "https://raw.githubusercontent.com/CodingMation/indian-states-districts/main/data/india_states_districts.min.json";
+
+const districtDataPromise = fetch(DATA_URL)
+    .then(response => {
+        if (!response.ok) throw new Error("District data could not load");
+        return response.json();
+    });
+
+document.getElementById("stateInput").addEventListener("input", async function () {
+    const selectedState = this.value.trim().toLowerCase();
+    const districtList = document.getElementById("districtList");
+
+    districtList.innerHTML = "";
+
+    try {
+        const allStates = await districtDataPromise;
+
+        const state = allStates.find(
+            item => item.name.trim().toLowerCase() === selectedState
+        );
+
+        if (state && state.districts) {
+            state.districts.forEach(district => {
+                const option = document.createElement("option");
+                option.value = district.name;
+                districtList.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error("District list error:", error);
+    }
+});
+</script>
+
+
 </div>
 </body>
 </html>
