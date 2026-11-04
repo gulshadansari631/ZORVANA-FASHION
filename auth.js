@@ -131,27 +131,174 @@ document.getElementById("profileOrders").onclick = () => {
   document.getElementById("myOrdersBtn").click();
 };
 
-document.getElementById("savedAddressBtn").onclick = () => {
+
+function getAddressKey() {
+  return "zorvanaAddresses_" + (currentUser ? currentUser.uid : "guest");
+}
+
+function renderAddresses() {
   const box = document.getElementById("savedAddresses");
-  const addresses = JSON.parse(
-    localStorage.getItem("zorvanaAddresses") || "[]"
-  );
+  const addresses = JSON.parse(localStorage.getItem(getAddressKey()) || "[]");
 
-  const address = prompt("Enter your full address:");
+  box.innerHTML = `
+    <h3>Saved Delivery Addresses</h3>
+    <button id="addNewAddress">+ ADD NEW ADDRESS</button>
+    <div id="addressFormBox"></div>
+    <div id="addressList"></div>
+  `;
 
-  if (address && address.trim()) {
-    addresses.push(address.trim());
-    localStorage.setItem("zorvanaAddresses", JSON.stringify(addresses));
+  document.getElementById("addNewAddress").onclick = () => showAddressForm();
+
+  const list = document.getElementById("addressList");
+
+  if (!addresses.length) {
+    list.textContent = "No saved addresses. Please add an address.";
+    return;
   }
 
-  box.innerHTML = "<h3>Saved Addresses</h3>";
+  addresses.forEach((a, index) => {
+    const card = document.createElement("div");
+    card.style.cssText = "border:1px solid #ddd;border-radius:10px;padding:14px;margin:12px 0;text-align:left;background:#fff";
 
-  addresses.forEach((item, index) => {
-    const p = document.createElement("p");
-    p.textContent = (index + 1) + ". " + item;
-    box.appendChild(p);
+    const heading = document.createElement("h3");
+    heading.textContent = a.name + (a.isDefault ? " ✓ DEFAULT" : "");
+
+    const details = document.createElement("p");
+    details.textContent = a.address + ", " + a.district + ", " + a.state + " - " + a.pincode;
+
+    const phone = document.createElement("p");
+    phone.textContent = "☎ " + a.phone;
+
+    const edit = document.createElement("button");
+    edit.textContent = "CHANGE ADDRESS";
+    edit.onclick = () => showAddressForm(index);
+
+    const remove = document.createElement("button");
+    remove.textContent = "DELETE";
+    remove.style.background = "#d32f2f";
+    remove.onclick = () => {
+      if (!confirm("Delete this address?")) return;
+      addresses.splice(index, 1);
+      if (!addresses.some(x => x.isDefault) && addresses.length) {
+        addresses[0].isDefault = true;
+      }
+      localStorage.setItem(getAddressKey(), JSON.stringify(addresses));
+      renderAddresses();
+    };
+
+    const makeDefault = document.createElement("button");
+    makeDefault.textContent = "SET AS DEFAULT";
+    makeDefault.onclick = () => {
+      addresses.forEach(x => x.isDefault = false);
+      addresses[index].isDefault = true;
+      localStorage.setItem(getAddressKey(), JSON.stringify(addresses));
+      renderAddresses();
+    };
+
+    const deliver = document.createElement("button");
+    deliver.textContent = "DELIVER TO THIS ADDRESS";
+    deliver.style.background = "#16853c";
+    deliver.onclick = () => {
+      document.querySelector('[name="customer_name"]').value = a.name;
+      document.querySelector('[name="phone"]').value = a.phone;
+      document.querySelector('[name="address"]').value = a.address;
+      document.querySelector('[name="state"]').value = a.state;
+      document.querySelector('[name="district"]').value = a.district;
+      document.querySelector('[name="pincode"]').value = a.pincode;
+
+      profileModal.style.display = "none";
+      document.getElementById("checkoutModal").style.display = "block";
+    };
+
+    card.append(heading, details, phone, edit, remove, makeDefault, deliver);
+    list.appendChild(card);
   });
-};
+}
+
+function showAddressForm(editIndex = -1) {
+  const box = document.getElementById("addressFormBox");
+  const addresses = JSON.parse(localStorage.getItem(getAddressKey()) || "[]");
+  const old = editIndex >= 0 ? addresses[editIndex] : {};
+
+  box.innerHTML = `
+    <div style="border:1px solid #ddd;padding:14px;border-radius:10px;margin:12px 0;text-align:left">
+      <h3>${editIndex >= 0 ? "Change Address" : "Add New Address"}</h3>
+      <label>Full Name</label>
+      <input id="addrName" placeholder="Enter full name">
+      <label>Mobile Number</label>
+      <input id="addrPhone" type="tel" maxlength="10" placeholder="10 digit mobile number">
+      <label>PIN Code</label>
+      <input id="addrPin" maxlength="6" placeholder="6 digit PIN code">
+      <label>State</label>
+      <input id="addrState" placeholder="Enter state">
+      <label>District / City</label>
+      <input id="addrDistrict" placeholder="Enter district">
+      <label>House No., Street, Area and Landmark</label>
+      <textarea id="addrFull" placeholder="Enter complete delivery address"></textarea>
+      <button id="saveAddress">SAVE ADDRESS</button>
+      <button id="cancelAddress" style="background:#777">CANCEL</button>
+    </div>
+  `;
+
+  ["Name", "Phone", "Pin", "State", "District", "Full"].forEach(key => {
+    const values = {
+      Name: old.name,
+      Phone: old.phone,
+      Pin: old.pincode,
+      State: old.state,
+      District: old.district,
+      Full: old.address
+    };
+    const element = document.getElementById("addr" + key);
+    element.value = values[key] || "";
+    element.style.cssText = "width:100%;box-sizing:border-box;padding:11px;margin:6px 0 12px;border:1px solid #ccc;border-radius:6px";
+  });
+
+  document.getElementById("cancelAddress").onclick = () => {
+    box.innerHTML = "";
+  };
+
+  document.getElementById("saveAddress").onclick = () => {
+    const name = document.getElementById("addrName").value.trim();
+    const phone = document.getElementById("addrPhone").value.trim();
+    const pincode = document.getElementById("addrPin").value.trim();
+    const state = document.getElementById("addrState").value.trim();
+    const district = document.getElementById("addrDistrict").value.trim();
+    const address = document.getElementById("addrFull").value.trim();
+
+    if (!name || !phone || !pincode || !state || !district || !address) {
+      alert("Please fill all address details.");
+      return;
+    }
+
+    if (!/^[0-9]{10}$/.test(phone)) {
+      alert("Enter a valid 10 digit mobile number.");
+      return;
+    }
+
+    if (!/^[0-9]{6}$/.test(pincode)) {
+      alert("Enter a valid 6 digit PIN code.");
+      return;
+    }
+
+    const saved = {
+      name, phone, pincode, state, district, address,
+      isDefault: editIndex >= 0 ? !!old.isDefault : addresses.length === 0
+    };
+
+    if (editIndex >= 0) {
+      addresses[editIndex] = saved;
+    } else {
+      addresses.push(saved);
+    }
+
+    localStorage.setItem(getAddressKey(), JSON.stringify(addresses));
+    renderAddresses();
+  };
+}
+
+document.getElementById("savedAddressBtn").onclick = renderAddresses;
+
 
 document.getElementById("logoutBtn").onclick = async () => {
   try {
