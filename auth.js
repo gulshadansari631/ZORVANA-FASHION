@@ -73,7 +73,6 @@ profileModal.innerHTML = `
   <h3 id="profileName"></h3>
   <p id="profileEmail"></p>
   <button id="profileOrders">MY ORDERS</button>
-  <button id="savedAddressBtn">SAVED ADDRESSES</button>
   <div id="savedAddresses"></div>
  </div>
 `;
