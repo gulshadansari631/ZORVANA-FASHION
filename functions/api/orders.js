@@ -1,8 +1,9 @@
 
+
 export async function onRequest(context) {
   const { request, env } = context;
 
-  // Save new customer order
+  // Save customer order
   if (request.method === "POST") {
     try {
       const form = await request.formData();
@@ -33,10 +34,16 @@ export async function onRequest(context) {
     }
   }
 
-  // Check admin password
+  // Verify admin email and password
+  const email = request.headers.get("X-Admin-Email");
   const password = request.headers.get("X-Admin-Password");
 
-  if (!env.ADMIN_PASSWORD || password !== env.ADMIN_PASSWORD) {
+  if (
+    !env.ADMIN_EMAIL ||
+    !env.ADMIN_PASSWORD ||
+    email !== env.ADMIN_EMAIL ||
+    password !== env.ADMIN_PASSWORD
+  ) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
