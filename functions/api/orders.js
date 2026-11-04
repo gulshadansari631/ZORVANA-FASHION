@@ -1,18 +1,63 @@
 
 
+
+async function verifyCustomer(request) {
+  const auth = request.headers.get("Authorization") || "";
+  const token = auth.startsWith("Bearer ")
+    ? auth.slice(7)
+    : "";
+
+  if (!token) return null;
+
+  const response = await fetch(
+    "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=AIzaSyDhCeF2z7VtPggUnwB9u7C-meNhZB-_7h0",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken: token })
+    }
+  );
+
+  if (!response.ok) return null;
+
+  const data = await response.json();
+  return data.users?.[0]?.localId || null;
+}
+
+function verifyAdmin(request, env) {
+  const email = request.headers.get("X-Admin-Email");
+  const password = request.headers.get("X-Admin-Password");
+
+  return Boolean(
+    env.ADMIN_EMAIL &&
+    env.ADMIN_PASSWORD &&
+    email === env.ADMIN_EMAIL &&
+    password === env.ADMIN_PASSWORD
+  );
+}
+
 export async function onRequest(context) {
   const { request, env } = context;
 
-  // Save customer order
+  // CUSTOMER: Save new order
   if (request.method === "POST") {
     try {
+      const customerUid = await verifyCustomer(request);
+
+      if (!customerUid) {
+        return Response.json(
+          { error: "Please login first" },
+          { status: 401 }
+        );
+      }
+
       const form = await request.formData();
 
       await env.DB.prepare(`
         INSERT INTO orders (
           product, size, customer_name, phone, address,
-          state, district, pincode, payment
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          state, district, pincode, payment, customer_uid
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(
         form.get("product"),
         form.get("size"),
@@ -22,48 +67,80 @@ export async function onRequest(context) {
         form.get("state"),
         form.get("district"),
         form.get("pincode"),
-        form.get("payment") || "Cash on Delivery"
+        form.get("payment") || "Cash on Delivery",
+        customerUid
       ).run();
 
       return Response.redirect(
         new URL("/order-success.html", request.url),
         303
       );
+
     } catch (error) {
-      return new Response("Order save failed", { status: 500 });
+      return Response.json(
+        { error: "Order save failed" },
+        { status: 500 }
+      );
     }
   }
 
-  // Verify admin email and password
-  const email = request.headers.get("X-Admin-Email");
-  const password = request.headers.get("X-Admin-Password");
-
-  if (
-    !env.ADMIN_EMAIL ||
-    !env.ADMIN_PASSWORD ||
-    email !== env.ADMIN_EMAIL ||
-    password !== env.ADMIN_PASSWORD
-  ) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  // Show all orders
+  // ADMIN OR CUSTOMER: View orders
   if (request.method === "GET") {
-    const result = await env.DB.prepare(
-      "SELECT * FROM orders ORDER BY id DESC"
-    ).all();
+    try {
+      if (verifyAdmin(request, env)) {
+        const result = await env.DB.prepare(
+          "SELECT * FROM orders ORDER BY id DESC"
+        ).all();
 
-    return Response.json(result.results || []);
+        return Response.json(result.results || []);
+      }
+
+      const customerUid = await verifyCustomer(request);
+
+      if (!customerUid) {
+        return Response.json(
+          { error: "Unauthorized" },
+          { status: 401 }
+        );
+      }
+
+      const result = await env.DB.prepare(
+        "SELECT * FROM orders WHERE customer_uid = ? ORDER BY id DESC"
+      ).bind(customerUid).all();
+
+      return Response.json(result.results || []);
+
+    } catch (error) {
+      return Response.json(
+        { error: "Could not load orders" },
+        { status: 500 }
+      );
+    }
   }
 
-  // Update order status
+  // ADMIN: Update order status
   if (request.method === "PATCH") {
+    if (!verifyAdmin(request, env)) {
+      return Response.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     try {
       const body = await request.json();
-      const allowed = ["Confirmed", "Cancelled", "Delivered"];
+
+      const allowed = [
+        "Confirmed",
+        "Cancelled",
+        "Delivered"
+      ];
 
       if (!body.id || !allowed.includes(body.status)) {
-        return Response.json({ error: "Invalid request" }, { status: 400 });
+        return Response.json(
+          { error: "Invalid request" },
+          { status: 400 }
+        );
       }
 
       const result = await env.DB.prepare(
@@ -71,14 +148,23 @@ export async function onRequest(context) {
       ).bind(body.status, body.id).run();
 
       if (!result.meta.changes) {
-        return Response.json({ error: "Order not found" }, { status: 404 });
+        return Response.json(
+          { error: "Order not found" },
+          { status: 404 }
+        );
       }
 
       return Response.json({ success: true });
+
     } catch (error) {
-      return Response.json({ error: "Update failed" }, { status: 500 });
+      return Response.json(
+        { error: "Update failed" },
+        { status: 500 }
+      );
     }
   }
 
-  return new Response("Method not allowed", { status: 405 });
+  return new Response("Method not allowed", {
+    status: 405
+  });
 }
