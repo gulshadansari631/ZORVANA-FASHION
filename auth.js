@@ -131,9 +131,13 @@ document.getElementById("profileOrders").onclick = () => {
   document.getElementById("myOrdersBtn").click();
 };
 
-
 function getAddressKey() {
-  return "zorvanaAddresses_" + (currentUser ? currentUser.uid : "guest");
+  const key = "zorvanaAddresses_" + (currentUser ? currentUser.uid : "guest");
+  if (currentUser && !localStorage.getItem(key)) {
+    const old = localStorage.getItem("zorvanaAddresses");
+    if (old) localStorage.setItem(key, old);
+  }
+  return key;
 }
 
 function renderAddresses() {
