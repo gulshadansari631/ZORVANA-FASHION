@@ -72,7 +72,8 @@ profileModal.innerHTML = `
   <img id="profilePhoto" alt="Profile photo">
   <h3 id="profileName"></h3>
   <p id="profileEmail"></p>
-  <button id="profileOrders">MY ORDERS</button>
+  <button id="savedAddressBtn">SAVED ADDRESSES</button>
+<div id="savedAddresses"></div>
  </div>
 `;
 document.body.appendChild(profileModal);
@@ -126,7 +127,30 @@ document.getElementById("profileOrders").onclick = () => {
   profileModal.style.display = "none";
   document.getElementById("myOrdersBtn").click();
 };
+document.getElementById("savedAddressBtn").onclick = () => {
+  const box = document.getElementById("savedAddresses");
+  const addresses = JSON.parse(
+    localStorage.getItem("zorvanaAddresses") || "[]"
+  );
 
+  const address = prompt("Enter your full address:");
+
+  if (address && address.trim()) {
+    addresses.push(address.trim());
+    localStorage.setItem(
+      "zorvanaAddresses",
+      JSON.stringify(addresses)
+    );
+  }
+
+  box.innerHTML = "<h3>Saved Addresses</h3>";
+
+  addresses.forEach((item, index) => {
+    const p = document.createElement("p");
+    p.textContent = (index + 1) + ". " + item;
+    box.appendChild(p);
+  });
+};
 // Login state
 onAuthStateChanged(auth, user => {
   currentUser = user;
