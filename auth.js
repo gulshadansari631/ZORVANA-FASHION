@@ -10,7 +10,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDhCeF2z7VtPggUnWb9U7C-meNhZB-_7h0",
+  apiKey: "AIzaSyDhCeF2z7VtPggUnWb9u7C-meNhZB-_7h0",
   authDomain: "zorvana-fashion.firebaseapp.com",
   projectId: "zorvana-fashion",
   storageBucket: "zorvana-fashion.firebasestorage.app",
