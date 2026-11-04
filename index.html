@@ -373,49 +373,11 @@ document.querySelectorAll(".card").forEach(card => {
    <label>Full Delivery Address</label>
    <textarea name="address" placeholder="House no, street, village, district" required></textarea>
    <label>State</label>
-<input list="stateList" name="state" id="stateInput" placeholder="Search or type State" required>
-<datalist id="stateList">
-<option value="Bihar">
-<option value="Uttar Pradesh">
-<option value="Jharkhand">
-<option value="West Bengal">
-<option value="Delhi">
-<option value="Maharashtra">
-<option value="Rajasthan">
-<option value="Madhya Pradesh">
-<option value="Haryana">
-<option value="Punjab">
-<option value="Assam">
-<option value="Odisha">
-<option value="Gujarat">
-<option value="Karnataka">
-<option value="Kerala">
-<option value="Tamil Nadu">
-<option value="Telangana">
-<option value="Andhra Pradesh">
-<option value="Chhattisgarh">
-<option value="Himachal Pradesh">
-<option value="Uttarakhand">
-<option value="Goa">
-<option value="Manipur">
-<option value="Meghalaya">
-<option value="Mizoram">
-<option value="Nagaland">
-<option value="Tripura">
-<option value="Sikkim">
-<option value="Arunachal Pradesh">
-<option value="Jammu and Kashmir">
-<option value="Ladakh">
-<option value="Puducherry">
-<option value="Chandigarh">
-<option value="Andaman and Nicobar Islands">
-<option value="Lakshadweep">
-<option value="Dadra and Nagar Haveli and Daman and Diu">
-</datalist>
+   <input type="text" name="state" id="stateInput" placeholder="Enter State" required>
+
 
 <label>District</label>
-<input list="districtList" name="district" id="districtInput" placeholder="Search or type District" required>
-<datalist id="districtList"></datalist>
+   <input type="text" name="district" id="districtInput" placeholder="Enter District" required>
 
    <label>PIN Code</label>
    <input type="text" name="pincode" placeholder="6 digit PIN code" pattern="[0-9]{6}" required>
@@ -429,41 +391,7 @@ document.querySelectorAll(".card").forEach(card => {
  </div>
  
 
-<script>
-const DATA_URL = "https://raw.githubusercontent.com/CodingMation/indian-states-districts/main/data/india_states_districts.min.json";
-
-const districtDataPromise = fetch(DATA_URL)
-    .then(response => {
-        if (!response.ok) throw new Error("District data could not load");
-        return response.json();
-    });
-
-document.getElementById("stateInput").addEventListener("input", async function () {
-    const selectedState = this.value.trim().toLowerCase();
-    const districtList = document.getElementById("districtList");
-
-    districtList.innerHTML = "";
-
-    try {
-        const allStates = await districtDataPromise;
-
-        const state = allStates.find(
-            item => item.name.trim().toLowerCase() === selectedState
-        );
-
-        if (state && state.districts) {
-            state.districts.forEach(district => {
-                const option = document.createElement("option");
-                option.value = district.name;
-                districtList.appendChild(option);
-            });
-        }
-    } catch (error) {
-        console.error("District list error:", error);
-    }
-});
-</script>
-
+ 
 
 </div>
 </body>
