@@ -8,11 +8,11 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,sans-serif;background:#f4f5f7;color:#222}
-header{background:#2874f0;color:white;padding:20px;font-size:22px;font-weight:bold}
+header{background:#2874f0;color:white;padding:20px;font-weight:bold}
 .container{max-width:1000px;margin:20px auto;padding:15px}
 .login,.dashboard{background:white;padding:20px;border-radius:10px;box-shadow:0 2px 10px #ddd}
-input{width:100%;padding:13px;margin:10px 0;border:1px solid #ccc;border-radius:6px}
-button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:white;font-weight:bold;cursor:pointer}
+input{width:100%;padding:13px;margin:8px 0;border:1px solid #ccc;border-radius:6px}
+button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:white;font-weight:bold;cursor:pointer;margin:5px 0}
 .logout{background:#555;float:right}
 .order{border:1px solid #ddd;border-radius:8px;padding:15px;margin:15px 0}
 .order h3{margin-top:0}
@@ -33,7 +33,8 @@ button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:whi
 
 <div class="login" id="loginBox">
 <h2>Admin Login</h2>
-<p>Enter your admin password</p>
+<p>Enter your admin email and password</p>
+<input type="email" id="email" placeholder="Admin Email">
 <input type="password" id="password" placeholder="Admin Password">
 <button onclick="login()">LOGIN</button>
 <p id="message"></p>
@@ -49,96 +50,120 @@ button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:whi
 </div>
 
 <script>
+let adminEmail = "";
 let adminPassword = "";
 
 async function login(){
-  const p = document.getElementById("password").value;
-  if(!p){alert("Enter password");return;}
-  adminPassword = p;
-  try{
-    const response = await fetch("/api/orders",{
-      headers:{"X-Admin-Password":adminPassword}
-    });
-    if(!response.ok) throw new Error("Wrong password or server error");
-    document.getElementById("loginBox").style.display="none";
-    document.getElementById("dashboard").style.display="block";
-    showOrders(await response.json());
-  }catch(e){
-    document.getElementById("message").textContent=e.message;
-  }
+ const email = document.getElementById("email").value.trim();
+ const password = document.getElementById("password").value;
+
+ if(!email || !password){
+  alert("Enter email and password");
+  return;
+ }
+
+ adminEmail = email;
+ adminPassword = password;
+
+ try{
+  const response = await fetch("/api/orders",{
+   headers:{
+    "X-Admin-Email":adminEmail,
+    "X-Admin-Password":adminPassword
+   }
+  });
+
+  if(!response.ok) throw new Error("Wrong email or password");
+
+  document.getElementById("loginBox").style.display="none";
+  document.getElementById("dashboard").style.display="block";
+  showOrders(await response.json());
+
+ }catch(e){
+  adminEmail="";
+  adminPassword="";
+  document.getElementById("message").textContent=e.message;
+ }
 }
 
 function logout(){
-  adminPassword="";
-  document.getElementById("password").value="";
-  document.getElementById("dashboard").style.display="none";
-  document.getElementById("loginBox").style.display="block";
+ adminEmail="";
+ adminPassword="";
+ document.getElementById("email").value="";
+ document.getElementById("password").value="";
+ document.getElementById("dashboard").style.display="none";
+ document.getElementById("loginBox").style.display="block";
 }
 
 async function loadOrders(){
-  document.getElementById("orders").textContent="Loading...";
-  try{
-    const r=await fetch("/api/orders",{
-      headers:{"X-Admin-Password":adminPassword}
-    });
-    if(!r.ok) throw new Error("Could not load orders");
-    showOrders(await r.json());
-  }catch(e){
-    document.getElementById("orders").textContent=e.message;
-  }
-}
-
-function showOrders(data){
-  const box=document.getElementById("orders");
-  if(!Array.isArray(data)||data.length===0){
-    box.innerHTML="<p>No orders found.</p>";
-    return;
-  }
-  box.innerHTML="";
-  data.forEach(o=>{
-    const div=document.createElement("div");
-    div.className="order";
-    div.innerHTML=`
-      <h3>Order #${o.id}</h3>
-      <p><b>Product:</b> ${safe(o.product)}</p>
-      <p><b>Size:</b> ${safe(o.size)}</p>
-      <p><b>Name:</b> ${safe(o.customer_name)}</p>
-      <p><b>Phone:</b> ${safe(o.phone)}</p>
-      <p><b>Address:</b> ${safe(o.address)}</p>
-      <p><b>State:</b> ${safe(o.state)} | <b>District:</b> ${safe(o.district)}</p>
-      <p><b>PIN:</b> ${safe(o.pincode)}</p>
-      <p><b>Payment:</b> ${safe(o.payment)}</p>
-      <p class="status">Status: ${safe(o.status)}</p>
-      <div class="actions">
-        <button class="confirm" onclick="updateStatus(${o.id},'Confirmed')">Confirm</button>
-        <button class="cancel" onclick="updateStatus(${o.id},'Cancelled')">Cancel</button>
-        <button class="delivered" onclick="updateStatus(${o.id},'Delivered')">Delivered</button>
-      </div>`;
-    box.appendChild(div);
+ document.getElementById("orders").textContent="Loading...";
+ try{
+  const response=await fetch("/api/orders",{
+   headers:{
+    "X-Admin-Email":adminEmail,
+    "X-Admin-Password":adminPassword
+   }
   });
+  if(!response.ok) throw new Error("Could not load orders");
+  showOrders(await response.json());
+ }catch(e){
+  document.getElementById("orders").textContent=e.message;
+ }
 }
 
 function safe(value){
-  const el=document.createElement("span");
-  el.textContent=value??"";
-  return el.innerHTML;
+ const span=document.createElement("span");
+ span.textContent=value??"";
+ return span.innerHTML;
+}
+
+function showOrders(data){
+ const box=document.getElementById("orders");
+ if(!Array.isArray(data)||data.length===0){
+  box.innerHTML="<p>No orders found.</p>";
+  return;
+ }
+ box.innerHTML="";
+ data.forEach(o=>{
+  const div=document.createElement("div");
+  div.className="order";
+  div.innerHTML=`
+   <h3>Order #${safe(o.id)}</h3>
+   <p><b>Product:</b> ${safe(o.product)}</p>
+   <p><b>Size:</b> ${safe(o.size)}</p>
+   <p><b>Name:</b> ${safe(o.customer_name)}</p>
+   <p><b>Phone:</b> ${safe(o.phone)}</p>
+   <p><b>Address:</b> ${safe(o.address)}</p>
+   <p><b>State:</b> ${safe(o.state)} | <b>District:</b> ${safe(o.district)}</p>
+   <p><b>PIN:</b> ${safe(o.pincode)}</p>
+   <p><b>Payment:</b> ${safe(o.payment)}</p>
+   <p class="status">Status: ${safe(o.status||"Pending")}</p>
+   <div class="actions">
+    <button class="confirm" onclick="updateStatus(${Number(o.id)},'Confirmed')">Confirm</button>
+    <button class="cancel" onclick="updateStatus(${Number(o.id)},'Cancelled')">Cancel</button>
+    <button class="delivered" onclick="updateStatus(${Number(o.id)},'Delivered')">Delivered</button>
+   </div>`;
+  box.appendChild(div);
+ });
 }
 
 async function updateStatus(id,status){
-  if(!confirm("Change order status to "+status+"?"))return;
-  try{
-    const r=await fetch("/api/orders",{
-      method:"PATCH",
-      headers:{
-        "Content-Type":"application/json",
-        "X-Admin-Password":adminPassword
-      },
-      body:JSON.stringify({id,status})
-    });
-    if(!r.ok)throw new Error("Status update failed");
-    alert("Status updated!");
-    loadOrders();
-  }catch(e){alert(e.message);}
+ try{
+  const response=await fetch("/api/orders",{
+   method:"PATCH",
+   headers:{
+    "Content-Type":"application/json",
+    "X-Admin-Email":adminEmail,
+    "X-Admin-Password":adminPassword
+   },
+   body:JSON.stringify({id,status})
+  });
+  if(!response.ok) throw new Error("Status update failed");
+  alert("Status updated!");
+  loadOrders();
+ }catch(e){
+  alert(e.message);
+ }
 }
 </script>
 </body>
