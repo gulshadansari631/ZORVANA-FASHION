@@ -272,34 +272,138 @@ function showAddressForm(editIndex = -1) {
     if (!name || !phone || !pincode || !state || !district || !address) {
       alert("Please fill all address details.");
       return;
-    }
+let savedAddresses = [];
 
-    if (!/^[0-9]{10}$/.test(phone)) {
-      alert("Enter a valid 10 digit mobile number.");
-      return;
-    }
+async function addressRequest(method = "GET", data = null) {
+  const token = await currentUser.getIdToken();
 
-    if (!/^[0-9]{6}$/.test(pincode)) {
-      alert("Enter a valid 6 digit PIN code.");
-      return;
-    }
+  const response = await fetch("/api/addresses", {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    ...(data ? { body: JSON.stringify(data) } : {})
+  });
 
-    const saved = {
-      name, phone, pincode, state, district, address,
-      isDefault: editIndex >= 0 ? !!old.isDefault : addresses.length === 0
-    };
+  const result = await response.json();
 
-    if (editIndex >= 0) {
-      addresses[editIndex] = saved;
-    } else {
-      addresses.push(saved);
-    }
+  if (!response.ok) {
+    throw new Error(result.error || "Address request failed");
+  }
 
-    localStorage.setItem(getAddressKey(), JSON.stringify(addresses));
-    renderAddresses();
-  };
+  return result;
 }
 
+async function renderAddresses() {
+  const box = document.getElementById("savedAddresses");
+  box.innerHTML = "<h3>Saved Delivery Addresses</h3>";
+
+  try {
+    savedAddresses = await addressRequest("GET");
+
+    const add = document.createElement("button");
+    add.textContent = "+ ADD NEW ADDRESS";
+    add.onclick = () => showAddressForm();
+    box.appendChild(add);
+
+    savedAddresses.forEach((a, index) => {
+      const card = document.createElement("div");
+      card.style.cssText =
+        "border:1px solid #ddd;padding:12px;margin:10px 0;border-radius:10px";
+
+      card.innerHTML = `
+        <b>${a.name} ${a.is_default ? "✓ DEFAULT" : ""}</b>
+        <p>${a.address}, ${a.district}, ${a.state} - ${a.pincode}</p>
+        <p>Phone: ${a.phone}</p>
+      `;
+
+      const edit = document.createElement("button");
+      edit.textContent = "EDIT";
+      edit.onclick = () => showAddressForm(index);
+
+      const remove = document.createElement("button");
+      remove.textContent = "DELETE";
+      remove.onclick = async () => {
+        if (!confirm("Delete this address?")) return;
+        try {
+          await addressRequest("DELETE", { id: a.id });
+          await renderAddresses();
+        } catch (e) {
+          alert(e.message);
+        }
+      };
+
+      const makeDefault = document.createElement("button");
+      makeDefault.textContent = "SET AS DEFAULT";
+      makeDefault.onclick = async () => {
+        try {
+          await addressRequest("PATCH", { id: a.id });
+          await renderAddresses();
+        } catch (e) {
+          alert(e.message);
+        }
+      };
+
+      card.append(edit, remove, makeDefault);
+      box.appendChild(card);
+    });
+  } catch (e) {
+    box.innerHTML += "<p>" + e.message + "</p>";
+  }
+}
+
+function showAddressForm(editIndex = -1) {
+  const box = document.getElementById("addressFormBox");
+  const old = editIndex >= 0 ? savedAddresses[editIndex] : {};
+
+  box.innerHTML = `
+    <h3>${editIndex >= 0 ? "Edit Address" : "Add New Address"}</h3>
+    <input id="addrName" placeholder="Full Name" value="${old.name || ""}">
+    <input id="addrPhone" placeholder="10 digit mobile number" value="${old.phone || ""}">
+    <input id="addrPin" placeholder="6 digit PIN code" value="${old.pincode || ""}">
+    <input id="addrState" placeholder="State" value="${old.state || ""}">
+    <input id="addrDistrict" placeholder="District" value="${old.district || ""}">
+    <textarea id="addrFull" placeholder="Complete delivery address">${old.address || ""}</textarea>
+    <button id="saveAddress">SAVE ADDRESS</button>
+    <button id="cancelAddress">CANCEL</button>
+  `;
+
+  document.getElementById("cancelAddress").onclick = () => {
+    box.innerHTML = "";
+  };
+
+  document.getElementById("saveAddress").onclick = async () => {
+    const data = {
+      name: document.getElementById("addrName").value.trim(),
+      phone: document.getElementById("addrPhone").value.trim(),
+      pincode: document.getElementById("addrPin").value.trim(),
+      state: document.getElementById("addrState").value.trim(),
+      district: document.getElementById("addrDistrict").value.trim(),
+      address: document.getElementById("addrFull").value.trim(),
+      is_default: editIndex < 0 && savedAddresses.length === 0
+    };
+
+    if (Object.values(data).some(v => !String(v).trim())) {
+      alert("Please fill all address details");
+      return;
+    }
+
+    try {
+      if (editIndex >= 0) {
+        data.id = savedAddresses[editIndex].id;
+        await addressRequest("PUT", data);
+      } else {
+        await addressRequest("POST", data);
+      }
+
+      box.innerHTML = "";
+      await renderAddresses();
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+}
 
 
 document.getElementById("logoutBtn").onclick = async () => {
