@@ -179,13 +179,33 @@ orderForm.addEventListener("submit", async event => {
 
   try {
     const token = await currentUser.getIdToken();
+    const productName = document.getElementById("checkoutProduct").value;
+
+const aliases = {
+  "Men Classic T Shirt": "Men's Classic T-Shirt",
+  "Womens Fashion Dress": "Women's Fashion Dress",
+  "Sports Sneakers": "Premium Sports Sneakers"
+};
+
+const actualName = aliases[productName] || productName;
+
+const productCard = [...document.querySelectorAll(".card")].find(card =>
+  (card.dataset.name || "").toLowerCase() === actualName.toLowerCase()
+);
+
+const formData = new FormData(orderForm);
+
+if (productCard) {
+  formData.append("product_image", productCard.querySelector("img").src);
+  formData.append("product_price", productCard.querySelector(".price").innerText);
+}
 
     const response = await fetch("/api/orders", {
       method: "POST",
       headers: {
         "Authorization": "Bearer " + token
       },
-      body: new FormData(orderForm)
+      body: formData
     });
 
     if (!response.ok) {
