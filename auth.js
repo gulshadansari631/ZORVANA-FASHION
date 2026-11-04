@@ -10,13 +10,13 @@ import {
 } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDhCeF2z7VtPggUnWb9u7C-meNhZB-_7h0",
-  authDomain: "zorvana-fashion.firebaseapp.com",
-  projectId: "zorvana-fashion",
-  storageBucket: "zorvana-fashion.firebasestorage.app",
-  messagingSenderId: "606256476404",
-  appId: "1:606256476404:web:67f46b61efae5e50362ea1",
-  measurementId: "G-ML0PLRYQ7J"
+const firebaseConfig = {
+  apiKey: "AIzaSyC6ljZWr8cDxEtPuziF7DhxQYiykFRocOc",
+  authDomain: "zorvana-fashion-new.firebaseapp.com",
+  projectId: "zorvana-fashion-new",
+  storageBucket: "zorvana-fashion-new.firebasestorage.app",
+  messagingSenderId: "328407308597",
+  appId: "1:328407308597:web:3a36dbb2e6c80e971ad47c"
 };
 
 const app = initializeApp(firebaseConfig);
