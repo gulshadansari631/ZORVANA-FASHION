@@ -1,11 +1,7 @@
 
-
-
 async function verifyCustomer(request) {
   const auth = request.headers.get("Authorization") || "";
-  const token = auth.startsWith("Bearer ")
-    ? auth.slice(7)
-    : "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
 
   if (!token) return null;
 
@@ -25,14 +21,11 @@ async function verifyCustomer(request) {
 }
 
 function verifyAdmin(request, env) {
-  const email = request.headers.get("X-Admin-Email");
-  const password = request.headers.get("X-Admin-Password");
-
   return Boolean(
     env.ADMIN_EMAIL &&
     env.ADMIN_PASSWORD &&
-    email === env.ADMIN_EMAIL &&
-    password === env.ADMIN_PASSWORD
+    request.headers.get("X-Admin-Email") === env.ADMIN_EMAIL &&
+    request.headers.get("X-Admin-Password") === env.ADMIN_PASSWORD
   );
 }
 
@@ -45,15 +38,12 @@ export async function onRequest(context) {
       const customerUid = await verifyCustomer(request);
 
       if (!customerUid) {
-        return Response.json(
-          { error: "Please login first" },
-          { status: 401 }
-        );
+        return Response.json({ error: "Please login first" }, { status: 401 });
       }
 
       const form = await request.formData();
 
-      await env.DB.prepare(`
+      const result = await env.DB.prepare(`
         INSERT INTO orders (
           product, size, customer_name, phone, address,
           state, district, pincode, payment, customer_uid
@@ -71,60 +61,66 @@ export async function onRequest(context) {
         customerUid
       ).run();
 
+      const orderId = result.meta.last_row_id;
+
+      await env.DB.prepare(`
+        INSERT INTO order_tracking (order_id, status)
+        VALUES (?, 'Pending')
+      `).bind(orderId).run();
+
       return Response.redirect(
         new URL("/order-success.html", request.url),
         303
       );
 
     } catch (error) {
-      return Response.json(
-        { error: "Order save failed" },
-        { status: 500 }
-      );
+      return Response.json({ error: "Order save failed" }, { status: 500 });
     }
   }
 
-  // ADMIN OR CUSTOMER: View orders
+  // ADMIN OR CUSTOMER: View orders with tracking history
   if (request.method === "GET") {
     try {
+      let orders;
+
       if (verifyAdmin(request, env)) {
         const result = await env.DB.prepare(
           "SELECT * FROM orders ORDER BY id DESC"
         ).all();
+        orders = result.results || [];
+      } else {
+        const customerUid = await verifyCustomer(request);
 
-        return Response.json(result.results || []);
+        if (!customerUid) {
+          return Response.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const result = await env.DB.prepare(
+          "SELECT * FROM orders WHERE customer_uid = ? ORDER BY id DESC"
+        ).bind(customerUid).all();
+
+        orders = result.results || [];
       }
 
-      const customerUid = await verifyCustomer(request);
+      for (const order of orders) {
+        const history = await env.DB.prepare(
+          "SELECT status, updated_at FROM order_tracking WHERE order_id = ? ORDER BY id ASC"
+        ).bind(order.id).all();
 
-      if (!customerUid) {
-        return Response.json(
-          { error: "Unauthorized" },
-          { status: 401 }
-        );
+        order.tracking = history.results || [];
       }
 
-      const result = await env.DB.prepare(
-        "SELECT * FROM orders WHERE customer_uid = ? ORDER BY id DESC"
-      ).bind(customerUid).all();
-
-      return Response.json(result.results || []);
+      return Response.json(orders);
 
     } catch (error) {
-      return Response.json(
-        { error: "Could not load orders" },
-        { status: 500 }
-      );
+      return Response.json({ error: "Could not load orders" }, { status: 500 });
     }
   }
 
-  // ADMIN: Update order status
+  // ADMIN: Update order status and save tracking history
   if (request.method === "PATCH") {
     if (!verifyAdmin(request, env)) {
-      return Response.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     try {
@@ -132,39 +128,38 @@ export async function onRequest(context) {
 
       const allowed = [
         "Confirmed",
-        "Cancelled",
-        "Delivered"
+        "Shipped",
+        "Out for Delivery",
+        "Delivered",
+        "Cancelled"
       ];
 
-      if (!body.id || !allowed.includes(body.status)) {
-        return Response.json(
-          { error: "Invalid request" },
-          { status: 400 }
-        );
+      const orderId = Number(body.id);
+
+      if (!Number.isInteger(orderId) || orderId <= 0 ||
+          !allowed.includes(body.status)) {
+        return Response.json({ error: "Invalid request" }, { status: 400 });
       }
 
       const result = await env.DB.prepare(
         "UPDATE orders SET status = ? WHERE id = ?"
-      ).bind(body.status, body.id).run();
+      ).bind(body.status, orderId).run();
 
       if (!result.meta.changes) {
-        return Response.json(
-          { error: "Order not found" },
-          { status: 404 }
-        );
+        return Response.json({ error: "Order not found" }, { status: 404 });
       }
+
+      await env.DB.prepare(`
+        INSERT INTO order_tracking (order_id, status)
+        VALUES (?, ?)
+      `).bind(orderId, body.status).run();
 
       return Response.json({ success: true });
 
     } catch (error) {
-      return Response.json(
-        { error: "Update failed" },
-        { status: 500 }
-      );
+      return Response.json({ error: "Update failed" }, { status: 500 });
     }
   }
 
-  return new Response("Method not allowed", {
-    status: 405
-  });
+  return new Response("Method not allowed", { status: 405 });
 }
