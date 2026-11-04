@@ -42,10 +42,10 @@ export async function onRequest(context) {
 
       const result = await env.DB.prepare(`
         INSERT INTO orders (
-          product, size, customer_name, phone, address,
-          state, district, pincode, payment, customer_uid,
-          product_image, product_price
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  product, size, customer_name, phone, address,
+  state, district, pincode, payment, status, customer_uid,
+  product_image, product_price
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Confirmed', ?, ?, ?)
       `).bind(
         form.get("product"),
         form.get("size"),
@@ -63,7 +63,7 @@ export async function onRequest(context) {
 
       await env.DB.prepare(`
         INSERT INTO order_tracking (order_id, status)
-        VALUES (?, 'Pending')
+        VALUES (?, 'Confirmed')
       `).bind(result.meta.last_row_id).run();
 
       return Response.redirect(
