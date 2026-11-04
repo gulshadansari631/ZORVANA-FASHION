@@ -10,7 +10,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDhCeF2z7VtPggUnwB9u7C-meNhZB-_7h0",
+  apiKey: "AIzaSyDhCeF2z7VtPggUnWb9U7C-meNhZB-_7h0",
   authDomain: "zorvana-fashion.firebaseapp.com",
   projectId: "zorvana-fashion",
   storageBucket: "zorvana-fashion.firebasestorage.app",
@@ -18,6 +18,12 @@ const firebaseConfig = {
   appId: "1:606256476404:web:67f46b61efae5e50362ea1",
   measurementId: "G-ML0PLRYQ7J"
 };
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+let currentUser = null;
+let savedAddresses = [];
 
 const authUI = document.createElement("div");
 authUI.id = "zorvanaAuth";
@@ -28,7 +34,9 @@ authUI.innerHTML = `
   <button id="myOrdersBtn">MY ORDERS</button>
   <button id="logoutBtn" style="display:none">LOGOUT</button>
 `;
-document.querySelector("header").after(authUI);
+
+const header = document.querySelector("header");
+if (header) header.after(authUI);
 
 const style = document.createElement("style");
 style.textContent = `
@@ -48,38 +56,39 @@ style.textContent = `
 .trackStep.done .trackDot{background:#16853c;border-color:#16853c}
 .trackStep.done{color:#16853c;font-weight:bold}
 .trackHistory{background:#f5f6f8;padding:12px;border-radius:8px;margin-top:12px}
+#savedAddresses input,#savedAddresses textarea,#checkoutAddressPanel input,#checkoutAddressPanel textarea{width:100%;box-sizing:border-box;padding:11px;margin:6px 0;border:1px solid #ccc;border-radius:6px}
+#checkoutAddressPanel{background:#f5f6f8;padding:14px;margin:12px 0;border-radius:12px;text-align:left}
+.addressCard{background:white;border:1px solid #ddd;border-radius:9px;padding:12px;margin:10px 0}
 `;
+
 document.head.appendChild(style);
 
 const modal = document.createElement("div");
 modal.id = "authModal";
 modal.innerHTML = `
- <div class="authBox">
-  <button id="authClose">✕ CLOSE</button>
-  <h2>Customer Login</h2>
-  <button id="googleLogin">Continue with Google</button>
-  <p id="authMessage"></p>
- </div>
+  <div class="authBox">
+    <button id="authClose">✕ CLOSE</button>
+    <h2>Customer Login</h2>
+    <button id="googleLogin">Continue with Google</button>
+    <p id="authMessage"></p>
+  </div>
 `;
 document.body.appendChild(modal);
 
 const profileModal = document.createElement("div");
 profileModal.id = "profileModal";
 profileModal.innerHTML = `
- <div class="profileBox">
-  <button id="profileClose">✕ CLOSE</button>
-  <h2>MY PROFILE</h2>
-  <img id="profilePhoto" alt="Profile photo">
-  <h3 id="profileName"></h3>
-  <p id="profileEmail"></p>
-  <button id="profileOrders">MY ORDERS</button>
-  <div id="savedAddresses"></div>
- </div>
+  <div class="profileBox">
+    <button id="profileClose">✕ CLOSE</button>
+    <h2>MY PROFILE</h2>
+    <img id="profilePhoto" alt="Profile photo">
+    <h3 id="profileName"></h3>
+    <p id="profileEmail"></p>
+    <button id="profileOrders">MY ORDERS</button>
+    <div id="savedAddresses"></div>
+  </div>
 `;
 document.body.appendChild(profileModal);
-
-let currentUser = null;
-let auth;
 
 function message(text) {
   document.getElementById("authMessage").textContent = text;
@@ -105,7 +114,7 @@ document.getElementById("googleLogin").onclick = async () => {
   }
 };
 
-document.getElementById("profileBtn").onclick = () => {
+document.getElementById("profileBtn").onclick = async () => {
   if (!currentUser) return;
 
   document.getElementById("profileName").textContent =
@@ -119,6 +128,7 @@ document.getElementById("profileBtn").onclick = () => {
   photo.style.display = currentUser.photoURL ? "block" : "none";
 
   profileModal.style.display = "block";
+  await renderAddresses();
 };
 
 document.getElementById("profileClose").onclick = () => {
@@ -130,151 +140,20 @@ document.getElementById("profileOrders").onclick = () => {
   document.getElementById("myOrdersBtn").click();
 };
 
-function getAddressKey() {
-  const key = "zorvanaAddresses_" + (currentUser ? currentUser.uid : "guest");
-  if (currentUser && !localStorage.getItem(key)) {
-    const old = localStorage.getItem("zorvanaAddresses");
-    if (old) localStorage.setItem(key, old);
+document.getElementById("logoutBtn").onclick = async () => {
+  try {
+    await signOut(auth);
+    profileModal.style.display = "none";
+  } catch (error) {
+    alert(error.message);
   }
-  return key;
-}
+};
 
-function renderAddresses() {
-  const box = document.getElementById("savedAddresses");
-  const addresses = JSON.parse(localStorage.getItem(getAddressKey()) || "[]");
-
-  box.innerHTML = `
-    <h3>Saved Delivery Addresses</h3>
-    <button id="addNewAddress">+ ADD NEW ADDRESS</button>
-    <div id="addressFormBox"></div>
-    <div id="addressList"></div>
-  `;
-
-  document.getElementById("addNewAddress").onclick = () => showAddressForm();
-
-  const list = document.getElementById("addressList");
-
-  if (!addresses.length) {
-    list.textContent = "No saved addresses. Please add an address.";
-    return;
-  }
-
-  addresses.forEach((a, index) => {
-    const card = document.createElement("div");
-    card.style.cssText = "border:1px solid #ddd;border-radius:10px;padding:14px;margin:12px 0;text-align:left;background:#fff";
-
-    const heading = document.createElement("h3");
-    heading.textContent = a.name + (a.isDefault ? " ✓ DEFAULT" : "");
-
-    const details = document.createElement("p");
-    details.textContent = a.address + ", " + a.district + ", " + a.state + " - " + a.pincode;
-
-    const phone = document.createElement("p");
-    phone.textContent = "☎ " + a.phone;
-
-    const edit = document.createElement("button");
-    edit.textContent = "CHANGE ADDRESS";
-    edit.onclick = () => showAddressForm(index);
-
-    const remove = document.createElement("button");
-    remove.textContent = "DELETE";
-    remove.style.background = "#d32f2f";
-    remove.onclick = () => {
-      if (!confirm("Delete this address?")) return;
-      addresses.splice(index, 1);
-      if (!addresses.some(x => x.isDefault) && addresses.length) {
-        addresses[0].isDefault = true;
-      }
-      localStorage.setItem(getAddressKey(), JSON.stringify(addresses));
-      renderAddresses();
-    };
-
-    const makeDefault = document.createElement("button");
-    makeDefault.textContent = "SET AS DEFAULT";
-    makeDefault.onclick = () => {
-      addresses.forEach(x => x.isDefault = false);
-      addresses[index].isDefault = true;
-      localStorage.setItem(getAddressKey(), JSON.stringify(addresses));
-      renderAddresses();
-    };
-
-    const deliver = document.createElement("button");
-    deliver.textContent = "DELIVER TO THIS ADDRESS";
-    deliver.style.background = "#16853c";
-    deliver.onclick = () => {
-      document.querySelector('[name="customer_name"]').value = a.name;
-      document.querySelector('[name="phone"]').value = a.phone;
-      document.querySelector('[name="address"]').value = a.address;
-      document.querySelector('[name="state"]').value = a.state;
-      document.querySelector('[name="district"]').value = a.district;
-      document.querySelector('[name="pincode"]').value = a.pincode;
-
-      profileModal.style.display = "none";
-      document.getElementById("checkoutModal").style.display = "block";
-    };
-
-    card.append(heading, details, phone, edit, remove, makeDefault, deliver);
-    list.appendChild(card);
-  });
-}
-
-function showAddressForm(editIndex = -1) {
-  const box = document.getElementById("addressFormBox");
-  const addresses = JSON.parse(localStorage.getItem(getAddressKey()) || "[]");
-  const old = editIndex >= 0 ? addresses[editIndex] : {};
-
-  box.innerHTML = `
-    <div style="border:1px solid #ddd;padding:14px;border-radius:10px;margin:12px 0;text-align:left">
-      <h3>${editIndex >= 0 ? "Change Address" : "Add New Address"}</h3>
-      <label>Full Name</label>
-      <input id="addrName" placeholder="Enter full name">
-      <label>Mobile Number</label>
-      <input id="addrPhone" type="tel" maxlength="10" placeholder="10 digit mobile number">
-      <label>PIN Code</label>
-      <input id="addrPin" maxlength="6" placeholder="6 digit PIN code">
-      <label>State</label>
-      <input id="addrState" placeholder="Enter state">
-      <label>District / City</label>
-      <input id="addrDistrict" placeholder="Enter district">
-      <label>House No., Street, Area and Landmark</label>
-      <textarea id="addrFull" placeholder="Enter complete delivery address"></textarea>
-      <button id="saveAddress">SAVE ADDRESS</button>
-      <button id="cancelAddress" style="background:#777">CANCEL</button>
-    </div>
-  `;
-
-  ["Name", "Phone", "Pin", "State", "District", "Full"].forEach(key => {
-    const values = {
-      Name: old.name,
-      Phone: old.phone,
-      Pin: old.pincode,
-      State: old.state,
-      District: old.district,
-      Full: old.address
-    };
-    const element = document.getElementById("addr" + key);
-    element.value = values[key] || "";
-    element.style.cssText = "width:100%;box-sizing:border-box;padding:11px;margin:6px 0 12px;border:1px solid #ccc;border-radius:6px";
-  });
-
-  document.getElementById("cancelAddress").onclick = () => {
-    box.innerHTML = "";
-  };
-
-  document.getElementById("saveAddress").onclick = () => {
-    const name = document.getElementById("addrName").value.trim();
-    const phone = document.getElementById("addrPhone").value.trim();
-    const pincode = document.getElementById("addrPin").value.trim();
-    const state = document.getElementById("addrState").value.trim();
-    const district = document.getElementById("addrDistrict").value.trim();
-    const address = document.getElementById("addrFull").value.trim();
-
-    if (!name || !phone || !pincode || !state || !district || !address) {
-      alert("Please fill all address details.");
-      return;
-let savedAddresses = [];
+// ADDRESS DATABASE API
 
 async function addressRequest(method = "GET", data = null) {
+  if (!currentUser) throw new Error("Please login first.");
+
   const token = await currentUser.getIdToken();
 
   const response = await fetch("/api/addresses", {
@@ -295,8 +174,12 @@ async function addressRequest(method = "GET", data = null) {
   return result;
 }
 
+// PROFILE ADDRESS MANAGEMENT
+
 async function renderAddresses() {
   const box = document.getElementById("savedAddresses");
+  if (!box) return;
+
   box.innerHTML = "<h3>Saved Delivery Addresses</h3>";
 
   try {
@@ -307,23 +190,31 @@ async function renderAddresses() {
     add.onclick = () => showAddressForm();
     box.appendChild(add);
 
+    const formBox = document.createElement("div");
+    formBox.id = "addressFormBox";
+    box.appendChild(formBox);
+
     savedAddresses.forEach((a, index) => {
       const card = document.createElement("div");
-      card.style.cssText =
-        "border:1px solid #ddd;padding:12px;margin:10px 0;border-radius:10px";
+      card.className = "addressCard";
 
-      card.innerHTML = `
-        <b>${a.name} ${a.is_default ? "✓ DEFAULT" : ""}</b>
-        <p>${a.address}, ${a.district}, ${a.state} - ${a.pincode}</p>
-        <p>Phone: ${a.phone}</p>
-      `;
+      const heading = document.createElement("b");
+      heading.textContent = a.name + (a.is_default ? " ✓ DEFAULT" : "");
+
+      const details = document.createElement("p");
+      details.textContent =
+        a.address + ", " + a.district + ", " + a.state + " - " + a.pincode;
+
+      const phone = document.createElement("p");
+      phone.textContent = "Phone: " + a.phone;
 
       const edit = document.createElement("button");
-      edit.textContent = "EDIT";
+      edit.textContent = "CHANGE ADDRESS";
       edit.onclick = () => showAddressForm(index);
 
       const remove = document.createElement("button");
       remove.textContent = "DELETE";
+      remove.style.background = "#d32f2f";
       remove.onclick = async () => {
         if (!confirm("Delete this address?")) return;
         try {
@@ -345,7 +236,7 @@ async function renderAddresses() {
         }
       };
 
-      card.append(edit, remove, makeDefault);
+      card.append(heading, details, phone, edit, remove, makeDefault);
       box.appendChild(card);
     });
   } catch (e) {
@@ -355,19 +246,34 @@ async function renderAddresses() {
 
 function showAddressForm(editIndex = -1) {
   const box = document.getElementById("addressFormBox");
+  if (!box) return;
+
   const old = editIndex >= 0 ? savedAddresses[editIndex] : {};
 
   box.innerHTML = `
-    <h3>${editIndex >= 0 ? "Edit Address" : "Add New Address"}</h3>
-    <input id="addrName" placeholder="Full Name" value="${old.name || ""}">
-    <input id="addrPhone" placeholder="10 digit mobile number" value="${old.phone || ""}">
-    <input id="addrPin" placeholder="6 digit PIN code" value="${old.pincode || ""}">
-    <input id="addrState" placeholder="State" value="${old.state || ""}">
-    <input id="addrDistrict" placeholder="District" value="${old.district || ""}">
-    <textarea id="addrFull" placeholder="Complete delivery address">${old.address || ""}</textarea>
+    <h3>${editIndex >= 0 ? "Change Address" : "Add New Address"}</h3>
+    <input id="addrName" placeholder="Full Name">
+    <input id="addrPhone" placeholder="10 digit mobile number" maxlength="10">
+    <input id="addrPin" placeholder="6 digit PIN code" maxlength="6">
+    <input id="addrState" placeholder="State">
+    <input id="addrDistrict" placeholder="District / City">
+    <textarea id="addrFull" placeholder="House No., Street, Area and Landmark"></textarea>
     <button id="saveAddress">SAVE ADDRESS</button>
-    <button id="cancelAddress">CANCEL</button>
+    <button id="cancelAddress" style="background:#777">CANCEL</button>
   `;
+
+  const fields = {
+    addrName: old.name,
+    addrPhone: old.phone,
+    addrPin: old.pincode,
+    addrState: old.state,
+    addrDistrict: old.district,
+    addrFull: old.address
+  };
+
+  Object.entries(fields).forEach(([id, value]) => {
+    document.getElementById(id).value = value || "";
+  });
 
   document.getElementById("cancelAddress").onclick = () => {
     box.innerHTML = "";
@@ -385,7 +291,17 @@ function showAddressForm(editIndex = -1) {
     };
 
     if (Object.values(data).some(v => !String(v).trim())) {
-      alert("Please fill all address details");
+      alert("Please fill all address details.");
+      return;
+    }
+
+    if (!/^[0-9]{10}$/.test(data.phone)) {
+      alert("Enter a valid 10 digit mobile number.");
+      return;
+    }
+
+    if (!/^[0-9]{6}$/.test(data.pincode)) {
+      alert("Enter a valid 6 digit PIN code.");
       return;
     }
 
@@ -397,7 +313,6 @@ function showAddressForm(editIndex = -1) {
         await addressRequest("POST", data);
       }
 
-      box.innerHTML = "";
       await renderAddresses();
     } catch (e) {
       alert(e.message);
@@ -405,15 +320,197 @@ function showAddressForm(editIndex = -1) {
   };
 }
 
+// CHECKOUT ADDRESS MANAGEMENT
 
-document.getElementById("logoutBtn").onclick = async () => {
-  try {
-    await signOut(auth);
-    profileModal.style.display = "none";
-  } catch (error) {
-    alert(error.message);
+const checkoutForm = document.querySelector('form[name="orders"]');
+
+if (checkoutForm) {
+  const addressPanel = document.createElement("div");
+  addressPanel.id = "checkoutAddressPanel";
+  checkoutForm.before(addressPanel);
+
+  function fillCheckoutAddress(a) {
+    const fields = {
+      customer_name: a.name,
+      phone: a.phone,
+      address: a.address,
+      state: a.state,
+      district: a.district,
+      pincode: a.pincode
+    };
+
+    Object.entries(fields).forEach(([name, value]) => {
+      const field = checkoutForm.querySelector(`[name="${name}"]`);
+      if (field) field.value = value || "";
+    });
   }
-};
+
+  async function showCheckoutAddresses() {
+    addressPanel.innerHTML = "<h3>Delivering to</h3>";
+
+    if (!currentUser) {
+      addressPanel.innerHTML += "<p>Please login to manage saved addresses.</p>";
+      return;
+    }
+
+    try {
+      const addresses = await addressRequest("GET");
+
+      const list = document.createElement("div");
+      addressPanel.appendChild(list);
+
+      addresses.forEach(a => {
+        const card = document.createElement("div");
+        card.className = "addressCard";
+
+        const title = document.createElement("b");
+        title.textContent = a.name + (a.is_default ? " ✓ DEFAULT" : "");
+
+        const details = document.createElement("p");
+        details.textContent =
+          a.address + ", " + a.district + ", " + a.state + " - " + a.pincode;
+
+        const phone = document.createElement("p");
+        phone.textContent = "Phone: " + a.phone;
+
+        const deliver = document.createElement("button");
+        deliver.type = "button";
+        deliver.textContent = "DELIVER TO THIS ADDRESS";
+        deliver.style.background = "#16853c";
+        deliver.onclick = async () => {
+          fillCheckoutAddress(a);
+          try {
+            await addressRequest("PATCH", { id: a.id });
+            await showCheckoutAddresses();
+          } catch (e) {
+            alert(e.message);
+          }
+        };
+
+        const change = document.createElement("button");
+        change.type = "button";
+        change.textContent = "CHANGE ADDRESS";
+        change.onclick = () => showCheckoutAddressForm(a);
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.textContent = "DELETE";
+        remove.style.background = "#d32f2f";
+        remove.onclick = async () => {
+          if (!confirm("Delete this address?")) return;
+          try {
+            await addressRequest("DELETE", { id: a.id });
+            await showCheckoutAddresses();
+          } catch (e) {
+            alert(e.message);
+          }
+        };
+
+        card.append(title, details, phone, deliver, change, remove);
+        list.appendChild(card);
+      });
+
+      if (!addresses.length) {
+        list.innerHTML = "<p>No saved address found. Add a delivery address.</p>";
+      } else {
+        const selected = addresses.find(a => a.is_default) || addresses[0];
+        fillCheckoutAddress(selected);
+      }
+
+      const add = document.createElement("button");
+      add.type = "button";
+      add.textContent = "+ ADD NEW ADDRESS";
+      add.onclick = () => showCheckoutAddressForm(null);
+      addressPanel.appendChild(add);
+
+      const formBox = document.createElement("div");
+      formBox.id = "checkoutNewAddress";
+      addressPanel.appendChild(formBox);
+
+    } catch (e) {
+      addressPanel.innerHTML += "<p>" + e.message + "</p>";
+    }
+  }
+
+  function showCheckoutAddressForm(old = null) {
+    const box = document.getElementById("checkoutNewAddress");
+    if (!box) return;
+
+    box.innerHTML = `
+      <h3>${old ? "Change Address" : "Add New Address"}</h3>
+      <input id="coName" placeholder="Full Name">
+      <input id="coPhone" placeholder="Mobile Number" maxlength="10">
+      <input id="coPin" placeholder="PIN Code" maxlength="6">
+      <input id="coState" placeholder="State">
+      <input id="coDistrict" placeholder="District / City">
+      <textarea id="coAddress" placeholder="House No., Street, Area and Landmark"></textarea>
+      <button type="button" id="coSave">SAVE ADDRESS</button>
+      <button type="button" id="coCancel" style="background:#777">CANCEL</button>
+    `;
+
+    const values = {
+      coName: old?.name,
+      coPhone: old?.phone,
+      coPin: old?.pincode,
+      coState: old?.state,
+      coDistrict: old?.district,
+      coAddress: old?.address
+    };
+
+    Object.entries(values).forEach(([id, value]) => {
+      const field = document.getElementById(id);
+      field.value = value || "";
+    });
+
+    document.getElementById("coCancel").onclick = () => {
+      box.innerHTML = "";
+    };
+
+    document.getElementById("coSave").onclick = async () => {
+      const data = {
+        name: document.getElementById("coName").value.trim(),
+        phone: document.getElementById("coPhone").value.trim(),
+        pincode: document.getElementById("coPin").value.trim(),
+        state: document.getElementById("coState").value.trim(),
+        district: document.getElementById("coDistrict").value.trim(),
+        address: document.getElementById("coAddress").value.trim(),
+        is_default: !old
+      };
+
+      if (Object.values(data).some(v => !String(v).trim())) {
+        alert("Please fill all address details.");
+        return;
+      }
+
+      if (!/^[0-9]{10}$/.test(data.phone)) {
+        alert("Enter a valid 10 digit mobile number.");
+        return;
+      }
+
+      if (!/^[0-9]{6}$/.test(data.pincode)) {
+        alert("Enter a valid 6 digit PIN code.");
+        return;
+      }
+
+      try {
+        if (old) {
+          data.id = old.id;
+          await addressRequest("PUT", data);
+        } else {
+          await addressRequest("POST", data);
+        }
+
+        await showCheckoutAddresses();
+      } catch (e) {
+        alert(e.message);
+      }
+    };
+  }
+
+  window.showCheckoutAddresses = showCheckoutAddresses;
+}
+
+// LOGIN STATE
 
 function updateLoginUI(user) {
   currentUser = user;
@@ -429,20 +526,18 @@ function updateLoginUI(user) {
 
   document.getElementById("profileBtn").style.display =
     user ? "inline-block" : "none";
+
+  if (checkoutForm) {
+    showCheckoutAddresses();
+  }
 }
 
-try {
-  const app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-
-  onAuthStateChanged(auth, updateLoginUI, error => {
-    document.getElementById("authStatus").textContent =
-      "Login error: " + error.message;
-  });
-} catch (error) {
+onAuthStateChanged(auth, updateLoginUI, error => {
   document.getElementById("authStatus").textContent =
-    "Firebase error: " + error.message;
-}
+    "Login error: " + error.message;
+});
+
+// BUY NOW LOGIN CHECK
 
 const originalBuy = window.buy;
 
@@ -458,6 +553,8 @@ window.buy = function(product) {
   }
 };
 
+// ORDER SUBMISSION
+
 const orderForm = document.querySelector('form[name="orders"]');
 
 if (orderForm) {
@@ -470,12 +567,15 @@ if (orderForm) {
     }
 
     const button = document.getElementById("orderButton");
-    button.disabled = true;
-    button.textContent = "PLEASE WAIT...";
+
+    if (button) {
+      button.disabled = true;
+      button.textContent = "PLEASE WAIT...";
+    }
 
     try {
       const token = await currentUser.getIdToken();
-      const productName = document.getElementById("checkoutProduct").value;
+      const productName = document.getElementById("checkoutProduct")?.value || "";
 
       const normalize = value =>
         (value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -517,11 +617,15 @@ if (orderForm) {
 
     } catch (error) {
       alert(error.message);
-      button.disabled = false;
-      button.textContent = "PLACE ORDER";
+      if (button) {
+        button.disabled = false;
+        button.textContent = "PLACE ORDER";
+      }
     }
   });
 }
+
+// MY ORDERS AND TRACKING
 
 document.getElementById("myOrdersBtn").onclick = async () => {
   if (!currentUser) {
@@ -659,184 +763,3 @@ document.getElementById("myOrdersBtn").onclick = async () => {
     box.textContent = error.message;
   }
 };
-
-// CHECKOUT SAVED ADDRESS SECTION
-
-const checkoutForm = document.querySelector('form[name="orders"]');
-
-if (checkoutForm) {
-  const addressPanel = document.createElement("div");
-  addressPanel.id = "checkoutAddressPanel";
-  addressPanel.style.cssText =
-    "background:#f5f6f8;padding:14px;margin:12px 0;border-radius:12px;text-align:left";
-
-  checkoutForm.before(addressPanel);
-
-  function checkoutAddressKey() {
-    return "zorvanaAddresses_" + (currentUser ? currentUser.uid : "guest");
-  }
-
-  function fillCheckoutAddress(a) {
-    checkoutForm.querySelector('[name="customer_name"]').value = a.name;
-    checkoutForm.querySelector('[name="phone"]').value = a.phone;
-    checkoutForm.querySelector('[name="address"]').value = a.address;
-    checkoutForm.querySelector('[name="state"]').value = a.state;
-    checkoutForm.querySelector('[name="district"]').value = a.district;
-    checkoutForm.querySelector('[name="pincode"]').value = a.pincode;
-  }
-
-  function showCheckoutAddresses() {
-    const addresses = JSON.parse(
-      localStorage.getItem(checkoutAddressKey()) || "[]"
-    );
-
-    addressPanel.innerHTML = `
-      <h3>Delivering to</h3>
-      <div id="checkoutAddressList"></div>
-      <button type="button" id="checkoutAddAddress"
-        style="width:100%;padding:12px;background:#2874f0;color:white;border:0;border-radius:6px;margin-top:10px">
-        + ADD NEW ADDRESS
-      </button>
-      <div id="checkoutNewAddress"></div>
-    `;
-
-    const list = document.getElementById("checkoutAddressList");
-
-    if (!addresses.length) {
-      list.innerHTML = "<p>No saved address found. Add a delivery address.</p>";
-    }
-
-    addresses.forEach((a, index) => {
-      const card = document.createElement("div");
-      card.style.cssText =
-        "background:white;border:1px solid #ddd;border-radius:9px;padding:12px;margin:10px 0";
-
-      const title = document.createElement("b");
-      title.textContent = a.name + (a.isDefault ? " ✓ DEFAULT" : "");
-
-      const details = document.createElement("p");
-      details.textContent =
-        a.address + ", " + a.district + ", " + a.state + " - " + a.pincode;
-
-      const phone = document.createElement("p");
-      phone.textContent = "Phone: " + a.phone;
-
-      const select = document.createElement("button");
-      select.type = "button";
-      select.textContent = "DELIVER TO THIS ADDRESS";
-      select.style.cssText =
-        "width:100%;padding:10px;background:#16853c;color:white;border:0;border-radius:5px";
-      select.onclick = () => {
-        fillCheckoutAddress(a);
-        addresses.forEach(x => x.isDefault = false);
-        addresses[index].isDefault = true;
-        localStorage.setItem(checkoutAddressKey(), JSON.stringify(addresses));
-        showCheckoutAddresses();
-      };
-
-      const change = document.createElement("button");
-      change.type = "button";
-      change.textContent = "CHANGE";
-      change.style.cssText =
-        "padding:9px 16px;background:#2874f0;color:white;border:0;border-radius:5px;margin-top:8px";
-      change.onclick = () => showCheckoutAddressForm(index);
-
-      card.append(title, details, phone, select, change);
-      list.appendChild(card);
-    });
-
-    document.getElementById("checkoutAddAddress").onclick = () => {
-      showCheckoutAddressForm(-1);
-    };
-
-    if (addresses.length) {
-      const selected = addresses.find(a => a.isDefault) || addresses[0];
-      fillCheckoutAddress(selected);
-    }
-  }
-
-  function showCheckoutAddressForm(editIndex = -1) {
-    const box = document.getElementById("checkoutNewAddress");
-    const addresses = JSON.parse(
-      localStorage.getItem(checkoutAddressKey()) || "[]"
-    );
-    const old = editIndex >= 0 ? addresses[editIndex] : {};
-
-    box.innerHTML = `
-      <h3>${editIndex >= 0 ? "Change Address" : "Add New Address"}</h3>
-      <input id="coName" placeholder="Full Name">
-      <input id="coPhone" placeholder="Mobile Number" maxlength="10">
-      <input id="coPin" placeholder="PIN Code" maxlength="6">
-      <input id="coState" placeholder="State">
-      <input id="coDistrict" placeholder="District / City">
-      <textarea id="coAddress" placeholder="House No., Street, Area and Landmark"></textarea>
-      <button type="button" id="coSave"
-        style="width:100%;padding:12px;background:#2874f0;color:white;border:0;border-radius:6px">
-        SAVE ADDRESS
-      </button>
-      <button type="button" id="coCancel"
-        style="width:100%;padding:10px;background:#777;color:white;border:0;border-radius:6px;margin-top:6px">
-        CANCEL
-      </button>
-    `;
-
-    const fields = {
-      coName: old.name,
-      coPhone: old.phone,
-      coPin: old.pincode,
-      coState: old.state,
-      coDistrict: old.district,
-      coAddress: old.address
-    };
-
-    Object.entries(fields).forEach(([id, value]) => {
-      const field = document.getElementById(id);
-      field.value = value || "";
-      field.style.cssText =
-        "width:100%;box-sizing:border-box;padding:11px;margin:6px 0;border:1px solid #ccc;border-radius:6px";
-    });
-
-    document.getElementById("coCancel").onclick = () => {
-      box.innerHTML = "";
-    };
-
-    document.getElementById("coSave").onclick = () => {
-      const a = {
-        name: document.getElementById("coName").value.trim(),
-        phone: document.getElementById("coPhone").value.trim(),
-        pincode: document.getElementById("coPin").value.trim(),
-        state: document.getElementById("coState").value.trim(),
-        district: document.getElementById("coDistrict").value.trim(),
-        address: document.getElementById("coAddress").value.trim(),
-        isDefault: editIndex >= 0 ? !!old.isDefault : addresses.length === 0
-      };
-
-      if (Object.values(a).some(v => v === "")) {
-        alert("Please fill all address details.");
-        return;
-      }
-
-      if (!/^[0-9]{10}$/.test(a.phone)) {
-        alert("Enter a valid 10 digit mobile number.");
-        return;
-      }
-
-      if (!/^[0-9]{6}$/.test(a.pincode)) {
-        alert("Enter a valid 6 digit PIN code.");
-        return;
-      }
-
-      if (editIndex >= 0) {
-        addresses[editIndex] = a;
-      } else {
-        addresses.push(a);
-      }
-
-      localStorage.setItem(checkoutAddressKey(), JSON.stringify(addresses));
-      fillCheckoutAddress(a);
-      showCheckoutAddresses();
-    };
-  }
-
-  showCheckoutAddresses();
-}
