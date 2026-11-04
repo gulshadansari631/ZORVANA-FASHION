@@ -236,7 +236,10 @@ document.getElementById("myOrdersBtn").onclick = async () => {
     authUI.after(box);
   }
 
-  box.innerHTML = "<h2>My Orders</h2><p>Loading...</p>";
+  box.innerHTML = `
+    <h2>My Orders</h2>
+    <p>Loading your orders...</p>
+  `;
 
   try {
     const token = await currentUser.getIdToken();
@@ -253,22 +256,158 @@ document.getElementById("myOrdersBtn").onclick = async () => {
 
     if (!orders.length) {
       box.innerHTML = "<h2>My Orders</h2><p>No orders found.</p>";
+      box.scrollIntoView({ behavior: "smooth" });
       return;
     }
 
-    box.innerHTML = "<h2>My Orders</h2>";
+    box.innerHTML = `
+      <h2>My Orders</h2>
+      <style>
+        .customerOrder {
+          background:white;
+          border:1px solid #ddd;
+          border-radius:12px;
+          padding:15px;
+          margin:15px 0;
+          color:#222;
+        }
+        .customerOrder img {
+          width:100px;
+          height:100px;
+          object-fit:contain;
+          border:1px solid #eee;
+          border-radius:8px;
+        }
+        .orderProduct {
+          display:flex;
+          gap:15px;
+          align-items:center;
+          margin:15px 0;
+        }
+        .trackLine {
+          display:flex;
+          justify-content:space-between;
+          gap:5px;
+          margin:20px 0;
+        }
+        .trackStep {
+          flex:1;
+          text-align:center;
+          font-size:11px;
+          color:#888;
+        }
+        .trackDot {
+          width:18px;
+          height:18px;
+          border-radius:50%;
+          border:2px solid #aaa;
+          margin:0 auto 7px;
+          background:white;
+        }
+        .trackStep.done .trackDot {
+          background:#16853c;
+          border-color:#16853c;
+        }
+        .trackStep.done {
+          color:#16853c;
+          font-weight:bold;
+        }
+        .trackHistory {
+          background:#f5f6f8;
+          padding:12px;
+          border-radius:8px;
+          margin-top:12px;
+        }
+      </style>
+    `;
+
+    const steps = [
+      "Confirmed",
+      "Shipped",
+      "Out for Delivery",
+      "Delivered"
+    ];
 
     orders.forEach(order => {
+      const status = order.status || "Pending";
+      const history = order.tracking || [];
+      const currentIndex = steps.indexOf(status);
+      const cancelled = status === "Cancelled";
+
       const item = document.createElement("div");
-      item.className = "orderItem";
+      item.className = "customerOrder";
 
-      const details = document.createElement("p");
-      details.textContent =
-        "Order #" + order.id +
-        " | " + order.product +
-        " | Status: " + (order.status || "Pending");
+      const image = document.createElement("img");
+      image.src = order.product_image || "";
+      image.alt = order.product || "Product";
 
-      item.appendChild(details);
+      const productInfo = document.createElement("div");
+      const name = document.createElement("h3");
+      name.textContent = order.product || "Product";
+      const price = document.createElement("p");
+      price.textContent = order.product_price || "";
+
+      productInfo.append(name, price);
+
+      const productRow = document.createElement("div");
+      productRow.className = "orderProduct";
+
+      if (order.product_image) productRow.appendChild(image);
+      productRow.appendChild(productInfo);
+
+      const orderNumber = document.createElement("p");
+      orderNumber.textContent = "Order #" + order.id;
+
+      const statusText = document.createElement("h3");
+      statusText.textContent = cancelled
+        ? "Order Cancelled"
+        : "Order " + status;
+
+      item.append(orderNumber, productRow, statusText);
+
+      if (!cancelled) {
+        const timeline = document.createElement("div");
+        timeline.className = "trackLine";
+
+        steps.forEach((step, index) => {
+          const stepBox = document.createElement("div");
+          stepBox.className = "trackStep";
+
+          if (currentIndex >= index) {
+            stepBox.classList.add("done");
+          }
+
+          const dot = document.createElement("div");
+          dot.className = "trackDot";
+
+          const label = document.createElement("span");
+          label.textContent = step;
+
+          stepBox.append(dot, label);
+          timeline.appendChild(stepBox);
+        });
+
+        item.appendChild(timeline);
+      }
+
+      const historyBox = document.createElement("div");
+      historyBox.className = "trackHistory";
+      const historyTitle = document.createElement("b");
+      historyTitle.textContent = "Order Updates";
+      historyBox.appendChild(historyTitle);
+
+      history.forEach(update => {
+        const line = document.createElement("p");
+        const date = update.updated_at
+          ? new Date(update.updated_at).toLocaleString("en-IN")
+          : "";
+
+        line.textContent = "✓ " + update.status + " " + date;
+        line.style.marginTop = "8px";
+        historyBox.appendChild(line);
+      });
+
+      item.appendChild(historyBox);
       box.appendChild(item);
     });
 
