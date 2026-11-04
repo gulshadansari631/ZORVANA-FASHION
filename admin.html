@@ -131,23 +131,28 @@ function showOrders(data){
   const div=document.createElement("div");
   div.className="order";
   div.innerHTML=`
-   <h3>Order #${safe(o.id)}</h3>
-   <p><b>Product:</b> ${safe(o.product)}</p>
-   <p><b>Size:</b> ${safe(o.size)}</p>
-   <p><b>Name:</b> ${safe(o.customer_name)}</p>
-   <p><b>Phone:</b> ${safe(o.phone)}</p>
-   <p><b>Address:</b> ${safe(o.address)}</p>
-   <p><b>State:</b> ${safe(o.state)} | <b>District:</b> ${safe(o.district)}</p>
-   <p><b>PIN:</b> ${safe(o.pincode)}</p>
-   <p><b>Payment:</b> ${safe(o.payment)}</p>
-   <p class="status">Status: ${safe(o.status||"Pending")}</p>
-   <div class="actions">
+  <h3>Order #${safe(o.id)}</h3>
+
+  ${o.product_image ? `<img src="${safe(o.product_image)}" style="width:120px;height:120px;object-fit:contain;border:1px solid #ddd;border-radius:8px">` : "<p>Product photo not available</p>"}
+
+  <p><b>Product:</b> ${safe(o.product)}</p>
+  <p><b>Price:</b> ${safe(o.product_price || "Not available")}</p>
+  <p><b>Size:</b> ${safe(o.size)}</p>
+  <p><b>Name:</b> ${safe(o.customer_name)}</p>
+  <p><b>Phone:</b> ${safe(o.phone)}</p>
+  <p><b>Address:</b> ${safe(o.address)}</p>
+  <p><b>State:</b> ${safe(o.state)} | <b>District:</b> ${safe(o.district)}</p>
+  <p><b>PIN:</b> ${safe(o.pincode)}</p>
+  <p><b>Payment:</b> ${safe(o.payment)}</p>
+  <p class="status">Status: ${safe(o.status || "Pending")}</p>
+
+  <div class="actions">
     <button class="confirm" onclick="updateStatus(${Number(o.id)},'Confirmed')">Confirm</button>
     <button class="shipped" onclick="updateStatus(${Number(o.id)},'Shipped')">Shipped</button>
     <button class="out" onclick="updateStatus(${Number(o.id)},'Out for Delivery')">Out for Delivery</button>
     <button class="delivered" onclick="updateStatus(${Number(o.id)},'Delivered')">Delivered</button>
     <button class="cancel" onclick="updateStatus(${Number(o.id)},'Cancelled')">Cancel</button>
-   </div>`;
+  </div>`;
   box.appendChild(div);
  });
 }
