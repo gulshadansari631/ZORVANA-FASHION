@@ -181,17 +181,17 @@ orderForm.addEventListener("submit", async event => {
     const token = await currentUser.getIdToken();
     const productName = document.getElementById("checkoutProduct").value;
 
-const aliases = {
-  "Men Classic T Shirt": "Men's Classic T-Shirt",
-  "Womens Fashion Dress": "Women's Fashion Dress",
-  "Sports Sneakers": "Premium Sports Sneakers"
-};
+const normalize = value =>
+  (value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
 
-const actualName = aliases[productName] || productName;
-
-const productCard = [...document.querySelectorAll(".card")].find(card =>
-  (card.dataset.name || "").toLowerCase() === actualName.toLowerCase()
-);
+const productCard = [...document.querySelectorAll(".card")].find(card => {
+  const cardName = normalize(card.dataset.name || card.querySelector("h3")?.innerText);
+  const orderName = normalize(productName);
+  return cardName === orderName ||
+  cardName.replace(/^mens/, "men") === orderName.replace(/^mens/, "men") ||
+  cardName.includes(orderName) ||
+  orderName.includes(cardName);
+});
 
 const formData = new FormData(orderForm);
 
