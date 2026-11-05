@@ -39,13 +39,16 @@ if (header) header.after(authUI);
 
 const style = document.createElement("style");
 style.textContent = `
-#zorvanaAuth{padding:12px;text-align:center;background:white}
+#zorvanaAuth{display:none!important}
 #zorvanaAuth button{padding:10px 15px;margin:5px;border:0;border-radius:5px;background:#2874f0;color:white;font-weight:bold}
 #authModal,#profileModal{display:none;position:fixed;inset:0;background:#000b;z-index:20000;padding:20px;overflow:auto}
 .authBox,.profileBox{background:white;color:#222;max-width:400px;margin:40px auto;padding:20px;border-radius:12px}
 .authBox button,.profileBox button{width:100%;padding:12px;margin:6px 0;border:0;border-radius:5px;background:#2874f0;color:white}
 #profilePhoto{width:90px;height:90px;border-radius:50%;object-fit:cover}
-#myOrders{padding:15px;background:white;margin:15px;border-radius:8px}
+#myOrders{padding:15px;background:white;margin:15px auto;border-radius:12px;max-width:900px;color:#222;min-height:60vh}
+body.orders-view .hero,body.orders-view .quick-cats,body.orders-view #shop,body.orders-view .offer-banner,body.orders-view .service-strip,body.orders-view footer{display:none!important}
+body.orders-view #myOrders{display:block!important}
+body.orders-view{background:#f6f6f6}
 .customerOrder{background:white;border:1px solid #ddd;border-radius:12px;padding:15px;margin:15px 0;color:#222}
 .customerOrder img{width:100px;height:100px;object-fit:contain}
 .orderProduct{display:flex;gap:15px;align-items:center;margin:15px 0}
@@ -85,6 +88,7 @@ profileModal.innerHTML = `
     <p id="profileEmail"></p>
     <button id="profileOrders">MY ORDERS</button>
     <div id="savedAddresses"></div>
+    <button id="profileLogout" style="background:#d32f2f">LOGOUT</button>
   </div>
 `;
 document.body.appendChild(profileModal);
@@ -132,6 +136,15 @@ document.getElementById("profileBtn").onclick = async () => {
 
 document.getElementById("profileClose").onclick = () => {
   profileModal.style.display = "none";
+};
+
+document.getElementById("profileLogout").onclick = async () => {
+  try {
+    await signOut(auth);
+    profileModal.style.display = "none";
+  } catch (error) {
+    alert(error.message);
+  }
 };
 
 document.getElementById("profileOrders").onclick = () => {
@@ -627,6 +640,8 @@ if (orderForm) {
 // MY ORDERS AND TRACKING
 
 document.getElementById("myOrdersBtn").onclick = async () => {
+  document.body.classList.add("orders-view");
+
   if (!currentUser) {
     openLogin();
     return;
@@ -637,7 +652,7 @@ document.getElementById("myOrdersBtn").onclick = async () => {
   if (!box) {
     box = document.createElement("section");
     box.id = "myOrders";
-    authUI.after(box);
+    document.body.appendChild(box);
   }
 
   box.innerHTML = "<h2>My Orders</h2><p>Loading...</p>";
@@ -697,10 +712,11 @@ document.getElementById("myOrdersBtn").onclick = async () => {
       price.textContent = order.product_price || "";
 
       if (order.size && order.size !== "Not selected" && order.size !== "Not applicable") {
-  const size = document.createElement("p");
-  size.textContent = "Size: " + order.size;
-  info.appendChild(size);
-}
+        const size = document.createElement("p");
+        size.textContent = "Size: " + order.size;
+        info.appendChild(size);
+      }
+
       info.append(name, price);
       productRow.appendChild(info);
       item.appendChild(productRow);
@@ -875,5 +891,23 @@ document.getElementById("myOrdersBtn").onclick = async () => {
 
   } catch (error) {
     box.textContent = error.message;
+  }
+};
+
+// BOTTOM NAVIGATION CONNECTIONS
+
+window.openOrders = function() {
+  document.body.classList.add("orders-view");
+  document.getElementById("myOrdersBtn").click();
+};
+
+window.openProfile = function() {
+  document.body.classList.remove("orders-view");
+
+  if (currentUser) {
+    document.getElementById("profileBtn").click();
+  } else {
+    openLogin();
+    message("Login to view your profile and saved addresses.");
   }
 };
