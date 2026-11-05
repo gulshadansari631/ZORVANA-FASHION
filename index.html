@@ -55,8 +55,10 @@ footer strong{color:#fff;font-size:20px;letter-spacing:2px}
 .detail-desc{color:#555;line-height:1.6;font-size:14px;margin:17px 0}
 .detail-info h4{margin:17px 0 8px}
 .pills{display:flex;gap:8px;flex-wrap:wrap}.pill{border:1px solid #ddd;background:#fff;padding:8px 13px;border-radius:4px;font-size:13px}.pill.selected{border:2px solid #171717;background:#fafafa}
-.buy-row{display:flex;gap:10px;margin-top:22px}.buy-row button{flex:1;padding:13px 10px;border-radius:5px;font-weight:bold}
+.buy-row{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+.buy-row button{flex:1;padding:13px 10px;border-radius:5px;font-weight:bold;min-width:100px}
 .buy{background:#e91e63;color:#fff;border:1px solid #e91e63}.wish{background:#fff;border:1px solid #ccc}
+.add-cart{background:#171717;color:white;border:1px solid #171717}
 .details-list{font-size:13px;color:#555;line-height:1.8;padding-left:18px}
 .related{margin-top:30px;border-top:1px solid #eee;padding-top:20px}
 .checkout{display:none;position:fixed;inset:0;background:#0009;z-index:70;overflow:auto;padding:15px}
@@ -64,8 +66,15 @@ footer strong{color:#fff;font-size:20px;letter-spacing:2px}
 .checkout-box h2{margin:0 0 15px}.checkout-box label{display:block;font-size:13px;font-weight:600;margin:11px 0 5px}
 .checkout-box input,.checkout-box select,.checkout-box textarea{width:100%;border:1px solid #ddd;border-radius:5px;padding:11px;background:white}
 .checkout-box textarea{min-height:70px}.checkout-submit{width:100%;margin-top:16px;background:#e91e63;color:#fff;border:0;padding:13px;border-radius:5px;font-weight:bold}
+.cart-row{display:flex;gap:12px;align-items:center;border:1px solid #eee;padding:12px;border-radius:8px;margin:12px 0}
+.cart-row img{width:85px;height:95px;object-fit:contain;background:#f7f7f7;border-radius:5px}
+.cart-info{flex:1;min-width:0}.cart-info h3{margin:0 0 7px;font-size:14px}
+.qty-control{display:flex;align-items:center;gap:12px;margin-top:8px}
+.qty-control button{border:1px solid #ddd;background:#fff;border-radius:4px;padding:5px 11px}
+.remove-cart{border:0;background:none;color:#d22;padding:6px}
+.cart-total{border-top:1px solid #eee;padding:15px 0;margin-top:15px;text-align:right;font-weight:bold;font-size:18px}
 @media(max-width:800px){.products{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.card-img{height:210px}.detail-grid{gap:18px}.hero-tag{font-size:48px}}
-@media(max-width:600px){.head{gap:10px;padding:12px}.logo{font-size:18px}.head-actions{gap:8px}.head-actions button{font-size:12px}.search input{padding:10px 8px}.hero{margin:12px;padding:25px 18px}.hero-tag{font-size:38px}.wrap{padding:0 12px;margin:22px auto}.products{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.card-img{height:190px}.card-info{padding:9px}.card h3{font-size:13px}.modal{padding:0}.modal-box{margin:0;border-radius:0;min-height:100vh;padding:18px 14px}.detail-grid{grid-template-columns:1fr;gap:18px}.main-photo{height:360px}.detail-info h2{font-size:20px}.buy-row{position:sticky;bottom:0;background:#fff;padding:10px 0}.hero-tag{display:none}}
+@media(max-width:600px){.head{gap:10px;padding:12px}.logo{font-size:18px}.head-actions{gap:8px}.head-actions button{font-size:12px}.search input{padding:10px 8px}.hero{margin:12px;padding:25px 18px}.hero-tag{font-size:38px}.wrap{padding:0 12px;margin:22px auto}.products{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.card-img{height:190px}.card-info{padding:9px}.card h3{font-size:13px}.modal{padding:0}.modal-box{margin:0;border-radius:0;min-height:100vh;padding:18px 14px}.detail-grid{grid-template-columns:1fr;gap:18px}.main-photo{height:360px}.detail-info h2{font-size:20px}.buy-row{position:sticky;bottom:0;background:#fff;padding:10px 0}.hero-tag{display:none}.cart-row img{width:70px;height:80px}}
 </style>
 </head>
 <body>
@@ -118,6 +127,7 @@ footer strong{color:#fff;font-size:20px;letter-spacing:2px}
         <h4>Product Details</h4><ul class="details-list" id="detailMore"></ul>
         <div class="buy-row">
           <button class="wish" onclick="toggleWishlist(currentProduct.id)">♡ Wishlist</button>
+          <button class="add-cart" onclick="addCurrentToCart()">ADD TO CART</button>
           <button class="buy" onclick="buyCurrentProduct()">BUY NOW</button>
         </div>
       </div>
@@ -140,7 +150,7 @@ footer strong{color:#fff;font-size:20px;letter-spacing:2px}
       <label>District</label><input name="district" required placeholder="District">
       <label>PIN Code</label><input name="pincode" required inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="6 digit PIN code">
       <label>Payment Method</label>
-      <select name="payment" required><option value="">Select payment method</option><option value="Cash on Delivery">Cash on Delivery</option><option value="Online Payment">Online Payment</option></select>
+      <input type="text" name="payment" value="Cash on Delivery" readonly>
       <button class="checkout-submit" id="orderButton" type="submit">PLACE ORDER</button>
     </form>
   </div>
@@ -149,13 +159,48 @@ footer strong{color:#fff;font-size:20px;letter-spacing:2px}
 <script>
 let allProducts=[], visibleProducts=[], currentProduct=null, selectedSize='', activeCategory='All';
 let wishlist=JSON.parse(localStorage.getItem('zorvana_wishlist')||'[]');
-let cart=JSON.parse(localStorage.getItem('zorvana_cart')||'[]');
+let savedCart=JSON.parse(localStorage.getItem('zorvana_cart')||'[]');
+
+function normalizeCart(items){
+  if(!Array.isArray(items))return [];
+  return items.map(item=>{
+    if(typeof item==='string'||typeof item==='number'){
+      return {id:String(item),size:'',qty:1};
+    }
+    return {id:String(item.id),size:item.size||'',qty:Math.max(1,Number(item.qty)||1)};
+  }).filter(item=>item.id);
+}
+let cart=normalizeCart(savedCart);
 const $=id=>document.getElementById(id);
 $('year').textContent=new Date().getFullYear();
+
 function money(v){return '₹'+Number(v||0).toLocaleString('en-IN')}
-function safeImages(p){let arr=[];if(Array.isArray(p.images))arr=p.images;else if(typeof p.images==='string'){try{arr=JSON.parse(p.images)}catch(e){arr=[]}}if(p.image)arr.unshift(p.image);return [...new Set(arr.filter(Boolean))]}
+function safeImages(p){
+  let arr=[];
+  if(Array.isArray(p.images))arr=p.images;
+  else if(typeof p.images==='string'){try{arr=JSON.parse(p.images)}catch(e){arr=[]}}
+  if(p.image)arr.unshift(p.image);
+  return [...new Set(arr.filter(Boolean))];
+}
 function productImage(p){return safeImages(p)[0]||'https://placehold.co/600x700?text=Zorvana+Fashion'}
-function listValue(v){if(Array.isArray(v))return v;if(typeof v==='string'){try{let x=JSON.parse(v);return Array.isArray(x)?x:v.split(/\r?\n/).filter(Boolean)}catch(e){return v.split(/\r?\n/).filter(Boolean)}}return []}
+function listValue(v){
+  if(Array.isArray(v))return v;
+  if(typeof v==='string'){
+    try{let x=JSON.parse(v);return Array.isArray(x)?x:Object.entries(x).map(([k,val])=>k+': '+val)}
+    catch(e){return v.split(/\r?\n/).filter(Boolean)}
+  }
+  if(v&&typeof v==='object')return Object.entries(v).filter(([k,val])=>val).map(([k,val])=>k+': '+val);
+  return [];
+}
+function productSizes(p){
+  if(Array.isArray(p.sizes))return p.sizes.map(String);
+  if(typeof p.sizes==='string'){try{let s=JSON.parse(p.sizes);return Array.isArray(s)?s.map(String):[]}catch(e){return []}}
+  return [];
+}
+function saveCart(){
+  localStorage.setItem('zorvana_cart',JSON.stringify(cart));
+  $('cartCount').textContent=cart.reduce((sum,item)=>sum+item.qty,0);
+}
 async function loadProducts(){
   const grid=$('productGrid');grid.innerHTML='<div class="empty">Loading products...</div>';
   try{
@@ -180,7 +225,9 @@ function renderProducts(items){
     <div class="card-bottom"><span class="off">${Number(p.discount||0)>0?Number(p.discount)+'% OFF':''}</span><button class="view-btn">View Details</button></div></div>
   </article>`).join('');
 }
-function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function escapeHtml(s){
+  return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 function filterCategory(category,btn){
   activeCategory=category;
   document.querySelectorAll('#categoryNav button').forEach(b=>b.classList.remove('active'));
@@ -191,9 +238,11 @@ function filterCategory(category,btn){
 function searchProducts(){
   const q=$('searchInput').value.trim().toLowerCase();
   let items=allProducts.filter(p=>(p.name+' '+p.category+' '+(p.description||'')).toLowerCase().includes(q));
-  $('sectionTitle').textContent=q?'Search Results':'Latest Collection';renderProducts(items);
+  $('sectionTitle').textContent=q?'Search Results':'Latest Collection';
+  renderProducts(items);
 }
 $('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')searchProducts()});
+
 function openProduct(id,updateUrl=true){
   const p=allProducts.find(x=>String(x.id)===String(id));if(!p)return;
   currentProduct=p;selectedSize='';
@@ -203,37 +252,114 @@ function openProduct(id,updateUrl=true){
   $('detailMrp').textContent=p.mrp?money(p.mrp):'';
   $('detailDiscount').textContent=Number(p.discount||0)>0?Number(p.discount)+'% OFF':'';
   $('detailDescription').textContent=p.description||'';
-  const images=safeImages(p);$('detailImage').src=images[0]||productImage(p);
+  const images=safeImages(p);
+  $('detailImage').src=images[0]||productImage(p);
   $('detailThumbs').innerHTML=images.map((src,i)=>`<img src="${src}" alt="Product image ${i+1}" onclick="$('detailImage').src=this.src">`).join('');
-  const category=(p.category||'').toLowerCase();
-  const sizes=category.includes('accessor')?[]:(category.includes('kid')?['2-3Y','4-5Y','6-7Y','8-9Y','10-11Y','S','M','L']:['S','M','L','XL','XXL','Free Size']);
+
+  const sizes=productSizes(p);
   $('sizeArea').style.display=sizes.length?'block':'none';
-  $('sizeOptions').innerHTML=sizes.map(s=>`<button class="pill" onclick="chooseSize('${s}',this)">${s}</button>`).join('');
+  $('sizeOptions').innerHTML=sizes.map(s=>`<button class="pill" onclick="chooseSize('${escapeHtml(s)}',this)">${escapeHtml(s)}</button>`).join('');
+
   $('detailHighlights').innerHTML=listValue(p.highlights).map(x=>`<li>${escapeHtml(x)}</li>`).join('')||'<li>Comfortable and stylish design</li>';
   $('detailMore').innerHTML=listValue(p.additional_details).map(x=>`<li>${escapeHtml(x)}</li>`).join('')||'<li>For product information, contact us.</li>';
+
   $('relatedGrid').innerHTML=allProducts.filter(x=>String(x.id)!==String(p.id)&&(x.category||'').toLowerCase()===(p.category||'').toLowerCase()).slice(0,4).map(x=>`<article class="card" onclick="openProduct('${String(x.id).replace(/'/g,"\\'")}')"><div class="card-img"><img loading="lazy" src="${productImage(x)}" alt=""></div><div class="card-info"><h3>${escapeHtml(x.name)}</h3><span class="price">${money(x.selling_price)}</span></div></article>`).join('')||'<div class="muted">More products coming soon.</div>';
+
   $('productModal').classList.add('show');document.body.style.overflow='hidden';
   if(updateUrl){const u=new URL(location.href);u.searchParams.set('product',p.id);history.replaceState({},'',u)}
 }
-function chooseSize(size,btn){selectedSize=size;document.querySelectorAll('#sizeOptions .pill').forEach(x=>x.classList.remove('selected'));btn.classList.add('selected')}
-function closeProduct(){$('productModal').classList.remove('show');document.body.style.overflow='';const u=new URL(location.href);u.searchParams.delete('product');history.replaceState({},'',u);currentProduct=null}
+function chooseSize(size,btn){
+  selectedSize=size;
+  document.querySelectorAll('#sizeOptions .pill').forEach(x=>x.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+function closeProduct(){
+  $('productModal').classList.remove('show');document.body.style.overflow='';
+  const u=new URL(location.href);u.searchParams.delete('product');history.replaceState({},'',u);
+  currentProduct=null;
+}
+function requireSelectedSize(){
+  if(!currentProduct)return false;
+  if(productSizes(currentProduct).length&&!selectedSize){
+    alert('Please select a size first.');
+    return false;
+  }
+  return true;
+}
+function addCurrentToCart(){
+  if(!requireSelectedSize())return;
+  const id=String(currentProduct.id);
+  const size=selectedSize||'Not applicable';
+  const existing=cart.find(item=>item.id===id&&item.size===size);
+  if(existing)existing.qty++;
+  else cart.push({id,size,qty:1});
+  saveCart();
+  alert('Product added to cart!');
+}
 function buyCurrentProduct(){
-  if(!currentProduct)return;
-  if($('sizeArea').style.display!=='none'&&!selectedSize){alert('Please select a size first.');return}
+  if(!requireSelectedSize())return;
   $('checkoutProduct').value=currentProduct.name||'';
   $('checkoutSize').value=selectedSize||'Not applicable';
   $('checkoutPanel').classList.add('show');
 }
 function closeCheckout(){$('checkoutPanel').classList.remove('show')}
 function toggleWishlist(id){
-  const key=String(id);wishlist=wishlist.includes(key)?wishlist.filter(x=>x!==key):[...wishlist,key];
-  localStorage.setItem('zorvana_wishlist',JSON.stringify(wishlist));$('wishCount').textContent=wishlist.length;
+  const key=String(id);
+  wishlist=wishlist.includes(key)?wishlist.filter(x=>x!==key):[...wishlist,key];
+  localStorage.setItem('zorvana_wishlist',JSON.stringify(wishlist));
+  $('wishCount').textContent=wishlist.length;
   if(currentProduct)alert(wishlist.includes(key)?'Added to wishlist':'Removed from wishlist');
 }
-function showWishlist(){const items=allProducts.filter(p=>wishlist.includes(String(p.id)));$('sectionTitle').textContent='My Wishlist';renderProducts(items);$('shop').scrollIntoView({behavior:'smooth'})}
-function addToCart(id){if(!cart.includes(String(id)))cart.push(String(id));localStorage.setItem('zorvana_cart',JSON.stringify(cart));$('cartCount').textContent=cart.length;alert('Added to cart')}
-function showCart(){const items=allProducts.filter(p=>cart.includes(String(p.id)));$('sectionTitle').textContent='My Cart';renderProducts(items);$('shop').scrollIntoView({behavior:'smooth'})}
-$('wishCount').textContent=wishlist.length;$('cartCount').textContent=cart.length;
+function showWishlist(){
+  const items=allProducts.filter(p=>wishlist.includes(String(p.id)));
+  $('sectionTitle').textContent='My Wishlist';
+  renderProducts(items);$('shop').scrollIntoView({behavior:'smooth'});
+}
+function showCart(){
+  $('sectionTitle').textContent='My Cart';
+  $('productCount').textContent=cart.length+' items';
+  const grid=$('productGrid');
+  const validCart=cart.filter(item=>allProducts.some(p=>String(p.id)===item.id));
+  cart=validCart;saveCart();
+
+  if(!cart.length){
+    grid.innerHTML='<div class="empty">Your cart is empty.</div>';
+    $('shop').scrollIntoView({behavior:'smooth'});return;
+  }
+
+  let total=0;
+  grid.innerHTML=cart.map((item,index)=>{
+    const p=allProducts.find(x=>String(x.id)===item.id);
+    const subtotal=Number(p.selling_price||0)*item.qty;total+=subtotal;
+    return `<div class="cart-row">
+      <img src="${productImage(p)}" alt="${escapeHtml(p.name)}">
+      <div class="cart-info">
+        <h3>${escapeHtml(p.name)}</h3>
+        <div>${money(p.selling_price)} · Size: ${escapeHtml(item.size)}</div>
+        <div class="qty-control">
+          <button onclick="changeCartQty(${index},-1)">−</button>
+          <b>${item.qty}</b>
+          <button onclick="changeCartQty(${index},1)">+</button>
+        </div>
+        <button class="remove-cart" onclick="removeCartItem(${index})">Remove</button>
+      </div>
+      <b>${money(subtotal)}</b>
+    </div>`;
+  }).join('')+`<div class="cart-total">Cart Total: ${money(total)}</div>`;
+  $('shop').scrollIntoView({behavior:'smooth'});
+}
+function changeCartQty(index,change){
+  if(!cart[index])return;
+  cart[index].qty+=change;
+  if(cart[index].qty<=0)cart.splice(index,1);
+  saveCart();showCart();
+}
+function removeCartItem(index){
+  cart.splice(index,1);saveCart();showCart();
+}
+
+$('wishCount').textContent=wishlist.length;
+saveCart();
 loadProducts();
 </script>
 <script type="module" src="/auth.js"></script>
