@@ -77,31 +77,32 @@ button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:whi
 <input type="text" id="productDiscount" placeholder="Discount">
 <input type="number" id="productStock" placeholder="Stock" min="0">
 <textarea id="productDescription" placeholder="Product Description"></textarea>
-<h3>Available Product Sizes</h3>
 
+<h3>Available Product Sizes</h3>
 <p><b>Letter Sizes</b></p>
 <div>
-  <label><input type="checkbox" name="productSize" value="XS"> XS</label>
-  <label><input type="checkbox" name="productSize" value="S"> S</label>
-  <label><input type="checkbox" name="productSize" value="M"> M</label>
-  <label><input type="checkbox" name="productSize" value="L"> L</label>
-  <label><input type="checkbox" name="productSize" value="XL"> XL</label>
-  <label><input type="checkbox" name="productSize" value="XXL"> XXL</label>
-  <label><input type="checkbox" name="productSize" value="XXXL"> XXXL</label>
+<label><input type="checkbox" name="productSize" value="XS"> XS</label>
+<label><input type="checkbox" name="productSize" value="S"> S</label>
+<label><input type="checkbox" name="productSize" value="M"> M</label>
+<label><input type="checkbox" name="productSize" value="L"> L</label>
+<label><input type="checkbox" name="productSize" value="XL"> XL</label>
+<label><input type="checkbox" name="productSize" value="XXL"> XXL</label>
+<label><input type="checkbox" name="productSize" value="XXXL"> XXXL</label>
 </div>
 
 <p><b>Number Sizes</b></p>
 <div>
-  <label><input type="checkbox" name="productSize" value="28"> 28</label>
-  <label><input type="checkbox" name="productSize" value="30"> 30</label>
-  <label><input type="checkbox" name="productSize" value="32"> 32</label>
-  <label><input type="checkbox" name="productSize" value="34"> 34</label>
-  <label><input type="checkbox" name="productSize" value="36"> 36</label>
-  <label><input type="checkbox" name="productSize" value="38"> 38</label>
-  <label><input type="checkbox" name="productSize" value="40"> 40</label>
-  <label><input type="checkbox" name="productSize" value="42"> 42</label>
-  <label><input type="checkbox" name="productSize" value="44"> 44</label>
+<label><input type="checkbox" name="productSize" value="28"> 28</label>
+<label><input type="checkbox" name="productSize" value="30"> 30</label>
+<label><input type="checkbox" name="productSize" value="32"> 32</label>
+<label><input type="checkbox" name="productSize" value="34"> 34</label>
+<label><input type="checkbox" name="productSize" value="36"> 36</label>
+<label><input type="checkbox" name="productSize" value="38"> 38</label>
+<label><input type="checkbox" name="productSize" value="40"> 40</label>
+<label><input type="checkbox" name="productSize" value="42"> 42</label>
+<label><input type="checkbox" name="productSize" value="44"> 44</label>
 </div>
+
 <p><b>Upload Product Photos (Multiple)</b></p>
 <input type="file" id="productImage" accept="image/*" multiple>
 <div id="imagePreview" class="preview"></div>
@@ -272,14 +273,19 @@ function editProduct(id){
  document.getElementById("productDiscount").value=p.discount||"";
  document.getElementById("productStock").value=p.stock??"";
  document.getElementById("productDescription").value=p.description||"";
-document.querySelectorAll('input[name="productSize"]').forEach(box => {
-  box.checked = Array.isArray(p.sizes) && p.sizes.includes(box.value);
-});
+
+ // FIX: Database se saved sizes ko checkboxes mein restore karo.
+ // Number aur string format dono ko support karta hai.
+ const savedSizes=Array.isArray(p.sizes)?p.sizes.map(String):[];
+
+ document.querySelectorAll('input[name="productSize"]').forEach(box=>{
+  box.checked=savedSizes.includes(box.value);
+ });
+
+ // Important: Yahan sizes ko dobara uncheck nahi karna hai.
+
  const h=p.highlights||{};
  document.getElementById("highlightColor").value=h.Color||"";
- document.querySelectorAll('input[name="productSize"]').forEach(box => {
-  box.checked = false;
-});
  document.getElementById("highlightFabric").value=h.Fabric||"";
  document.getElementById("highlightType").value=h.Type||"";
  document.getElementById("highlightLength").value=h.Length||"";
@@ -476,7 +482,7 @@ async function saveProduct(){
    id:editingProductId,
    name,
    category,
-   sizes: Array.from(document.querySelectorAll('input[name="productSize"]:checked')).map(box => box.value),
+   sizes:Array.from(document.querySelectorAll('input[name="productSize"]:checked')).map(box=>box.value),
    images,
    image:images[0],
    selling_price:price,
