@@ -117,6 +117,55 @@ button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:whi
 let adminEmail = "";
 let adminPassword = "";
 
+function showAdminTab(tab) {
+  document.getElementById("productsSection").style.display =
+    tab === "products" ? "block" : "none";
+
+  document.getElementById("ordersSection").style.display =
+    tab === "orders" ? "block" : "none";
+
+  if (tab === "products") loadProducts();
+  if (tab === "orders") loadOrders();
+}
+
+async function loadProducts() {
+  const box = document.getElementById("productList");
+  box.textContent = "Loading products...";
+
+  try {
+    const response = await fetch("/api/products");
+    if (!response.ok) throw new Error("Products load nahi hue");
+
+    const products = await response.json();
+
+    if (!products.length) {
+      box.innerHTML = "<p>Abhi koi product add nahi hua.</p>";
+      return;
+    }
+
+    box.innerHTML = "";
+
+    products.forEach(p => {
+      const div = document.createElement("div");
+      div.className = "order";
+
+      div.innerHTML = `
+        <img src="${safe(p.image)}"
+          style="width:100px;height:110px;object-fit:contain">
+        <h3>${safe(p.name)}</h3>
+        <p>Category: ${safe(p.category)}</p>
+        <p>Selling Price: ₹${safe(p.selling_price)}</p>
+        <p>MRP: ₹${safe(p.mrp)}</p>
+        <p>Stock: ${safe(p.stock)}</p>
+      `;
+
+      box.appendChild(div);
+    });
+  } catch (error) {
+    box.textContent = error.message;
+  }
+}
+
 async function login(){
  const email = document.getElementById("email").value.trim();
  const password = document.getElementById("password").value;
