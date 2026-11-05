@@ -696,6 +696,11 @@ document.getElementById("myOrdersBtn").onclick = async () => {
       const price = document.createElement("p");
       price.textContent = order.product_price || "";
 
+      if (order.size && order.size !== "Not selected" && order.size !== "Not applicable") {
+  const size = document.createElement("p");
+  size.textContent = "Size: " + order.size;
+  info.appendChild(size);
+}
       info.append(name, price);
       productRow.appendChild(info);
       item.appendChild(productRow);
