@@ -12,9 +12,7 @@ async function verifyCustomer(request, env) {
       `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${env.FIREBASE_API_KEY}`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idToken: token })
       }
     );
@@ -23,8 +21,7 @@ async function verifyCustomer(request, env) {
 
     const data = await response.json();
     return data.users?.[0]?.localId || null;
-
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -38,31 +35,56 @@ function verifyAdmin(request, env) {
   );
 }
 
-// Expected delivery: 8 calendar days after order confirmation
 function getExpectedDelivery(orderDate) {
   if (!orderDate) return null;
 
-  const datePart = String(orderDate).slice(0, 10);
-  const parts = datePart.split("-").map(Number);
+  const parts = String(orderDate).slice(0, 10).split("-").map(Number);
 
-  if (
-    parts.length !== 3 ||
-    !parts[0] ||
-    !parts[1] ||
-    !parts[2]
-  ) {
+  if (parts.length !== 3 || !parts[0] || !parts[1] || !parts[2]) {
     return null;
   }
 
-  const date = new Date(Date.UTC(
-    parts[0],
-    parts[1] - 1,
-    parts[2]
-  ));
-
+  const date = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
   date.setUTCDate(date.getUTCDate() + 8);
 
   return date.toISOString().slice(0, 10);
+}
+
+function clean(value, max = 500) {
+  return String(value ?? "").trim().slice(0, max);
+}
+
+async function saveOrder(env, customerUid, customer, item) {
+  const result = await env.DB.prepare(`
+    INSERT INTO orders (
+      product, size, customer_name, phone, address,
+      state, district, pincode, payment, status,
+      customer_uid, product_image, product_price
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, 'Cash on Delivery',
+      'Confirmed', ?, ?, ?)
+  `).bind(
+    item.product,
+    item.size,
+    customer.name,
+    customer.phone,
+    customer.address,
+    customer.state,
+    customer.district,
+    customer.pincode,
+    customerUid,
+    item.image,
+    item.price
+  ).run();
+
+  const orderId = result.meta.last_row_id;
+
+  await env.DB.prepare(`
+    INSERT INTO order_tracking (order_id, status)
+    VALUES (?, 'Confirmed')
+  `).bind(orderId).run();
+
+  return orderId;
 }
 
 export async function onRequest(context) {
@@ -75,7 +97,7 @@ export async function onRequest(context) {
     );
   }
 
-  // CUSTOMER: SAVE ORDER
+  // CUSTOMER: PLACE ORDER
   if (request.method === "POST") {
     try {
       const customerUid = await verifyCustomer(request, env);
@@ -89,76 +111,103 @@ export async function onRequest(context) {
 
       const form = await request.formData();
 
-      const product = form.get("product");
-      const size = form.get("size");
-      const customerName = form.get("customer_name");
-      const phone = form.get("phone");
-      const address = form.get("address");
-      const state = form.get("state");
-      const district = form.get("district");
-      const pincode = form.get("pincode");
-      const payment = form.get("payment") || "Cash on Delivery";
-      const productImage = form.get("product_image") || null;
-      const productPrice = form.get("product_price") || null;
+      const customer = {
+        name: clean(form.get("customer_name"), 120),
+        phone: clean(form.get("phone"), 10),
+        address: clean(form.get("address"), 500),
+        state: clean(form.get("state"), 100),
+        district: clean(form.get("district"), 100),
+        pincode: clean(form.get("pincode"), 6)
+      };
 
       if (
-        !product ||
-        !customerName ||
-        !phone ||
-        !address ||
-        !state ||
-        !district ||
-        !pincode
+        !customer.name ||
+        !/^[0-9]{10}$/.test(customer.phone) ||
+        !customer.address ||
+        !customer.state ||
+        !customer.district ||
+        !/^[0-9]{6}$/.test(customer.pincode)
       ) {
         return Response.json(
-          { error: "Please fill all order details" },
+          { error: "Please enter valid delivery details." },
           { status: 400 }
         );
       }
 
-      const result = await env.DB.prepare(`
-        INSERT INTO orders (
+      let items = [];
+
+      const itemsText = form.get("items");
+
+      if (itemsText) {
+        try {
+          items = JSON.parse(String(itemsText));
+        } catch {
+          return Response.json(
+            { error: "Invalid cart items." },
+            { status: 400 }
+          );
+        }
+      }
+
+      // Backward compatibility with single-product checkout
+      if (!Array.isArray(items) || items.length === 0) {
+        items = [{
+          product: form.get("product"),
+          size: form.get("size"),
+          image: form.get("product_image"),
+          price: form.get("product_price")
+        }];
+      }
+
+      if (items.length > 30) {
+        return Response.json(
+          { error: "Maximum 30 cart items allowed." },
+          { status: 400 }
+        );
+      }
+
+      const cleanItems = [];
+
+      for (const item of items) {
+        const product = clean(item.product || item.name, 200);
+        const size = clean(item.size || "Not selected", 30);
+        const image = clean(item.image || item.product_image, 1000);
+        const price = clean(item.price || item.product_price, 50);
+
+        if (!product) {
+          return Response.json(
+            { error: "A cart item has no product name." },
+            { status: 400 }
+          );
+        }
+
+        cleanItems.push({
           product,
           size,
-          customer_name,
-          phone,
-          address,
-          state,
-          district,
-          pincode,
-          payment,
-          status,
-          customer_uid,
-          product_image,
-          product_price
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Confirmed', ?, ?, ?)
-      `).bind(
-        product,
-        size,
-        customerName,
-        phone,
-        address,
-        state,
-        district,
-        pincode,
-        payment,
-        customerUid,
-        productImage,
-        productPrice
-      ).run();
+          image: image || null,
+          price: price || null
+        });
+      }
 
-      const orderId = result.meta.last_row_id;
+      const orderIds = [];
 
-      await env.DB.prepare(`
-        INSERT INTO order_tracking (order_id, status)
-        VALUES (?, 'Confirmed')
-      `).bind(orderId).run();
+      for (const item of cleanItems) {
+        const orderId = await saveOrder(
+          env,
+          customerUid,
+          customer,
+          item
+        );
 
-      return Response.redirect(
-        new URL("/order-success.html", request.url),
-        303
-      );
+        orderIds.push(orderId);
+      }
+
+      return Response.json({
+        success: true,
+        message: "Order placed successfully.",
+        order_ids: orderIds,
+        payment: "Cash on Delivery"
+      });
 
     } catch (error) {
       return Response.json(
@@ -168,7 +217,7 @@ export async function onRequest(context) {
     }
   }
 
-  // ADMIN OR CUSTOMER: GET ORDERS
+  // CUSTOMER OR ADMIN: VIEW ORDERS
   if (request.method === "GET") {
     try {
       let result;
@@ -177,7 +226,6 @@ export async function onRequest(context) {
         result = await env.DB.prepare(`
           SELECT * FROM orders ORDER BY id DESC
         `).all();
-
       } else {
         const customerUid = await verifyCustomer(request, env);
 
@@ -206,13 +254,8 @@ export async function onRequest(context) {
         `).bind(order.id).all();
 
         order.tracking = history.results || [];
-
-        // First tracking entry is the original confirmation date
-        order.order_date =
-          order.tracking[0]?.updated_at || null;
-
-        order.expected_delivery =
-          getExpectedDelivery(order.order_date);
+        order.order_date = order.tracking[0]?.updated_at || null;
+        order.expected_delivery = getExpectedDelivery(order.order_date);
       }
 
       return Response.json(orders);
@@ -225,18 +268,17 @@ export async function onRequest(context) {
     }
   }
 
-   // CUSTOMER OR ADMIN: UPDATE ORDER STATUS
+  // CUSTOMER CANCELLATION / ADMIN STATUS UPDATE
   if (request.method === "PATCH") {
     try {
       const customerUid = await verifyCustomer(request, env);
 
-      // CUSTOMER ORDER CANCELLATION
       if (customerUid) {
         const body = await request.json();
         const id = Number(body.id);
-        const reason = String(body.cancel_reason || "").trim();
+        const reason = clean(body.cancel_reason, 300);
 
-        if (!Number.isInteger(id) || id <= 0 || !reason || reason.length > 300) {
+        if (!Number.isInteger(id) || id <= 0 || !reason) {
           return Response.json(
             { error: "Invalid order ID or cancellation reason." },
             { status: 400 }
@@ -281,7 +323,6 @@ export async function onRequest(context) {
         });
       }
 
-      // ADMIN ORDER STATUS UPDATE
       if (!verifyAdmin(request, env)) {
         return Response.json(
           { error: "Unauthorized" },
@@ -340,7 +381,5 @@ export async function onRequest(context) {
     }
   }
 
-  return new Response("Method not allowed", {
-    status: 405
-  });
+  return new Response("Method not allowed", { status: 405 });
 }
