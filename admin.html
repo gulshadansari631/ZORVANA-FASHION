@@ -45,55 +45,70 @@ button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:whi
 <div class="dashboard" id="dashboard" style="display:none">
 <button class="logout" onclick="logout()">LOGOUT</button>
 
+
 <h2>Store Management</h2>
 
-<div class="order">
-  <h3>Add New Product</h3>
-
-  <input id="productName" placeholder="Product Name">
-
-  <select id="productCategory">
-    <option value="">Select Category</option>
-    <option value="Men">Men</option>
-    <option value="Women">Women</option>
-    <option value="Kids">Kids</option>
-    <option value="Accessories">Accessories</option>
-  </select>
-
-  <input type="number" id="productPrice" placeholder="Selling Price">
-  <input type="number" id="productMRP" placeholder="MRP">
-  <input type="text" id="productDiscount" placeholder="Discount">
-  <input type="number" id="productStock" placeholder="Stock">
-  <textarea id="productDescription" placeholder="Product Description"></textarea>
-
-  
-<p>Upload Product Photos (Multiple)</p>
-<input type="file" id="productImage" accept="image/*" multiple>
-<div id="imagePreview" style="display:flex;flex-wrap:wrap;gap:10px;margin:10px 0"></div>
-
-<h3>Product Highlights</h3>
-<input id="highlightColor" placeholder="Color (e.g. Black)">
-<input id="highlightFabric" placeholder="Fabric (e.g. Cotton)">
-<input id="highlightType" placeholder="Type (e.g. Zipper)">
-<input id="highlightLength" placeholder="Length">
-
-<h3>Additional Details</h3>
-<input id="detailCollar" placeholder="Neck / Collar">
-<input id="detailSleeve" placeholder="Sleeve Styling">
-<input id="detailPattern" placeholder="Print or Pattern">
-<input id="detailPocket" placeholder="Pocket Style">
-<input id="detailOrigin" placeholder="Country of Origin">
-
-
-  <button onclick="saveProduct()">ADD PRODUCT</button>
-  <p id="productMessage"></p>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin:15px 0">
+  <button id="productTab" onclick="showAdminTab('products')">
+    PRODUCT MANAGEMENT
+  </button>
+  <button id="orderTab" onclick="showAdminTab('orders')">
+    ORDER MANAGEMENT
+  </button>
 </div>
 
-<h3>All Products</h3>
-<div id="productList">Loading products...</div>
+<section id="productsSection">
+  <div class="order">
+    <h3>Add New Product</h3>
 
-<button onclick="loadOrders()">Refresh Orders</button>
-<div id="orders">Loading orders...</div>
+    <input id="productName" placeholder="Product Name">
+
+    <select id="productCategory">
+      <option value="">Select Category</option>
+      <option value="Men">Men</option>
+      <option value="Women">Women</option>
+      <option value="Kids">Kids</option>
+      <option value="Accessories">Accessories</option>
+    </select>
+
+    <input type="number" id="productPrice" placeholder="Selling Price">
+    <input type="number" id="productMRP" placeholder="MRP">
+    <input type="text" id="productDiscount" placeholder="Discount">
+    <input type="number" id="productStock" placeholder="Stock">
+    <textarea id="productDescription" placeholder="Product Description"></textarea>
+
+    <p>Upload Product Photos (Multiple)</p>
+    <input type="file" id="productImage" accept="image/*" multiple>
+    <div id="imagePreview" style="display:flex;flex-wrap:wrap;gap:10px;margin:10px 0"></div>
+
+    <h3>Product Highlights</h3>
+    <input id="highlightColor" placeholder="Color">
+    <input id="highlightFabric" placeholder="Fabric">
+    <input id="highlightType" placeholder="Type">
+    <input id="highlightLength" placeholder="Length">
+
+    <h3>Additional Details</h3>
+    <input id="detailCollar" placeholder="Neck / Collar">
+    <input id="detailSleeve" placeholder="Sleeve Styling">
+    <input id="detailPattern" placeholder="Print or Pattern">
+    <input id="detailPocket" placeholder="Pocket Style">
+    <input id="detailOrigin" placeholder="Country of Origin">
+
+    <button onclick="saveProduct()">ADD PRODUCT</button>
+    <p id="productMessage"></p>
+  </div>
+
+  <h3>All Products</h3>
+  <button onclick="loadProducts()">Refresh Products</button>
+  <div id="productList">Loading products...</div>
+</section>
+
+<section id="ordersSection" style="display:none">
+  <h3>All Orders</h3>
+  <button onclick="loadOrders()">Refresh Orders</button>
+  <div id="orders">Loading orders...</div>
+</section>
+
 </div>
 
 </div>
