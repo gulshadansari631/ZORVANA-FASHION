@@ -120,7 +120,7 @@ footer p{margin-top:8px;font-size:13px}
 <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400" alt="Men T Shirt">
 <h3>Men's Classic T-Shirt</h3>
 <div class="price">₹599 <span class="old">₹999</span><span class="discount">40% off</span></div>
-<button class="cart" onclick="addCart()">ADD TO CART</button>
+ onclick="openProductFromButton(this)"
 <button class="buy" onclick="buy('Men Classic T Shirt')">BUY NOW</button>
 </div>
 
@@ -129,7 +129,7 @@ footer p{margin-top:8px;font-size:13px}
 <img src="https://images.unsplash.com/photo-1539008835657-9e8e9680c956?w=400" alt="Women's Dress">
 <h3>Women's Fashion Dress</h3>
 <div class="price">₹899 <span class="old">₹1499</span><span class="discount">40% off</span></div>
-<button class="cart" onclick="addCart()">ADD TO CART</button>
+onclick="openProductFromButton(this)"
 <button class="buy" onclick="buy('Womens Fashion Dress')">BUY NOW</button>
 </div>
 
@@ -138,7 +138,7 @@ footer p{margin-top:8px;font-size:13px}
 <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400" alt="Sports Shoes">
 <h3>Premium Sports Sneakers</h3>
 <div class="price">₹1,299 <span class="old">₹1999</span><span class="discount">35% off</span></div>
-<button class="cart" onclick="addCart()">ADD TO CART</button>
+onclick="openProductFromButton(this)"
 <button class="buy" onclick="buy('Sports Sneakers')">BUY NOW</button>
 </div>
 
@@ -147,7 +147,7 @@ footer p{margin-top:8px;font-size:13px}
 <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400" alt="Watch">
 <h3>Classic Wrist Watch</h3>
 <div class="price">₹999 <span class="old">₹1599</span><span class="discount">37% off</span></div>
-<button class="cart" onclick="addCart()">ADD TO CART</button>
+onclick="openProductFromButton(this)"
 <button class="buy" onclick="buy('Classic Wrist Watch')">BUY NOW</button>
 </div>
 
@@ -156,7 +156,7 @@ footer p{margin-top:8px;font-size:13px}
 <img src="https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=400" alt="Sunglasses">
 <h3>Stylish Sunglasses</h3>
 <div class="price">₹499 <span class="old">₹799</span><span class="discount">37% off</span></div>
-<button class="cart" onclick="addCart()">ADD TO CART</button>
+onclick="openProductFromButton(this)"
 <button class="buy" onclick="buy('Stylish Sunglasses')">BUY NOW</button>
 </div>
 
@@ -168,21 +168,93 @@ footer p{margin-top:8px;font-size:13px}
 
 
 <script>
-let cartCount=0;
+let cartCount = 0;
+let selectedSize = "";
+let activeProductCategory = "";
 
-function addCart(){
- cartCount++;
- document.getElementById('count').innerText=cartCount;
- alert('Product added to cart!');
+function requiresSize() {
+  return ["Men", "Women", "Shoes"].includes(activeProductCategory);
 }
 
-function buy(product){
- document.getElementById("checkoutProduct").value = product;
- document.getElementById("checkoutSize").value = selectedSize || "Not selected";
- document.getElementById("productModal").style.display = "none";
- document.getElementById("checkoutModal").style.display = "block";
+function addCart() {
+  if (requiresSize() && !selectedSize) {
+    alert("Please select a size first.");
+    return;
+  }
+
+  cartCount++;
+  document.getElementById("count").innerText = cartCount;
+
+  alert("Product added to cart! Size: " + (selectedSize || "Not applicable"));
 }
 
+function setAvailableSizes() {
+  const box = document.getElementById("detailSizes");
+  const title = box.previousElementSibling;
+
+  box.innerHTML = "";
+  let sizes = [];
+
+  if (activeProductCategory === "Men" ||
+      activeProductCategory === "Women") {
+    sizes = [
+      "S", "M", "L", "XL", "XXL",
+      "28", "30", "32", "34", "36",
+      "38", "40", "42", "44"
+    ];
+  } else if (activeProductCategory === "Shoes") {
+    sizes = ["6", "7", "8", "9", "10", "11"];
+  }
+
+  title.style.display = sizes.length ? "block" : "none";
+  box.style.display = sizes.length ? "flex" : "none";
+
+  sizes.forEach(size => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = size;
+    button.onclick = () => selectSize(button);
+    box.appendChild(button);
+  });
+}
+
+function openProductFromButton(button) {
+  const card = button.closest(".card");
+  if (!card) return;
+  openProductCard(card);
+}
+
+function openProductCard(card) {
+  const img = card.querySelector("img");
+  const name = card.dataset.name ||
+    card.querySelector("h3")?.innerText || "Product";
+  const price = card.querySelector(".price")?.innerText || "";
+
+  activeProductCategory = card.dataset.category || "";
+  selectedSize = "";
+
+  document.getElementById("detailImage").src = img?.src || "";
+  document.getElementById("detailName").innerText = name;
+  document.getElementById("detailPrice").innerText = price;
+
+  setAvailableSizes();
+
+  document.getElementById("productModal").style.display = "block";
+}
+
+function buy(product) {
+  if (requiresSize() && !selectedSize) {
+    alert("Please select a size first.");
+    return;
+  }
+
+  document.getElementById("checkoutProduct").value = product;
+  document.getElementById("checkoutSize").value =
+    selectedSize || "Not applicable";
+
+  document.getElementById("productModal").style.display = "none";
+  document.getElementById("checkoutModal").style.display = "block";
+}
 function showCategory(category){
  document.getElementById('search').value='';
  document.getElementById('productTitle').innerText=category.toUpperCase()+' PRODUCTS';
