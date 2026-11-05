@@ -65,6 +65,32 @@ footer{background:#171717;color:#ddd;text-align:center;padding:30px 15px;margin-
 .detail-info h2{font-size:23px}.detail-price{font-size:25px;font-weight:bold}.detail-mrp{text-decoration:line-through;color:#999;margin-left:8px}
 .detail-desc{color:#666;line-height:1.6}.pills{display:flex;gap:8px;flex-wrap:wrap}
 .pill{padding:9px 13px;border:1px solid #ddd;background:#fff;border-radius:5px}.pill.selected{border:2px solid #111}
+ .size-guide-toggle{
+  margin-top:10px;
+  padding:9px 13px;
+  background:#fff;
+  border:1px solid #d71936;
+  color:#d71936;
+  border-radius:6px;
+  font-weight:bold;
+}
+.size-guide{
+  margin-top:12px;
+  padding:12px;
+  border:1px solid #eee;
+  border-radius:8px;
+  background:#fafafa;
+  overflow-x:auto;
+}
+.size-guide h4{margin:0 0 10px}
+.size-guide table{width:100%;border-collapse:collapse;font-size:12px}
+.size-guide th,.size-guide td{
+  padding:9px 7px;
+  border:1px solid #ddd;
+  text-align:center;
+}
+.size-guide th{background:#f1f1f1}
+.size-guide-note{font-size:11px;color:#777;margin-top:9p}
 .buy-row{display:flex;gap:8px;margin-top:22px;flex-wrap:wrap}.buy-row button{flex:1;padding:13px 8px;border-radius:5px;font-weight:bold}
 .buy{background:var(--red);color:#fff;border:0}.wish{background:#fff;border:1px solid #ccc}.add-cart{background:#171717;color:#fff;border:0}
 .details-list{font-size:13px;line-height:1.8;color:#555}.checkout-box{max-width:520px}
@@ -152,7 +178,18 @@ footer{background:#171717;color:#ddd;text-align:center;padding:30px 15px;margin-
   <div><div class="main-photo"><img id="detailImage" src="" alt="Product"></div><div class="thumbs" id="detailThumbs"></div></div>
   <div class="detail-info"><div class="muted" id="detailCategory"></div><h2 id="detailName"></h2>
    <div><span class="detail-price" id="detailPrice"></span><span class="detail-mrp" id="detailMrp"></span></div>
-   <p class="detail-desc" id="detailDescription"></p><div id="sizeArea"><h4>Select Size</h4><div class="pills" id="sizeOptions"></div></div>
+   <p class="detail-desc" id="detailDescription"></p>
+
+<div id="sizeArea">
+  <h4>Select Size</h4>
+  <div class="pills" id="sizeOptions"></div>
+
+  <button class="size-guide-toggle" onclick="toggleSizeGuide()">
+    📏 SIZE GUIDE
+  </button>
+
+  <div class="size-guide" id="sizeGuide" style="display:none"></div>
+</div>
    <h4>Highlights</h4><ul class="details-list" id="detailHighlights"></ul><h4>Product Details</h4><ul class="details-list" id="detailMore"></ul>
    <div class="buy-row"><button class="wish" onclick="toggleWishlist(currentProduct.id)">♡ Wishlist</button><button class="add-cart" onclick="addCurrentToCart()">ADD TO CART</button><button class="buy" onclick="buyCurrentProduct()">BUY NOW</button></div>
   </div>
@@ -205,6 +242,68 @@ function goSearch(){goHome();setNav('search');setTimeout(focusSearch,100)}
 function toggleMenu(){goCategories()}
 function openProduct(id,update=true){const p=allProducts.find(x=>String(x.id)===String(id));if(!p)return;currentProduct=p;selectedSize='';$('detailCategory').textContent=p.category||'Fashion';$('detailName').textContent=p.name||'Product';$('detailPrice').textContent=money(p.selling_price);$('detailMrp').textContent=p.mrp?money(p.mrp):'';$('detailDescription').textContent=p.description||'';const imgs=images(p);$('detailImage').src=imgs[0]||productImage(p);$('detailThumbs').innerHTML=imgs.map((x,i)=>`<img src="${x}" onclick="$('detailImage').src=this.src" alt="Product ${i+1}">`).join('');const ss=sizes(p);$('sizeArea').style.display=ss.length?'block':'none';$('sizeOptions').innerHTML=ss.map(x=>`<button class="pill" onclick="chooseSize('${escapeHtml(x)}',this)">${escapeHtml(x)}</button>`).join('');$('detailHighlights').innerHTML=listValue(p.highlights).map(x=>`<li>${escapeHtml(x)}</li>`).join('')||'<li>Stylish and comfortable design</li>';$('detailMore').innerHTML=listValue(p.additional_details).map(x=>`<li>${escapeHtml(x)}</li>`).join('')||'<li>Quality fashion product</li>';$('productModal').classList.add('show');document.body.style.overflow='hidden';if(update){const u=new URL(location.href);u.searchParams.set('product',id);history.replaceState({},'',u)}}
 function chooseSize(s,b){selectedSize=s;document.querySelectorAll('#sizeOptions .pill').forEach(x=>x.classList.remove('selected'));b.classList.add('selected')}
+ function toggleSizeGuide(){
+  const box=document.getElementById('sizeGuide');
+
+  if(!box)return;
+
+  if(box.style.display!=='none'){
+    box.style.display='none';
+    return;
+  }
+
+  box.style.display='block';
+
+  const category=String(currentProduct?.category||'').toLowerCase();
+  const name=String(currentProduct?.name||'').toLowerCase();
+  const text=category+' '+name;
+
+  let title='Clothing Size Chart';
+  let headers=['Size','Chest (in)','Length (in)'];
+  let rows=[
+    ['S','36','27'],
+    ['M','38','28'],
+    ['L','40','29'],
+    ['XL','42','30'],
+    ['XXL','44','31'],
+    ['XXXL','46','32']
+  ];
+
+  if(/shoe|footwear/.test(text)){
+    title='Footwear Size Chart';
+    headers=['UK Size','Foot Length (cm)'];
+    rows=[
+      ['6','24.5'],['7','25.4'],['8','26.2'],
+      ['9','27.1'],['10','27.9'],['11','28.8']
+    ];
+  }else if(/jean|trouser|pant/.test(text)){
+    title='Jeans & Trousers Size Chart';
+    headers=['Waist Size','Waist (in)'];
+    rows=['28','30','32','34','36','38','40'].map(x=>[x,x]);
+  }else if(/women|girl|dress/.test(text)){
+    title="Women's Clothing Size Chart";
+    rows=[
+      ['XS','32','25'],['S','34','26'],
+      ['M','36','27'],['L','38','28'],
+      ['XL','40','29'],['XXL','42','30']
+    ];
+  }
+
+  box.innerHTML=`
+    <h4>${title}</h4>
+    <table>
+      <thead>
+        <tr>${headers.map(x=>`<th>${x}</th>`).join('')}</tr>
+      </thead>
+      <tbody>
+        ${rows.map(row=>`<tr>${row.map(x=>`<td>${x}</td>`).join('')}</tr>`).join('')}
+      </tbody>
+    </table>
+    <p class="size-guide-note">
+      Measurements are approximate. Actual fit may vary by product.
+    </p>
+  `;
+}
 function closeProduct(){$('productModal').classList.remove('show');document.body.style.overflow='';const u=new URL(location.href);u.searchParams.delete('product');history.replaceState({},'',u);currentProduct=null}
 function sizeOK(p){if(sizes(p).length&&!selectedSize){alert('Please select a size first.');return false}return true}
 function quickAdd(id){const p=allProducts.find(x=>String(x.id)===String(id));if(!p)return;currentProduct=p;selectedSize='';if(sizes(p).length){openProduct(id);alert('Please select your size, then tap ADD TO CART.');return}addToCart(p,'Not applicable')}
