@@ -275,7 +275,16 @@ function showCategory(category){
  });
  document.getElementById('noResult').style.display=found?'none':'block';
 }
+function showAllProducts() {
+  document.getElementById('search').value = '';
+  document.getElementById('productTitle').innerText = 'TRENDING PRODUCTS';
 
+  document.querySelectorAll('.card').forEach(card => {
+    card.style.display = 'block';
+  });
+
+  document.getElementById('noResult').style.display = 'none';
+}
 function filterProducts(){
  let value=document.getElementById('search').value.toLowerCase();
  let cards=document.querySelectorAll('.card');
