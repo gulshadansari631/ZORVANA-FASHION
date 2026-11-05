@@ -1,9 +1,7 @@
 
 async function verifyCustomer(request, env) {
   const authHeader = request.headers.get("Authorization") || "";
-  const token = authHeader.startsWith("Bearer ")
-    ? authHeader.slice(7)
-    : "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
 
   if (!token || !env.FIREBASE_API_KEY) return null;
 
@@ -18,7 +16,6 @@ async function verifyCustomer(request, env) {
     );
 
     if (!response.ok) return null;
-
     const data = await response.json();
     return data.users?.[0]?.localId || null;
   } catch {
@@ -35,23 +32,18 @@ function verifyAdmin(request, env) {
   );
 }
 
+function clean(value, max = 500) {
+  return String(value ?? "").trim().slice(0, max);
+}
+
 function getExpectedDelivery(orderDate) {
   if (!orderDate) return null;
-
   const parts = String(orderDate).slice(0, 10).split("-").map(Number);
-
-  if (parts.length !== 3 || !parts[0] || !parts[1] || !parts[2]) {
-    return null;
-  }
+  if (parts.length !== 3 || !parts[0] || !parts[1] || !parts[2]) return null;
 
   const date = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
   date.setUTCDate(date.getUTCDate() + 8);
-
   return date.toISOString().slice(0, 10);
-}
-
-function clean(value, max = 500) {
-  return String(value ?? "").trim().slice(0, max);
 }
 
 async function saveOrder(env, customerUid, customer, item) {
@@ -61,7 +53,7 @@ async function saveOrder(env, customerUid, customer, item) {
       state, district, pincode, payment, status,
       customer_uid, product_image, product_price
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, 'Cash on Delivery',
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Cash on Delivery',
       'Confirmed', ?, ?, ?)
   `).bind(
     item.product,
@@ -91,22 +83,15 @@ export async function onRequest(context) {
   const { request, env } = context;
 
   if (!env.DB) {
-    return Response.json(
-      { error: "Database binding DB is missing" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Database binding DB is missing" }, { status: 500 });
   }
 
-  // CUSTOMER: PLACE ORDER
   if (request.method === "POST") {
     try {
       const customerUid = await verifyCustomer(request, env);
 
       if (!customerUid) {
-        return Response.json(
-          { error: "Please login first" },
-          { status: 401 }
-        );
+        return Response.json({ error: "Please login first" }, { status: 401 });
       }
 
       const form = await request.formData();
@@ -128,28 +113,20 @@ export async function onRequest(context) {
         !customer.district ||
         !/^[0-9]{6}$/.test(customer.pincode)
       ) {
-        return Response.json(
-          { error: "Please enter valid delivery details." },
-          { status: 400 }
-        );
+        return Response.json({ error: "Please enter valid delivery details." }, { status: 400 });
       }
 
       let items = [];
-
       const itemsText = form.get("items");
 
       if (itemsText) {
         try {
           items = JSON.parse(String(itemsText));
         } catch {
-          return Response.json(
-            { error: "Invalid cart items." },
-            { status: 400 }
-          );
+          return Response.json({ error: "Invalid cart items." }, { status: 400 });
         }
       }
 
-      // Backward compatibility with single-product checkout
       if (!Array.isArray(items) || items.length === 0) {
         items = [{
           product: form.get("product"),
@@ -160,10 +137,7 @@ export async function onRequest(context) {
       }
 
       if (items.length > 30) {
-        return Response.json(
-          { error: "Maximum 30 cart items allowed." },
-          { status: 400 }
-        );
+        return Response.json({ error: "Maximum 30 cart items allowed." }, { status: 400 });
       }
 
       const cleanItems = [];
@@ -175,10 +149,7 @@ export async function onRequest(context) {
         const price = clean(item.price || item.product_price, 50);
 
         if (!product) {
-          return Response.json(
-            { error: "A cart item has no product name." },
-            { status: 400 }
-          );
+          return Response.json({ error: "A cart item has no product name." }, { status: 400 });
         }
 
         cleanItems.push({
@@ -192,13 +163,7 @@ export async function onRequest(context) {
       const orderIds = [];
 
       for (const item of cleanItems) {
-        const orderId = await saveOrder(
-          env,
-          customerUid,
-          customer,
-          item
-        );
-
+        const orderId = await saveOrder(env, customerUid, customer, item);
         orderIds.push(orderId);
       }
 
@@ -210,30 +175,21 @@ export async function onRequest(context) {
       });
 
     } catch (error) {
-      return Response.json(
-        { error: "Order save failed: " + error.message },
-        { status: 500 }
-      );
+      return Response.json({ error: "Order save failed: " + error.message }, { status: 500 });
     }
   }
 
-  // CUSTOMER OR ADMIN: VIEW ORDERS
   if (request.method === "GET") {
     try {
       let result;
 
       if (verifyAdmin(request, env)) {
-        result = await env.DB.prepare(`
-          SELECT * FROM orders ORDER BY id DESC
-        `).all();
+        result = await env.DB.prepare("SELECT * FROM orders ORDER BY id DESC").all();
       } else {
         const customerUid = await verifyCustomer(request, env);
 
         if (!customerUid) {
-          return Response.json(
-            { error: "Unauthorized. Please login." },
-            { status: 401 }
-          );
+          return Response.json({ error: "Unauthorized. Please login." }, { status: 401 });
         }
 
         result = await env.DB.prepare(`
@@ -261,14 +217,10 @@ export async function onRequest(context) {
       return Response.json(orders);
 
     } catch (error) {
-      return Response.json(
-        { error: "Could not load orders: " + error.message },
-        { status: 500 }
-      );
+      return Response.json({ error: "Could not load orders: " + error.message }, { status: 500 });
     }
   }
 
-  // CUSTOMER CANCELLATION / ADMIN STATUS UPDATE
   if (request.method === "PATCH") {
     try {
       const customerUid = await verifyCustomer(request, env);
@@ -279,24 +231,14 @@ export async function onRequest(context) {
         const reason = clean(body.cancel_reason, 300);
 
         if (!Number.isInteger(id) || id <= 0 || !reason) {
-          return Response.json(
-            { error: "Invalid order ID or cancellation reason." },
-            { status: 400 }
-          );
+          return Response.json({ error: "Invalid order ID or cancellation reason." }, { status: 400 });
         }
 
-        const columns = await env.DB.prepare(
-          "PRAGMA table_info(orders)"
-        ).all();
-
-        const hasCancelReason = (columns.results || []).some(
-          column => column.name === "cancel_reason"
-        );
+        const columns = await env.DB.prepare("PRAGMA table_info(orders)").all();
+        const hasCancelReason = (columns.results || []).some(c => c.name === "cancel_reason");
 
         if (!hasCancelReason) {
-          await env.DB.prepare(
-            "ALTER TABLE orders ADD COLUMN cancel_reason TEXT"
-          ).run();
+          await env.DB.prepare("ALTER TABLE orders ADD COLUMN cancel_reason TEXT").run();
         }
 
         const result = await env.DB.prepare(`
@@ -306,10 +248,7 @@ export async function onRequest(context) {
         `).bind(reason, id, customerUid).run();
 
         if (!result.meta.changes) {
-          return Response.json(
-            { error: "Only confirmed orders can be cancelled." },
-            { status: 400 }
-          );
+          return Response.json({ error: "Only confirmed orders can be cancelled." }, { status: 400 });
         }
 
         await env.DB.prepare(`
@@ -317,39 +256,19 @@ export async function onRequest(context) {
           VALUES (?, 'Cancelled')
         `).bind(id).run();
 
-        return Response.json({
-          success: true,
-          message: "Order cancelled successfully"
-        });
+        return Response.json({ success: true, message: "Order cancelled successfully" });
       }
 
       if (!verifyAdmin(request, env)) {
-        return Response.json(
-          { error: "Unauthorized" },
-          { status: 401 }
-        );
+        return Response.json({ error: "Unauthorized" }, { status: 401 });
       }
 
       const body = await request.json();
       const id = Number(body.id);
+      const allowedStatuses = ["Confirmed", "Shipped", "Out for Delivery", "Delivered", "Cancelled"];
 
-      const allowedStatuses = [
-        "Confirmed",
-        "Shipped",
-        "Out for Delivery",
-        "Delivered",
-        "Cancelled"
-      ];
-
-      if (
-        !Number.isInteger(id) ||
-        id <= 0 ||
-        !allowedStatuses.includes(body.status)
-      ) {
-        return Response.json(
-          { error: "Invalid order ID or status" },
-          { status: 400 }
-        );
+      if (!Number.isInteger(id) || id <= 0 || !allowedStatuses.includes(body.status)) {
+        return Response.json({ error: "Invalid order ID or status" }, { status: 400 });
       }
 
       const result = await env.DB.prepare(`
@@ -357,10 +276,7 @@ export async function onRequest(context) {
       `).bind(body.status, id).run();
 
       if (!result.meta.changes) {
-        return Response.json(
-          { error: "Order not found" },
-          { status: 404 }
-        );
+        return Response.json({ error: "Order not found" }, { status: 404 });
       }
 
       await env.DB.prepare(`
@@ -368,16 +284,10 @@ export async function onRequest(context) {
         VALUES (?, ?)
       `).bind(id, body.status).run();
 
-      return Response.json({
-        success: true,
-        message: "Order status updated"
-      });
+      return Response.json({ success: true, message: "Order status updated" });
 
     } catch (error) {
-      return Response.json(
-        { error: "Update failed: " + error.message },
-        { status: 500 }
-      );
+      return Response.json({ error: "Update failed: " + error.message }, { status: 500 });
     }
   }
 
