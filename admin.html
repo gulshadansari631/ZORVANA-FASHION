@@ -66,9 +66,24 @@ button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:whi
   <input type="number" id="productStock" placeholder="Stock">
   <textarea id="productDescription" placeholder="Product Description"></textarea>
 
-  <p>Upload Product Photo</p>
-  <input type="file" id="productImage" accept="image/jpeg,image/png,image/webp">
-  <img id="imagePreview" style="display:none;width:140px;height:140px;object-fit:contain">
+  
+<p>Upload Product Photos (Multiple)</p>
+<input type="file" id="productImage" accept="image/*" multiple>
+<div id="imagePreview" style="display:flex;flex-wrap:wrap;gap:10px;margin:10px 0"></div>
+
+<h3>Product Highlights</h3>
+<input id="highlightColor" placeholder="Color (e.g. Black)">
+<input id="highlightFabric" placeholder="Fabric (e.g. Cotton)">
+<input id="highlightType" placeholder="Type (e.g. Zipper)">
+<input id="highlightLength" placeholder="Length">
+
+<h3>Additional Details</h3>
+<input id="detailCollar" placeholder="Neck / Collar">
+<input id="detailSleeve" placeholder="Sleeve Styling">
+<input id="detailPattern" placeholder="Print or Pattern">
+<input id="detailPocket" placeholder="Pocket Style">
+<input id="detailOrigin" placeholder="Country of Origin">
+
 
   <button onclick="saveProduct()">ADD PRODUCT</button>
   <p id="productMessage"></p>
@@ -196,66 +211,64 @@ async function updateStatus(id,status){
    headers:{
     "Content-Type":"application/json",
     "X-Admin-Email":adminEmail,
-    "X-Admin-Password":adminPassword
-   },
-   body:JSON.stringify({id,status})
-  });
-  if(!response.ok) throw new Error("Status update failed");
-  alert("Status updated!");
-  loadOrders();
- }catch(e){
-  alert(e.message);
- }
-}
-
+    
 const CLOUDINARY_NAME = "opngws1m";
 const UPLOAD_PRESET = "zorvana_products";
 
 document.getElementById("productImage").addEventListener("change", function () {
-  const file = this.files[0];
-  if (!file) return;
+  const preview = document.getElementById("imagePreview");
+  preview.innerHTML = "";
 
-  if (file.size > 5 * 1024 * 1024) {
-    alert("Image 5 MB se chhoti honi chahiye");
-    this.value = "";
-    return;
-  }
+  Array.from(this.files).forEach(file => {
+    if (!file.type.startsWith("image/")) return;
 
-  document.getElementById("imagePreview").src =
-    URL.createObjectURL(file);
-
-  document.getElementById("imagePreview").style.display = "block";
+    const img = document.createElement("img");
+    img.src = URL.createObjectURL(file);
+    img.style.cssText = "width:100px;height:110px;object-fit:contain;border:1px solid #ddd;border-radius:8px";
+    preview.appendChild(img);
+  });
 });
 
 async function saveProduct() {
-  const file = document.getElementById("productImage").files[0];
+  const files = Array.from(document.getElementById("productImage").files);
   const message = document.getElementById("productMessage");
 
   const name = document.getElementById("productName").value.trim();
   const category = document.getElementById("productCategory").value;
   const price = document.getElementById("productPrice").value;
 
-  if (!name || !category || !price || !file) {
+  if (!name || !category || !price || !files.length) {
     message.textContent = "Name, category, price aur photo zaroori hain.";
     return;
   }
 
+  if (files.some(file => file.size > 5 * 1024 * 1024)) {
+    message.textContent = "Har photo 5 MB se chhoti honi chahiye.";
+    return;
+  }
+
   try {
-    message.textContent = "Photo upload ho rahi hai...";
+    const images = [];
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", UPLOAD_PRESET);
+    for (let i = 0; i < files.length; i++) {
+      message.textContent = `Photo ${i + 1}/${files.length} upload ho rahi hai...`;
 
-    const uploadResponse = await fetch(
-      `https://api.cloudinary.com/v1_1/${CLOUDINARY_NAME}/image/upload`,
-      { method: "POST", body: formData }
-    );
+      const formData = new FormData();
+      formData.append("file", files[i]);
+      formData.append("upload_preset", UPLOAD_PRESET);
 
-    const uploaded = await uploadResponse.json();
+      const uploadResponse = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_NAME}/image/upload`,
+        { method: "POST", body: formData }
+      );
 
-    if (!uploadResponse.ok) {
-      throw new Error(uploaded.error?.message || "Photo upload failed");
+      const uploaded = await uploadResponse.json();
+
+      if (!uploadResponse.ok) {
+        throw new Error(uploaded.error?.message || "Photo upload failed");
+      }
+
+      images.push(uploaded.secure_url);
     }
 
     message.textContent = "Product save ho raha hai...";
@@ -270,12 +283,43 @@ async function saveProduct() {
       body: JSON.stringify({
         name,
         category,
-        image: uploaded.secure_url,
+        images,
+        image: images[0],
         selling_price: price,
         mrp: document.getElementById("productMRP").value,
         discount: document.getElementById("productDiscount").value,
         stock: document.getElementById("productStock").value,
-        description: document.getElementById("productDescription").value
+        description: document.getElementById("productDescription").value,
+        highlights: {
+          Color: document.getElementById("highlightColor").value,
+          Fabric: document.getElementById("highlightFabric").value,
+          Type: document.getElementById("highlightType").value,
+          Length: document.getElementById("highlightLength").value
+        },
+        additional_details: {
+          "Neck / Collar": document.getElementById("detailCollar").value,
+          "Sleeve Styling": document.getElementById("detailSleeve").value,
+          "Print or Pattern": document.getElementById("detailPattern").value,
+          "Pocket Style": document.getElementById("detailPocket").value,
+          "Country of Origin": document.getElementById("detailOrigin").value
+        }
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Product save failed");
+    }
+
+    message.textContent = "Product successfully added!";
+    alert("Product successfully added!");
+
+  } catch (error) {
+    message.textContent = error.message;
+  }
+}
+
       })
     });
 
