@@ -28,6 +28,7 @@ export async function onRequest({ request, env }) {
         stock INTEGER DEFAULT 0,
         highlights TEXT DEFAULT '{}',
         additional_details TEXT DEFAULT '{}',
+        sizes TEXT DEFAULT '[]',
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
       )
     `).run();
@@ -41,7 +42,8 @@ export async function onRequest({ request, env }) {
     const migrations = [
       ["images", "TEXT DEFAULT '[]'"],
       ["highlights", "TEXT DEFAULT '{}'"],
-      ["additional_details", "TEXT DEFAULT '{}'"]
+      ["additional_details", "TEXT DEFAULT '{}'"],
+      ["sizes", "TEXT DEFAULT '[]'"]
     ];
 
     for (const [name, type] of migrations) {
@@ -61,7 +63,8 @@ export async function onRequest({ request, env }) {
         ...p,
         images: parseJSON(p.images, p.image ? [p.image] : []),
         highlights: parseJSON(p.highlights, {}),
-        additional_details: parseJSON(p.additional_details, {})
+        additional_details: parseJSON(p.additional_details, {}),
+        sizes: parseJSON(p.sizes, [])
       }));
 
       return Response.json(products);
@@ -92,6 +95,15 @@ export async function onRequest({ request, env }) {
 
       const mainImage = images[0] || p.image || "";
 
+      const allowedSizes = [
+        "XS", "S", "M", "L", "XL", "XXL", "XXXL",
+        "28", "30", "32", "34", "36", "38", "40", "42", "44"
+      ];
+
+      const sizes = Array.isArray(p.sizes)
+        ? [...new Set(p.sizes.map(String).filter(size => allowedSizes.includes(size)))]
+        : [];
+
       const values = [
         String(p.name).trim(),
         String(p.category),
@@ -103,15 +115,16 @@ export async function onRequest({ request, env }) {
         String(p.description || ""),
         Math.max(0, Number(p.stock) || 0),
         JSON.stringify(p.highlights || {}),
-        JSON.stringify(p.additional_details || {})
+        JSON.stringify(p.additional_details || {}),
+        JSON.stringify(sizes)
       ];
 
       if (request.method === "POST") {
         const result = await env.DB.prepare(`
           INSERT INTO products
           (name, category, image, images, selling_price, mrp, discount,
-           description, stock, highlights, additional_details)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           description, stock, highlights, additional_details, sizes)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(...values).run();
 
         return Response.json({
@@ -128,7 +141,7 @@ export async function onRequest({ request, env }) {
         UPDATE products SET
         name=?, category=?, image=?, images=?, selling_price=?, mrp=?,
         discount=?, description=?, stock=?, highlights=?,
-        additional_details=?
+        additional_details=?, sizes=?
         WHERE id=?
       `).bind(...values, Number(p.id)).run();
 
