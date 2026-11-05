@@ -225,16 +225,70 @@ export async function onRequest(context) {
     }
   }
 
-  // ADMIN: UPDATE ORDER STATUS
+   // CUSTOMER OR ADMIN: UPDATE ORDER STATUS
   if (request.method === "PATCH") {
-    if (!verifyAdmin(request, env)) {
-      return Response.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
     try {
+      const customerUid = await verifyCustomer(request, env);
+
+      // CUSTOMER ORDER CANCELLATION
+      if (customerUid) {
+        const body = await request.json();
+        const id = Number(body.id);
+        const reason = String(body.cancel_reason || "").trim();
+
+        if (!Number.isInteger(id) || id <= 0 || !reason || reason.length > 300) {
+          return Response.json(
+            { error: "Invalid order ID or cancellation reason." },
+            { status: 400 }
+          );
+        }
+
+        const columns = await env.DB.prepare(
+          "PRAGMA table_info(orders)"
+        ).all();
+
+        const hasCancelReason = (columns.results || []).some(
+          column => column.name === "cancel_reason"
+        );
+
+        if (!hasCancelReason) {
+          await env.DB.prepare(
+            "ALTER TABLE orders ADD COLUMN cancel_reason TEXT"
+          ).run();
+        }
+
+        const result = await env.DB.prepare(`
+          UPDATE orders
+          SET status = 'Cancelled', cancel_reason = ?
+          WHERE id = ? AND customer_uid = ? AND status = 'Confirmed'
+        `).bind(reason, id, customerUid).run();
+
+        if (!result.meta.changes) {
+          return Response.json(
+            { error: "Only confirmed orders can be cancelled." },
+            { status: 400 }
+          );
+        }
+
+        await env.DB.prepare(`
+          INSERT INTO order_tracking (order_id, status)
+          VALUES (?, 'Cancelled')
+        `).bind(id).run();
+
+        return Response.json({
+          success: true,
+          message: "Order cancelled successfully"
+        });
+      }
+
+      // ADMIN ORDER STATUS UPDATE
+      if (!verifyAdmin(request, env)) {
+        return Response.json(
+          { error: "Unauthorized" },
+          { status: 401 }
+        );
+      }
+
       const body = await request.json();
       const id = Number(body.id);
 
