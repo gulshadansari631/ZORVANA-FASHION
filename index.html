@@ -282,78 +282,186 @@ function filterProducts(){
 }
 </script>
  
+
 <style>
 .product-modal {
   display:none;
   position:fixed;
   inset:0;
-  background:#0009;
   z-index:9999;
-  overflow:auto;
-  padding:20px;
+  background:rgba(0,0,0,.65);
+  overflow-y:auto;
+  padding:12px;
 }
 .product-detail {
-  background:white;
+  background:#fff;
   color:#222;
-  max-width:450px;
-  margin:25px auto;
-  padding:18px;
-  border-radius:12px;
+  width:100%;
+  max-width:520px;
+  margin:12px auto;
+  padding:16px;
+  border-radius:16px;
+  position:relative;
+  box-shadow:0 8px 30px #0003;
 }
-.product-detail img {
+.product-close {
+  position:absolute;
+  right:12px;
+  top:12px;
+  z-index:2;
+  border:0;
+  background:#f1f1f1;
+  border-radius:50%;
+  width:35px;
+  height:35px;
+  font-size:18px;
+}
+.product-photo {
   width:100%;
   height:260px;
   object-fit:contain;
+  background:#f7f7f7;
+  border-radius:12px;
+  margin:22px 0 12px;
 }
-.product-detail button {
-  padding:12px;
-  margin:5px 2px;
-  border:1px solid #ddd;
-  border-radius:5px;
-  cursor:pointer;
+.product-detail h2 {
+  font-size:20px;
+  margin:8px 0;
+  padding-right:35px;
+}
+.rating-line {
+  color:#e69b00;
+  font-size:14px;
+  margin:7px 0;
+}
+.price-line {
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:9px;
+  margin:12px 0;
 }
 .detail-price {
   color:#16833c;
-  font-size:25px;
+  font-size:27px;
+  font-weight:700;
+}
+.detail-mrp {
+  color:#888;
+  text-decoration:line-through;
+  font-size:15px;
+}
+.detail-discount {
+  background:#e53935;
+  color:white;
+  padding:5px 8px;
+  border-radius:5px;
+  font-size:12px;
   font-weight:bold;
+}
+#detailSizes {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:12px 0 18px;
+}
+#detailSizes button {
+  min-width:48px;
+  min-height:42px;
+  padding:8px 12px;
+  border:1px solid #bbb;
+  border-radius:7px;
+  background:white;
+  font-weight:600;
+}
+#detailSizes button:focus {
+  background:#dceaff;
+  border:2px solid #2874f0;
+}
+.product-detail h3 {
+  font-size:16px;
+  margin-top:16px;
+}
+#detailDescription {
+  font-size:13px;
+  color:#555;
+  line-height:1.6;
+  margin:8px 0 15px;
+}
+.product-actions {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:15px;
+}
+.product-actions button {
+  border:0;
+  border-radius:8px;
+  padding:14px 7px;
+  font-weight:bold;
+  font-size:13px;
+  color:white;
+}
+.detail-cart-btn {background:#2874f0}
+.detail-buy-btn {background:#fb641b}
+@media(max-width:480px) {
+  .product-modal {padding:7px}
+  .product-detail {
+    margin:5px auto;
+    padding:12px;
+    border-radius:12px;
+  }
+  .product-photo {
+    height:210px;
+    margin-top:25px;
+  }
+  .product-detail h2 {font-size:18px}
+  .detail-price {font-size:23px}
+  .product-actions button {font-size:12px;padding:13px 4px}
 }
 </style>
 
 <div class="product-modal" id="productModal">
   <div class="product-detail">
-    <button onclick="closeProduct()" style="float:right">✕ Close</button>
-    <img id="detailImage" src="" alt="Product">
-    <h2 id="detailName"></h2>
-    <p>⭐ <span id="detailRating">Rating not added</span></p>
-    <p class="detail-price" id="detailPrice"></p>
-    <p id="detailExtra"></p>
+    <button class="product-close" onclick="closeProduct()">✕</button>
 
-    <h3>Select Size</h3>
-    <div id="detailSizes">
-      <button onclick="selectSize(this)">S</button>
-      <button onclick="selectSize(this)">M</button>
-      <button onclick="selectSize(this)">L</button>
-      <button onclick="selectSize(this)">XL</button>
-      <button onclick="selectSize(this)">XXL</button>
+    <img class="product-photo" id="detailImage" src="" alt="Product">
+
+    <h2 id="detailName"></h2>
+    <p class="rating-line">⭐ <span id="detailRating">Rating not added</span></p>
+
+    <div class="price-line">
+      <span class="detail-price" id="detailPrice"></span>
+      <span class="detail-mrp" id="detailMRP"></span>
+      <span class="detail-discount" id="detailDiscount"></span>
     </div>
+
+    <h3 id="sizeHeading">Select Size</h3>
+    <div id="detailSizes"></div>
 
     <h3>Product Information</h3>
     <p id="detailDescription">Product details and material information.</p>
 
-    <button onclick="addCart()">ADD TO CART</button>
-    <button onclick="buy(document.getElementById('detailName').innerText)"
-      style="background:#ff641b;color:white">BUY NOW</button>
+    <div class="product-actions">
+      <button class="detail-cart-btn" onclick="addCart()">ADD TO CART</button>
+      <button class="detail-buy-btn"
+        onclick="buy(document.getElementById('detailName').innerText)">
+        BUY NOW
+      </button>
+    </div>
   </div>
 </div>
 
 <script>
-
-
 function selectSize(btn) {
   selectedSize = btn.innerText;
   document.querySelectorAll("#detailSizes button")
-    .forEach(b => b.style.background = "");
-  btn.style.background = "#bde5ff";
+    .forEach(b => {
+      b.style.background = "white";
+      b.style.borderColor = "#bbb";
+    });
+  btn.style.background = "#dceaff";
+  btn.style.borderColor = "#2874f0";
 }
 
 function closeProduct() {
@@ -363,18 +471,11 @@ function closeProduct() {
 document.querySelectorAll(".card").forEach(card => {
   card.addEventListener("click", function(e) {
     if(e.target.closest("button")) return;
-
-    let img = card.querySelector("img");
-    let name = card.dataset.name || card.querySelector("h3")?.innerText || "Product";
-    let price = card.querySelector(".price")?.innerText || "";
-
-    document.getElementById("detailImage").src = img?.src || "";
-    document.getElementById("detailName").innerText = name;
-    document.getElementById("detailPrice").innerText = price;
-    document.getElementById("productModal").style.display = "block";
+    openProductCard(card);
   });
 });
 </script>
+
 
 <style>
 #checkoutModal{
