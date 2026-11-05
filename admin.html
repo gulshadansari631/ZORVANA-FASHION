@@ -8,22 +8,28 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,sans-serif;background:#f4f5f7;color:#222}
-header{background:#2874f0;color:white;padding:20px;font-weight:bold}
+header{background:#222;color:white;padding:20px;font-weight:bold}
 .container{max-width:1000px;margin:20px auto;padding:15px}
 .login,.dashboard{background:white;padding:20px;border-radius:10px;box-shadow:0 2px 10px #ddd}
-input{width:100%;padding:13px;margin:8px 0;border:1px solid #ccc;border-radius:6px}
+input,select,textarea{width:100%;padding:13px;margin:8px 0;border:1px solid #ccc;border-radius:6px;font:inherit}
+textarea{min-height:90px}
 button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:white;font-weight:bold;cursor:pointer;margin:5px 0}
 .logout{background:#555;float:right}
-.order{border:1px solid #ddd;border-radius:8px;padding:15px;margin:15px 0}
+.order{border:1px solid #ddd;border-radius:8px;padding:15px;margin:15px 0;background:#fff}
 .order h3{margin-top:0}
-.status{font-weight:bold;margin:10px 0}
 .actions{display:flex;gap:8px;flex-wrap:wrap}
 .confirm{background:#16853c}
 .shipped{background:#2874f0}
 .out{background:#e67e22}
 .cancel{background:#d93025}
 .delivered{background:#6c45b5}
-#message{color:#d93025;margin-top:10px}
+.delete{background:#d93025}
+.edit{background:#16853c}
+#message{color:#d93025}
+#productMessage{color:#16853c;font-weight:bold}
+.tabs{display:flex;gap:10px;flex-wrap:wrap;margin:15px 0}
+.preview{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0}
+.preview img{width:90px;height:100px;object-fit:contain;border:1px solid #ddd;border-radius:6px}
 @media(max-width:600px){.container{padding:10px}.order{font-size:14px}}
 </style>
 </head>
@@ -44,142 +50,109 @@ button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:whi
 
 <div class="dashboard" id="dashboard" style="display:none">
 <button class="logout" onclick="logout()">LOGOUT</button>
-
-
 <h2>Store Management</h2>
 
-<div style="display:flex;gap:10px;flex-wrap:wrap;margin:15px 0">
-  <button id="productTab" onclick="showAdminTab('products')">
-    PRODUCT MANAGEMENT
-  </button>
-  <button id="orderTab" onclick="showAdminTab('orders')">
-    ORDER MANAGEMENT
-  </button>
+<div class="tabs">
+<button onclick="showAdminTab('products')">PRODUCT MANAGEMENT</button>
+<button onclick="showAdminTab('orders')">ORDER MANAGEMENT</button>
 </div>
 
 <section id="productsSection">
-  <div class="order">
-    <h3>Add New Product</h3>
+<div class="order">
+<h3 id="formHeading">Add New Product</h3>
 
-    <input id="productName" placeholder="Product Name">
+<form id="productForm" onsubmit="event.preventDefault();saveProduct()">
+<input id="productName" placeholder="Product Name" required>
 
-    <select id="productCategory">
-      <option value="">Select Category</option>
-      <option value="Men">Men</option>
-      <option value="Women">Women</option>
-      <option value="Kids">Kids</option>
-      <option value="Accessories">Accessories</option>
-    </select>
+<select id="productCategory" required>
+<option value="">Select Category</option>
+<option value="Men">Men</option>
+<option value="Women">Women</option>
+<option value="Kids">Kids</option>
+<option value="Accessories">Accessories</option>
+</select>
 
-    <input type="number" id="productPrice" placeholder="Selling Price">
-    <input type="number" id="productMRP" placeholder="MRP">
-    <input type="text" id="productDiscount" placeholder="Discount">
-    <input type="number" id="productStock" placeholder="Stock">
-    <textarea id="productDescription" placeholder="Product Description"></textarea>
+<input type="number" id="productPrice" placeholder="Selling Price" min="0" required>
+<input type="number" id="productMRP" placeholder="MRP" min="0">
+<input type="text" id="productDiscount" placeholder="Discount">
+<input type="number" id="productStock" placeholder="Stock" min="0">
+<textarea id="productDescription" placeholder="Product Description"></textarea>
 
-    <p>Upload Product Photos (Multiple)</p>
-    <input type="file" id="productImage" accept="image/*" multiple>
-    <div id="imagePreview" style="display:flex;flex-wrap:wrap;gap:10px;margin:10px 0"></div>
+<p><b>Upload Product Photos (Multiple)</b></p>
+<input type="file" id="productImage" accept="image/*" multiple>
+<div id="imagePreview" class="preview"></div>
+<p id="photoNote"></p>
 
-    <h3>Product Highlights</h3>
-    <input id="highlightColor" placeholder="Color">
-    <input id="highlightFabric" placeholder="Fabric">
-    <input id="highlightType" placeholder="Type">
-    <input id="highlightLength" placeholder="Length">
+<h3>Product Highlights</h3>
+<input id="highlightColor" placeholder="Color">
+<input id="highlightFabric" placeholder="Fabric">
+<input id="highlightType" placeholder="Type">
+<input id="highlightLength" placeholder="Length">
 
-    <h3>Additional Details</h3>
-    <input id="detailCollar" placeholder="Neck / Collar">
-    <input id="detailSleeve" placeholder="Sleeve Styling">
-    <input id="detailPattern" placeholder="Print or Pattern">
-    <input id="detailPocket" placeholder="Pocket Style">
-    <input id="detailOrigin" placeholder="Country of Origin">
+<h3>Additional Details</h3>
+<input id="detailCollar" placeholder="Neck / Collar">
+<input id="detailSleeve" placeholder="Sleeve Styling">
+<input id="detailPattern" placeholder="Print or Pattern">
+<input id="detailPocket" placeholder="Pocket Style">
+<input id="detailOrigin" placeholder="Country of Origin">
 
-    <button onclick="saveProduct()">ADD PRODUCT</button>
-    <p id="productMessage"></p>
-  </div>
+<button type="submit" id="saveProductButton">ADD PRODUCT</button>
+<button type="button" id="cancelEditButton" onclick="cancelEditProduct()" style="display:none;background:#555">CANCEL EDIT</button>
+<p id="productMessage"></p>
+</form>
+</div>
 
-  <h3>All Products</h3>
-  <button onclick="loadProducts()">Refresh Products</button>
-  <div id="productList">Loading products...</div>
+<h3>All Products</h3>
+<button onclick="loadProducts()">Refresh Products</button>
+<div id="productList">Loading products...</div>
 </section>
 
 <section id="ordersSection" style="display:none">
-  <h3>All Orders</h3>
-  <button onclick="loadOrders()">Refresh Orders</button>
-  <div id="orders">Loading orders...</div>
+<h3>All Orders</h3>
+<button onclick="loadOrders()">Refresh Orders</button>
+<div id="orders">Loading orders...</div>
 </section>
 
 </div>
-
 </div>
 
 <script>
 let adminEmail = "";
 let adminPassword = "";
+let allProducts = [];
+let editingProductId = null;
+let existingProductImages = [];
 
-function showAdminTab(tab) {
-  document.getElementById("productsSection").style.display =
-    tab === "products" ? "block" : "none";
+const CLOUDINARY_NAME = "opngws1m";
+const UPLOAD_PRESET = "zorvana_products";
 
-  document.getElementById("ordersSection").style.display =
-    tab === "orders" ? "block" : "none";
-
-  if (tab === "products") loadProducts();
-  if (tab === "orders") loadOrders();
+function safe(value){
+ const span=document.createElement("span");
+ span.textContent=value??"";
+ return span.innerHTML;
 }
 
-async function loadProducts() {
-  const box = document.getElementById("productList");
-  box.textContent = "Loading products...";
-
-  try {
-    const response = await fetch("/api/products");
-    if (!response.ok) throw new Error("Products load nahi hue");
-
-    const products = await response.json();
-
-    if (!products.length) {
-      box.innerHTML = "<p>Abhi koi product add nahi hua.</p>";
-      return;
-    }
-
-    box.innerHTML = "";
-
-    products.forEach(p => {
-      const div = document.createElement("div");
-      div.className = "order";
-
-      div.innerHTML = `
-        <img src="${safe(p.image)}"
-          style="width:100px;height:110px;object-fit:contain">
-        <h3>${safe(p.name)}</h3>
-        <p>Category: ${safe(p.category)}</p>
-        <p>Selling Price: ₹${safe(p.selling_price)}</p>
-        <p>MRP: ₹${safe(p.mrp)}</p>
-        <p>Stock: ${safe(p.stock)}</p>
-      `;
-
-      box.appendChild(div);
-    });
-  } catch (error) {
-    box.textContent = error.message;
-  }
+function showAdminTab(tab){
+ document.getElementById("productsSection").style.display=tab==="products"?"block":"none";
+ document.getElementById("ordersSection").style.display=tab==="orders"?"block":"none";
+ if(tab==="products") loadProducts();
+ if(tab==="orders") loadOrders();
 }
 
 async function login(){
- const email = document.getElementById("email").value.trim();
- const password = document.getElementById("password").value;
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
 
- if(!email || !password){
+ if(!email||!password){
   alert("Enter email and password");
   return;
  }
 
- adminEmail = email;
- adminPassword = password;
+ adminEmail=email;
+ adminPassword=password;
 
  try{
-  const response = await fetch("/api/orders",{
+  const response=await fetch("/api/orders",{
    headers:{
     "X-Admin-Email":adminEmail,
     "X-Admin-Password":adminPassword
@@ -190,12 +163,12 @@ async function login(){
 
   document.getElementById("loginBox").style.display="none";
   document.getElementById("dashboard").style.display="block";
-  showOrders(await response.json());
+  showAdminTab("products");
 
- }catch(e){
+ }catch(error){
   adminEmail="";
   adminPassword="";
-  document.getElementById("message").textContent=e.message;
+  document.getElementById("message").textContent=error.message;
  }
 }
 
@@ -206,10 +179,139 @@ function logout(){
  document.getElementById("password").value="";
  document.getElementById("dashboard").style.display="none";
  document.getElementById("loginBox").style.display="block";
+ document.getElementById("message").textContent="";
+ cancelEditProduct();
+}
+
+async function loadProducts(){
+ const box=document.getElementById("productList");
+ box.textContent="Loading products...";
+
+ try{
+  const response=await fetch("/api/products");
+  if(!response.ok) throw new Error("Products load nahi hue");
+
+  allProducts=await response.json();
+
+  if(!allProducts.length){
+   box.innerHTML="<p>Abhi koi product add nahi hua.</p>";
+   return;
+  }
+
+  box.innerHTML="";
+
+  allProducts.forEach(p=>{
+   const div=document.createElement("div");
+   div.className="order";
+
+   const img=document.createElement("img");
+   img.src=p.image||"";
+   img.style.cssText="width:100px;height:110px;object-fit:contain";
+   img.alt=p.name||"Product";
+
+   const heading=document.createElement("h3");
+   heading.textContent=p.name||"";
+
+   const info=document.createElement("p");
+   info.textContent="Category: "+(p.category||"")+" | Selling Price: ₹"+(p.selling_price||0)+" | MRP: ₹"+(p.mrp||0)+" | Stock: "+(p.stock||0);
+
+   const edit=document.createElement("button");
+   edit.className="edit";
+   edit.textContent="EDIT";
+   edit.onclick=()=>editProduct(Number(p.id));
+
+   const del=document.createElement("button");
+   del.className="delete";
+   del.textContent="DELETE";
+   del.onclick=()=>deleteProduct(Number(p.id));
+
+   div.append(img,heading,info,edit,del);
+   box.appendChild(div);
+  });
+
+ }catch(error){
+  box.textContent=error.message;
+ }
+}
+
+function editProduct(id){
+ const p=allProducts.find(item=>Number(item.id)===id);
+ if(!p) return;
+
+ editingProductId=id;
+ existingProductImages=p.images|| (p.image?[p.image]:[]);
+
+ document.getElementById("productName").value=p.name||"";
+ document.getElementById("productCategory").value=p.category||"";
+ document.getElementById("productPrice").value=p.selling_price??"";
+ document.getElementById("productMRP").value=p.mrp??"";
+ document.getElementById("productDiscount").value=p.discount||"";
+ document.getElementById("productStock").value=p.stock??"";
+ document.getElementById("productDescription").value=p.description||"";
+
+ const h=p.highlights||{};
+ document.getElementById("highlightColor").value=h.Color||"";
+ document.getElementById("highlightFabric").value=h.Fabric||"";
+ document.getElementById("highlightType").value=h.Type||"";
+ document.getElementById("highlightLength").value=h.Length||"";
+
+ const d=p.additional_details||{};
+ document.getElementById("detailCollar").value=d["Neck / Collar"]||"";
+ document.getElementById("detailSleeve").value=d["Sleeve Styling"]||"";
+ document.getElementById("detailPattern").value=d["Print or Pattern"]||"";
+ document.getElementById("detailPocket").value=d["Pocket Style"]||"";
+ document.getElementById("detailOrigin").value=d["Country of Origin"]||"";
+
+ document.getElementById("productImage").value="";
+ document.getElementById("formHeading").textContent="Edit Product";
+ document.getElementById("saveProductButton").textContent="UPDATE PRODUCT";
+ document.getElementById("cancelEditButton").style.display="inline-block";
+ document.getElementById("photoNote").textContent="Purani photos rahengi. Nayi photos select karoge to unke saath add hongi.";
+ document.getElementById("productMessage").textContent="Editing: "+p.name;
+
+ document.getElementById("productsSection").scrollIntoView({behavior:"smooth"});
+}
+
+function cancelEditProduct(){
+ editingProductId=null;
+ existingProductImages=[];
+ document.getElementById("productForm").reset();
+ document.getElementById("imagePreview").innerHTML="";
+ document.getElementById("formHeading").textContent="Add New Product";
+ document.getElementById("saveProductButton").textContent="ADD PRODUCT";
+ document.getElementById("cancelEditButton").style.display="none";
+ document.getElementById("photoNote").textContent="";
+ document.getElementById("productMessage").textContent="";
+}
+
+async function deleteProduct(id){
+ if(!confirm("Kya aap ye product delete karna chahte hain?")) return;
+
+ try{
+  const response=await fetch("/api/products",{
+   method:"DELETE",
+   headers:{
+    "Content-Type":"application/json",
+    "X-Admin-Email":adminEmail,
+    "X-Admin-Password":adminPassword
+   },
+   body:JSON.stringify({id})
+  });
+
+  const result=await response.json();
+  if(!response.ok) throw new Error(result.error||"Delete failed");
+
+  alert("Product delete ho gaya!");
+  loadProducts();
+ }catch(error){
+  alert(error.message);
+ }
 }
 
 async function loadOrders(){
- document.getElementById("orders").textContent="Loading...";
+ const box=document.getElementById("orders");
+ box.textContent="Loading orders...";
+
  try{
   const response=await fetch("/api/orders",{
    headers:{
@@ -217,37 +319,33 @@ async function loadOrders(){
     "X-Admin-Password":adminPassword
    }
   });
+
   if(!response.ok) throw new Error("Could not load orders");
   showOrders(await response.json());
- }catch(e){
-  document.getElementById("orders").textContent=e.message;
+ }catch(error){
+  box.textContent=error.message;
  }
-}
-
-function safe(value){
- const span=document.createElement("span");
- span.textContent=value??"";
- return span.innerHTML;
 }
 
 function showOrders(data){
  const box=document.getElementById("orders");
+
  if(!Array.isArray(data)||data.length===0){
   box.innerHTML="<p>No orders found.</p>";
   return;
  }
+
  box.innerHTML="";
 
  data.forEach(o=>{
   const div=document.createElement("div");
   div.className="order";
+
   div.innerHTML=`
   <h3>Order #${safe(o.id)}</h3>
-
-  ${o.product_image ? `<img src="${safe(o.product_image)}" style="width:120px;height:120px;object-fit:contain;border:1px solid #ddd;border-radius:8px">` : "<p>Product photo not available</p>"}
-
+  ${o.product_image?`<img src="${safe(o.product_image)}" style="width:120px;height:120px;object-fit:contain">`:"<p>Product photo not available</p>"}
   <p><b>Product:</b> ${safe(o.product)}</p>
-  <p><b>Price:</b> ${safe(o.product_price || "Not available")}</p>
+  <p><b>Price:</b> ${safe(o.product_price||"Not available")}</p>
   <p><b>Size:</b> ${safe(o.size)}</p>
   <p><b>Name:</b> ${safe(o.customer_name)}</p>
   <p><b>Phone:</b> ${safe(o.phone)}</p>
@@ -255,152 +353,146 @@ function showOrders(data){
   <p><b>State:</b> ${safe(o.state)} | <b>District:</b> ${safe(o.district)}</p>
   <p><b>PIN:</b> ${safe(o.pincode)}</p>
   <p><b>Payment:</b> ${safe(o.payment)}</p>
-  <p class="status">Status: ${safe(o.status || "Pending")}</p>
-
+  <p><b>Status:</b> ${safe(o.status||"Pending")}</p>
   <div class="actions">
-    <button class="confirm" onclick="updateStatus(${Number(o.id)},'Confirmed')">Confirm</button>
-    <button class="shipped" onclick="updateStatus(${Number(o.id)},'Shipped')">Shipped</button>
-    <button class="out" onclick="updateStatus(${Number(o.id)},'Out for Delivery')">Out for Delivery</button>
-    <button class="delivered" onclick="updateStatus(${Number(o.id)},'Delivered')">Delivered</button>
-    <button class="cancel" onclick="updateStatus(${Number(o.id)},'Cancelled')">Cancel</button>
+   <button class="confirm" onclick="updateStatus(${Number(o.id)},'Confirmed')">Confirm</button>
+   <button class="shipped" onclick="updateStatus(${Number(o.id)},'Shipped')">Shipped</button>
+   <button class="out" onclick="updateStatus(${Number(o.id)},'Out for Delivery')">Out for Delivery</button>
+   <button class="delivered" onclick="updateStatus(${Number(o.id)},'Delivered')">Delivered</button>
+   <button class="cancel" onclick="updateStatus(${Number(o.id)},'Cancelled')">Cancel</button>
   </div>`;
+
   box.appendChild(div);
  });
 }
 
+async function updateStatus(id,status){
+ try{
+  const response=await fetch("/api/orders",{
+   method:"PATCH",
+   headers:{
+    "Content-Type":"application/json",
+    "X-Admin-Email":adminEmail,
+    "X-Admin-Password":adminPassword
+   },
+   body:JSON.stringify({id,status})
+  });
 
-async function updateStatus(id, status) {
-  try {
-    const response = await fetch("/api/orders", {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Admin-Email": adminEmail,
-        "X-Admin-Password": adminPassword
-      },
-      body: JSON.stringify({ id, status })
-    });
+  const result=await response.json();
+  if(!response.ok) throw new Error(result.error||"Status update failed");
 
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.error || "Status update failed");
-    }
-
-    alert("Order status updated!");
-    loadOrders();
-  } catch (error) {
-    alert(error.message);
-  }
+  alert("Order status updated!");
+  loadOrders();
+ }catch(error){
+  alert(error.message);
+ }
 }
 
-const CLOUDINARY_NAME = "opngws1m";
-const UPLOAD_PRESET = "zorvana_products";
+document.getElementById("productImage").addEventListener("change",function(){
+ const preview=document.getElementById("imagePreview");
+ preview.innerHTML="";
 
-document.getElementById("productImage").addEventListener("change", function () {
-  const preview = document.getElementById("imagePreview");
-  preview.innerHTML = "";
+ Array.from(this.files).forEach(file=>{
+  if(!file.type.startsWith("image/")) return;
 
-  Array.from(this.files).forEach(file => {
-    if (!file.type.startsWith("image/")) return;
-
-    const img = document.createElement("img");
-    img.src = URL.createObjectURL(file);
-    img.style.cssText = "width:100px;height:110px;object-fit:contain;border:1px solid #ddd;border-radius:8px";
-    preview.appendChild(img);
-  });
+  const img=document.createElement("img");
+  img.src=URL.createObjectURL(file);
+  preview.appendChild(img);
+ });
 });
 
-async function saveProduct() {
-  const files = Array.from(document.getElementById("productImage").files);
-  const message = document.getElementById("productMessage");
-  const name = document.getElementById("productName").value.trim();
-  const category = document.getElementById("productCategory").value;
-  const price = document.getElementById("productPrice").value;
+async function saveProduct(){
+ const files=Array.from(document.getElementById("productImage").files);
+ const message=document.getElementById("productMessage");
+ const name=document.getElementById("productName").value.trim();
+ const category=document.getElementById("productCategory").value;
+ const price=document.getElementById("productPrice").value;
 
-  if (!name || !category || !price || !files.length) {
-    message.textContent = "Name, category, price aur photo zaroori hain.";
-    return;
+ if(!name||!category||!price||(!editingProductId&&!files.length)){
+  message.textContent="Name, category, price aur photo zaroori hain.";
+  return;
+ }
+
+ if(files.some(file=>file.size>5*1024*1024)){
+  message.textContent="Har photo 5 MB se chhoti honi chahiye.";
+  return;
+ }
+
+ try{
+  const images=editingProductId?[...existingProductImages]:[];
+
+  for(let i=0;i<files.length;i++){
+   message.textContent=`Photo ${i+1}/${files.length} upload ho rahi hai...`;
+
+   const formData=new FormData();
+   formData.append("file",files[i]);
+   formData.append("upload_preset",UPLOAD_PRESET);
+
+   const uploadResponse=await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_NAME}/image/upload`,
+    {method:"POST",body:formData}
+   );
+
+   const uploaded=await uploadResponse.json();
+   if(!uploadResponse.ok) throw new Error(uploaded.error?.message||"Photo upload failed");
+
+   images.push(uploaded.secure_url);
   }
 
-  if (files.some(file => file.size > 5 * 1024 * 1024)) {
-    message.textContent = "Har photo 5 MB se chhoti honi chahiye.";
-    return;
-  }
+  if(!images.length) throw new Error("Product photo zaroori hai.");
 
-  try {
-    const images = [];
+  message.textContent="Product save ho raha hai...";
 
-    for (let i = 0; i < files.length; i++) {
-      message.textContent = `Photo ${i + 1}/${files.length} upload ho rahi hai...`;
+  const productData={
+   id:editingProductId,
+   name,
+   category,
+   images,
+   image:images[0],
+   selling_price:price,
+   mrp:document.getElementById("productMRP").value,
+   discount:document.getElementById("productDiscount").value,
+   stock:document.getElementById("productStock").value,
+   description:document.getElementById("productDescription").value,
+   highlights:{
+    Color:document.getElementById("highlightColor").value,
+    Fabric:document.getElementById("highlightFabric").value,
+    Type:document.getElementById("highlightType").value,
+    Length:document.getElementById("highlightLength").value
+   },
+   additional_details:{
+    "Neck / Collar":document.getElementById("detailCollar").value,
+    "Sleeve Styling":document.getElementById("detailSleeve").value,
+    "Print or Pattern":document.getElementById("detailPattern").value,
+    "Pocket Style":document.getElementById("detailPocket").value,
+    "Country of Origin":document.getElementById("detailOrigin").value
+   }
+  };
 
-      const formData = new FormData();
-      formData.append("file", files[i]);
-      formData.append("upload_preset", UPLOAD_PRESET);
+  const wasEditing=Boolean(editingProductId);
 
-      const uploadResponse = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUDINARY_NAME}/image/upload`,
-        { method: "POST", body: formData }
-      );
+  const response=await fetch("/api/products",{
+   method:wasEditing?"PUT":"POST",
+   headers:{
+    "Content-Type":"application/json",
+    "X-Admin-Email":adminEmail,
+    "X-Admin-Password":adminPassword
+   },
+   body:JSON.stringify(productData)
+  });
 
-      const uploaded = await uploadResponse.json();
+  const result=await response.json();
+  if(!response.ok) throw new Error(result.error||"Product save failed");
 
-      if (!uploadResponse.ok) {
-        throw new Error(uploaded.error?.message || "Photo upload failed");
-      }
+  cancelEditProduct();
+  message.textContent=wasEditing?"Product successfully updated!":"Product successfully added!";
+  alert(wasEditing?"Product update ho gaya!":"Product add ho gaya!");
+  loadProducts();
 
-      images.push(uploaded.secure_url);
-    }
-
-    message.textContent = "Product save ho raha hai...";
-
-    const response = await fetch("/api/products", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Admin-Email": adminEmail,
-        "X-Admin-Password": adminPassword
-      },
-      body: JSON.stringify({
-        name,
-        category,
-        images,
-        image: images[0],
-        selling_price: price,
-        mrp: document.getElementById("productMRP").value,
-        discount: document.getElementById("productDiscount").value,
-        stock: document.getElementById("productStock").value,
-        description: document.getElementById("productDescription").value,
-        highlights: {
-          Color: document.getElementById("highlightColor").value,
-          Fabric: document.getElementById("highlightFabric").value,
-          Type: document.getElementById("highlightType").value,
-          Length: document.getElementById("highlightLength").value
-        },
-        additional_details: {
-          "Neck / Collar": document.getElementById("detailCollar").value,
-          "Sleeve Styling": document.getElementById("detailSleeve").value,
-          "Print or Pattern": document.getElementById("detailPattern").value,
-          "Pocket Style": document.getElementById("detailPocket").value,
-          "Country of Origin": document.getElementById("detailOrigin").value
-        }
-      })
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || "Product save failed");
-    }
-
-    message.textContent = "Product successfully added!";
-    loadProducts();
-    alert("Product successfully added!");
-  } catch (error) {
-    message.textContent = error.message;
-  }
+ }catch(error){
+  message.textContent=error.message;
+ }
 }
-
-
 </script>
 </body>
 </html>
