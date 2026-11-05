@@ -640,28 +640,25 @@ document.getElementById("myOrdersBtn").onclick = async () => {
     authUI.after(box);
   }
 
-  box.innerHTML = "<h2>My Orders</h2><p>Loading your orders...</p>";
+  box.innerHTML = "<h2>My Orders</h2><p>Loading...</p>";
 
   try {
     const token = await currentUser.getIdToken();
 
     const response = await fetch("/api/orders", {
-      headers: {
-        "Authorization": "Bearer " + token
-      }
+      headers: { "Authorization": "Bearer " + token }
     });
 
     if (!response.ok) throw new Error("Could not load orders");
 
     const orders = await response.json();
 
+    box.innerHTML = "<h2>My Orders</h2>";
+
     if (!orders.length) {
-      box.innerHTML = "<h2>My Orders</h2><p>No orders found.</p>";
-      box.scrollIntoView({ behavior: "smooth" });
+      box.innerHTML += "<p>No orders found.</p>";
       return;
     }
-
-    box.innerHTML = "<h2>My Orders</h2>";
 
     const steps = [
       "Confirmed",
@@ -672,16 +669,14 @@ document.getElementById("myOrdersBtn").onclick = async () => {
 
     orders.forEach(order => {
       const status = order.status || "Pending";
-      const history = order.tracking || [];
-      const currentIndex = steps.indexOf(status);
       const cancelled = status === "Cancelled";
 
       const item = document.createElement("div");
       item.className = "customerOrder";
 
-      const orderNumber = document.createElement("p");
-      orderNumber.textContent = "Order #" + order.id;
-      item.appendChild(orderNumber);
+      const number = document.createElement("p");
+      number.textContent = "Order #" + order.id;
+      item.appendChild(number);
 
       const productRow = document.createElement("div");
       productRow.className = "orderProduct";
@@ -693,15 +688,16 @@ document.getElementById("myOrdersBtn").onclick = async () => {
         productRow.appendChild(image);
       }
 
-      const productInfo = document.createElement("div");
+      const info = document.createElement("div");
+
       const name = document.createElement("h3");
       name.textContent = order.product || "Product";
 
       const price = document.createElement("p");
       price.textContent = order.product_price || "";
 
-      productInfo.append(name, price);
-      productRow.appendChild(productInfo);
+      info.append(name, price);
+      productRow.appendChild(info);
       item.appendChild(productRow);
 
       const statusText = document.createElement("h3");
@@ -710,17 +706,131 @@ document.getElementById("myOrdersBtn").onclick = async () => {
         : "Order " + status;
       item.appendChild(statusText);
 
+      if (order.expected_delivery && !cancelled) {
+        const delivery = document.createElement("p");
+        const date = new Date(order.expected_delivery + "T00:00:00");
+
+        delivery.textContent = "Expected Delivery: " +
+          date.toLocaleDateString("en-IN", {
+            day: "numeric",
+            month: "long",
+            year: "numeric"
+          });
+
+        delivery.style.fontWeight = "bold";
+        item.appendChild(delivery);
+      }
+
+      if (cancelled && order.cancel_reason) {
+        const reason = document.createElement("p");
+        reason.textContent = "Cancellation Reason: " + order.cancel_reason;
+        item.appendChild(reason);
+      }
+
+      if (status === "Confirmed") {
+        const cancelButton = document.createElement("button");
+        cancelButton.textContent = "CANCEL ORDER";
+        cancelButton.style.cssText =
+          "background:#d32f2f;color:white;padding:10px;border:0;border-radius:6px";
+
+        const panel = document.createElement("div");
+        panel.style.display = "none";
+
+        const select = document.createElement("select");
+        select.style.cssText = "width:100%;padding:10px;margin:10px 0";
+        select.innerHTML = `
+          <option value="">Select reason</option>
+          <option value="Ordered by mistake">Ordered by mistake</option>
+          <option value="Found a better price">Found a better price</option>
+          <option value="Delivery taking too long">Delivery taking too long</option>
+          <option value="Want to change product or size">Want to change product or size</option>
+          <option value="Other">Other</option>
+        `;
+
+        const other = document.createElement("textarea");
+        other.placeholder = "Enter your reason";
+        other.style.cssText = "width:100%;padding:10px;box-sizing:border-box";
+
+        const confirm = document.createElement("button");
+        confirm.textContent = "CONFIRM CANCELLATION";
+        confirm.style.cssText =
+          "background:#d32f2f;color:white;padding:10px;border:0;border-radius:6px;margin:5px";
+
+        const close = document.createElement("button");
+        close.textContent = "KEEP ORDER";
+        close.style.cssText =
+          "background:#777;color:white;padding:10px;border:0;border-radius:6px;margin:5px";
+
+        cancelButton.onclick = () => {
+          panel.style.display =
+            panel.style.display === "none" ? "block" : "none";
+        };
+
+        close.onclick = () => {
+          panel.style.display = "none";
+          select.value = "";
+          other.value = "";
+        };
+
+        confirm.onclick = async () => {
+          const reason = select.value === "Other"
+            ? other.value.trim()
+            : select.value;
+
+          if (!reason) {
+            alert("Please select or enter a reason.");
+            return;
+          }
+
+          confirm.disabled = true;
+          confirm.textContent = "PLEASE WAIT...";
+
+          try {
+            const cancelToken = await currentUser.getIdToken();
+
+            const result = await fetch("/api/orders", {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + cancelToken
+              },
+              body: JSON.stringify({
+                id: order.id,
+                cancel_reason: reason
+              })
+            });
+
+            const data = await result.json();
+
+            if (!result.ok) {
+              throw new Error(data.error || "Cancellation failed");
+            }
+
+            alert("Order cancelled successfully.");
+            document.getElementById("myOrdersBtn").click();
+
+          } catch (error) {
+            alert(error.message);
+            confirm.disabled = false;
+            confirm.textContent = "CONFIRM CANCELLATION";
+          }
+        };
+
+        panel.append(select, other, confirm, close);
+        item.append(cancelButton, panel);
+      }
+
       if (!cancelled) {
         const timeline = document.createElement("div");
         timeline.className = "trackLine";
+
+        const currentIndex = steps.indexOf(status);
 
         steps.forEach((step, index) => {
           const stepBox = document.createElement("div");
           stepBox.className = "trackStep";
 
-          if (currentIndex >= index) {
-            stepBox.classList.add("done");
-          }
+          if (currentIndex >= index) stepBox.classList.add("done");
 
           const dot = document.createElement("div");
           dot.className = "trackDot";
@@ -738,11 +848,11 @@ document.getElementById("myOrdersBtn").onclick = async () => {
       const historyBox = document.createElement("div");
       historyBox.className = "trackHistory";
 
-      const historyTitle = document.createElement("b");
-      historyTitle.textContent = "Order Updates";
-      historyBox.appendChild(historyTitle);
+      const heading = document.createElement("b");
+      heading.textContent = "Order Updates";
+      historyBox.appendChild(heading);
 
-      history.forEach(update => {
+      (order.tracking || []).forEach(update => {
         const line = document.createElement("p");
         const date = update.updated_at
           ? new Date(update.updated_at).toLocaleString("en-IN")
