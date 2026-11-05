@@ -29,41 +29,11 @@ button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:whi
 .tabs{display:flex;gap:10px;flex-wrap:wrap;margin:15px 0}
 .preview{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0}
 .preview img{width:90px;height:100px;object-fit:contain;border:1px solid #ddd;border-radius:6px}
-
-.size-group{
-  margin:15px 0;
-  padding:14px;
-  background:#fafafa;
-  border:1px solid #eee;
-  border-radius:9px;
-}
-.size-options{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-  margin-top:10px;
-}
-.size-options label{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  padding:9px 12px;
-  background:#fff;
-  border:1px solid #ddd;
-  border-radius:7px;
-  font-weight:bold;
-  cursor:pointer;
-}
-.size-options input{
-  width:17px;
-  height:17px;
-  margin:0;
-  accent-color:#d71936;
-}
-@media(max-width:600px){
-  .container{padding:10px}
-  .order{font-size:14px}
-}
+.size-group{margin:15px 0;padding:14px;background:#fafafa;border:1px solid #eee;border-radius:9px}
+.size-options{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.size-options label{display:inline-flex;align-items:center;gap:6px;padding:9px 12px;background:#fff;border:1px solid #ddd;border-radius:7px;font-weight:bold;cursor:pointer}
+.size-options input{width:17px;height:17px;margin:0;accent-color:#d71936}
+@media(max-width:600px){.container{padding:10px}.order{font-size:14px}}
 </style>
 </head>
 <body>
@@ -209,6 +179,102 @@ let existingProductImages = [];
 const CLOUDINARY_NAME = "opngws1m";
 const UPLOAD_PRESET = "zorvana_products";
 
+/* ===== 7 DAY ADMIN SESSION ===== */
+const ADMIN_SESSION_KEY = "zorvana_admin_session";
+const ADMIN_SESSION_DAYS = 7;
+
+function saveAdminSession(email,password){
+ const expiresAt = Date.now() + ADMIN_SESSION_DAYS * 24 * 60 * 60 * 1000;
+ localStorage.setItem(ADMIN_SESSION_KEY,JSON.stringify({
+  email:email,
+  password:password,
+  expiresAt:expiresAt
+ }));
+}
+
+function clearAdminSession(){
+ localStorage.removeItem(ADMIN_SESSION_KEY);
+ adminEmail = "";
+ adminPassword = "";
+}
+
+async function verifyAdminSession(email,password){
+ const response = await fetch("/api/orders",{
+  headers:{
+   "X-Admin-Email":email,
+   "X-Admin-Password":password
+  }
+ });
+ if(!response.ok) throw new Error("Admin login expired");
+}
+
+async function login(){
+ const email = document.getElementById("email").value.trim();
+ const password = document.getElementById("password").value;
+
+ if(!email || !password){
+  alert("Enter email and password");
+  return;
+ }
+
+ adminEmail = email;
+ adminPassword = password;
+
+ try{
+  await verifyAdminSession(adminEmail,adminPassword);
+  saveAdminSession(adminEmail,adminPassword);
+
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("dashboard").style.display = "block";
+  showAdminTab("products");
+
+ }catch(error){
+  clearAdminSession();
+  document.getElementById("message").textContent = "Wrong email or password";
+ }
+}
+
+async function restoreAdminSession(){
+ try{
+  const saved = JSON.parse(localStorage.getItem(ADMIN_SESSION_KEY) || "null");
+
+  if(!saved || !saved.email || !saved.password || !saved.expiresAt || Date.now() >= saved.expiresAt){
+   clearAdminSession();
+   return;
+  }
+
+  await verifyAdminSession(saved.email,saved.password);
+
+  adminEmail = saved.email;
+  adminPassword = saved.password;
+
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("dashboard").style.display = "block";
+  showAdminTab("products");
+
+  setTimeout(()=>{
+   if(Date.now() >= saved.expiresAt) logout();
+  },saved.expiresAt-Date.now());
+
+ }catch(error){
+  clearAdminSession();
+  document.getElementById("loginBox").style.display = "block";
+  document.getElementById("dashboard").style.display = "none";
+ }
+}
+
+function logout(){
+ clearAdminSession();
+
+ document.getElementById("email").value = "";
+ document.getElementById("password").value = "";
+ document.getElementById("dashboard").style.display = "none";
+ document.getElementById("loginBox").style.display = "block";
+ document.getElementById("message").textContent = "";
+
+ cancelEditProduct();
+}
+
 function safe(value){
  const span=document.createElement("span");
  span.textContent=value??"";
@@ -220,50 +286,6 @@ function showAdminTab(tab){
  document.getElementById("ordersSection").style.display=tab==="orders"?"block":"none";
  if(tab==="products") loadProducts();
  if(tab==="orders") loadOrders();
-}
-
-async function login(){
- const email=document.getElementById("email").value.trim();
- const password=document.getElementById("password").value;
-
- if(!email||!password){
-  alert("Enter email and password");
-  return;
- }
-
- adminEmail=email;
- adminPassword=password;
-
- try{
-  const response=await fetch("/api/orders",{
-   headers:{
-    "X-Admin-Email":adminEmail,
-    "X-Admin-Password":adminPassword
-   }
-  });
-
-  if(!response.ok) throw new Error("Wrong email or password");
-
-  document.getElementById("loginBox").style.display="none";
-  document.getElementById("dashboard").style.display="block";
-  showAdminTab("products");
-
- }catch(error){
-  adminEmail="";
-  adminPassword="";
-  document.getElementById("message").textContent=error.message;
- }
-}
-
-function logout(){
- adminEmail="";
- adminPassword="";
- document.getElementById("email").value="";
- document.getElementById("password").value="";
- document.getElementById("dashboard").style.display="none";
- document.getElementById("loginBox").style.display="block";
- document.getElementById("message").textContent="";
- cancelEditProduct();
 }
 
 async function loadProducts(){
@@ -583,6 +605,9 @@ async function saveProduct(){
   message.textContent=error.message;
  }
 }
+
+/* Page open hote hi saved 7-day session check karo */
+restoreAdminSession();
 </script>
 </body>
 </html>
