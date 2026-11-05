@@ -190,6 +190,7 @@ async function addressRequest(method = "GET", data = null) {
 
 async function renderAddresses() {
   const box = document.getElementById("savedAddresses");
+  const box = document.getElementById("savedAddresses");
   if (!box) return;
 
   box.innerHTML = "<h3>Saved Delivery Addresses</h3>";
@@ -1064,7 +1065,7 @@ window.openProfile = function() {
 
         if(action==="addresses"){
           showPage("zv-account-view","Saved Addresses",
-            '<section class="zv-panel"><div id="savedAddresses"></div></section>');
+            '<section class="zv-panel"><div id="zvSavedAddresses"></div></section>');
           await renderAddresses();
         }
 
