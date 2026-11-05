@@ -207,6 +207,92 @@ async function updateStatus(id,status){
   alert(e.message);
  }
 }
+
+const CLOUDINARY_NAME = "opngws1m";
+const UPLOAD_PRESET = "zorvana_products";
+
+document.getElementById("productImage").addEventListener("change", function () {
+  const file = this.files[0];
+  if (!file) return;
+
+  if (file.size > 5 * 1024 * 1024) {
+    alert("Image 5 MB se chhoti honi chahiye");
+    this.value = "";
+    return;
+  }
+
+  document.getElementById("imagePreview").src =
+    URL.createObjectURL(file);
+
+  document.getElementById("imagePreview").style.display = "block";
+});
+
+async function saveProduct() {
+  const file = document.getElementById("productImage").files[0];
+  const message = document.getElementById("productMessage");
+
+  const name = document.getElementById("productName").value.trim();
+  const category = document.getElementById("productCategory").value;
+  const price = document.getElementById("productPrice").value;
+
+  if (!name || !category || !price || !file) {
+    message.textContent = "Name, category, price aur photo zaroori hain.";
+    return;
+  }
+
+  try {
+    message.textContent = "Photo upload ho rahi hai...";
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", UPLOAD_PRESET);
+
+    const uploadResponse = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY_NAME}/image/upload`,
+      { method: "POST", body: formData }
+    );
+
+    const uploaded = await uploadResponse.json();
+
+    if (!uploadResponse.ok) {
+      throw new Error(uploaded.error?.message || "Photo upload failed");
+    }
+
+    message.textContent = "Product save ho raha hai...";
+
+    const response = await fetch("/api/products", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Admin-Email": adminEmail,
+        "X-Admin-Password": adminPassword
+      },
+      body: JSON.stringify({
+        name,
+        category,
+        image: uploaded.secure_url,
+        selling_price: price,
+        mrp: document.getElementById("productMRP").value,
+        discount: document.getElementById("productDiscount").value,
+        stock: document.getElementById("productStock").value,
+        description: document.getElementById("productDescription").value
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Product save failed");
+    }
+
+    message.textContent = "Product successfully added!";
+    alert("Product successfully added!");
+
+  } catch (error) {
+    message.textContent = error.message;
+  }
+}
+
 </script>
 </body>
 </html>
