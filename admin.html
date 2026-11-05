@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,7 +29,8 @@ button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:whi
 .tabs{display:flex;gap:10px;flex-wrap:wrap;margin:15px 0}
 .preview{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0}
 .preview img{width:90px;height:100px;object-fit:contain;border:1px solid #ddd;border-radius:6px}
- .size-group{
+
+.size-group{
   margin:15px 0;
   padding:14px;
   background:#fafafa;
@@ -60,7 +60,10 @@ button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:whi
   margin:0;
   accent-color:#d71936;
 }
-@media(max-width:600px){.container{padding:10px}.order{font-size:14px}}
+@media(max-width:600px){
+  .container{padding:10px}
+  .order{font-size:14px}
+}
 </style>
 </head>
 <body>
@@ -109,8 +112,10 @@ button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:whi
 <textarea id="productDescription" placeholder="Product Description"></textarea>
 
 <h3>Available Product Sizes</h3>
-<p><b>Letter Sizes</b></p>
-<div>
+
+<div class="size-group">
+<b>Clothing Sizes</b>
+<div class="size-options">
 <label><input type="checkbox" name="productSize" value="XS"> XS</label>
 <label><input type="checkbox" name="productSize" value="S"> S</label>
 <label><input type="checkbox" name="productSize" value="M"> M</label>
@@ -119,9 +124,11 @@ button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:whi
 <label><input type="checkbox" name="productSize" value="XXL"> XXL</label>
 <label><input type="checkbox" name="productSize" value="XXXL"> XXXL</label>
 </div>
+</div>
 
-<p><b>Number Sizes</b></p>
-<div>
+<div class="size-group">
+<b>Jeans / Trouser Sizes</b>
+<div class="size-options">
 <label><input type="checkbox" name="productSize" value="28"> 28</label>
 <label><input type="checkbox" name="productSize" value="30"> 30</label>
 <label><input type="checkbox" name="productSize" value="32"> 32</label>
@@ -131,6 +138,27 @@ button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:whi
 <label><input type="checkbox" name="productSize" value="40"> 40</label>
 <label><input type="checkbox" name="productSize" value="42"> 42</label>
 <label><input type="checkbox" name="productSize" value="44"> 44</label>
+</div>
+</div>
+
+<div class="size-group">
+<b>Shoe Sizes (UK)</b>
+<div class="size-options">
+<label><input type="checkbox" name="productSize" value="UK 6"> UK 6</label>
+<label><input type="checkbox" name="productSize" value="UK 7"> UK 7</label>
+<label><input type="checkbox" name="productSize" value="UK 8"> UK 8</label>
+<label><input type="checkbox" name="productSize" value="UK 9"> UK 9</label>
+<label><input type="checkbox" name="productSize" value="UK 10"> UK 10</label>
+<label><input type="checkbox" name="productSize" value="UK 11"> UK 11</label>
+</div>
+</div>
+
+<div class="size-group">
+<b>Other Sizes</b>
+<div class="size-options">
+<label><input type="checkbox" name="productSize" value="Free Size"> Free Size</label>
+<label><input type="checkbox" name="productSize" value="Not applicable"> Not applicable</label>
+</div>
 </div>
 
 <p><b>Upload Product Photos (Multiple)</b></p>
@@ -304,15 +332,11 @@ function editProduct(id){
  document.getElementById("productStock").value=p.stock??"";
  document.getElementById("productDescription").value=p.description||"";
 
- // FIX: Database se saved sizes ko checkboxes mein restore karo.
- // Number aur string format dono ko support karta hai.
  const savedSizes=Array.isArray(p.sizes)?p.sizes.map(String):[];
 
  document.querySelectorAll('input[name="productSize"]').forEach(box=>{
   box.checked=savedSizes.includes(box.value);
  });
-
- // Important: Yahan sizes ko dobara uncheck nahi karna hai.
 
  const h=p.highlights||{};
  document.getElementById("highlightColor").value=h.Color||"";
