@@ -911,3 +911,341 @@ window.openProfile = function() {
     message("Login to view your profile and saved addresses.");
   }
 };
+
+// ===== ZORVANA MEESHO STYLE ACCOUNT + ORDERS + TRACKING =====
+(function () {
+  const css = document.createElement("style");
+  css.textContent = `
+  body.zv-page-mode{background:#f5f5f5!important}
+  body.zv-page-mode .topbar,
+  body.zv-page-mode header,
+  body.zv-page-mode .hero,
+  body.zv-page-mode .quick-cats,
+  body.zv-page-mode #shop,
+  body.zv-page-mode .offer-banner,
+  body.zv-page-mode .service-strip,
+  body.zv-page-mode footer{display:none!important}
+
+  #zvPage{display:none;max-width:760px;min-height:80vh;
+    margin:auto;padding:16px 13px 95px;color:#222}
+  body.zv-account-view #zvPage,
+  body.zv-orders-view #zvPage,
+  body.zv-detail-view #zvPage{display:block}
+
+  #zvPage .zv-head{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+  #zvPage .zv-back{border:0;background:white;border-radius:50%;
+    width:40px;height:40px;font-size:25px}
+  #zvPage h2{font-size:21px;margin:0}
+  .zv-panel,.zv-order{background:white;border:1px solid #eee;
+    border-radius:12px;padding:16px;margin:12px 0}
+  .zv-account-user{display:flex;align-items:center;gap:13px}
+  .zv-avatar{width:58px;height:58px;border-radius:50%;
+    object-fit:cover;background:#eee;display:flex;align-items:center;
+    justify-content:center;font-size:25px}
+  .zv-menu{display:flex;align-items:center;gap:14px;padding:17px 5px;
+    border-bottom:1px solid #eee;cursor:pointer}
+  .zv-menu:last-child{border-bottom:0}
+  .zv-menu-icon{width:28px;text-align:center;font-size:23px}
+  .zv-menu b{flex:1;font-size:15px}
+  .zv-arrow{color:#999;font-size:20px}
+  .zv-order-top{display:flex;justify-content:space-between;
+    gap:8px;align-items:center;font-size:13px;color:#666}
+  .zv-order-product{display:flex;gap:12px;align-items:center;margin:13px 0}
+  .zv-order-product img{width:85px;height:95px;object-fit:contain;
+    background:#f7f7f7;border-radius:8px}
+  .zv-order-product h3{font-size:15px;margin:0 0 7px}
+  .zv-status{color:#16853c;font-weight:bold;font-size:14px}
+  .zv-primary{width:100%;padding:13px;border:0;border-radius:7px;
+    background:#d71936;color:white;font-weight:bold;margin-top:10px}
+  .zv-track{display:flex;justify-content:space-between;gap:3px;
+    margin:22px 0 15px;position:relative}
+  .zv-track:before{content:"";position:absolute;top:11px;
+    left:8%;right:8%;height:3px;background:#ddd}
+  .zv-track-step{z-index:1;flex:1;text-align:center;font-size:10px;color:#888}
+  .zv-track-dot{width:23px;height:23px;border:2px solid #bbb;
+    background:white;border-radius:50%;margin:0 auto 8px;
+    display:flex;align-items:center;justify-content:center}
+  .zv-track-step.done{color:#16853c;font-weight:bold}
+  .zv-track-step.done .zv-track-dot{background:#16853c;
+    border-color:#16853c;color:white}
+  .zv-detail-label{font-size:12px;color:#777;margin-bottom:5px}
+  .zv-address{line-height:1.6;font-size:14px}
+  .zv-history p{font-size:13px;border-bottom:1px solid #eee;padding:8px 0;margin:0}
+  body.zv-page-mode .bottom-nav{z-index:100}
+  @media(max-width:480px){
+    .zv-track-step{font-size:9px}
+    .zv-order-product img{width:75px;height:85px}
+  }`;
+  document.head.appendChild(css);
+
+  const page=document.createElement("main");
+  page.id="zvPage";
+  document.body.appendChild(page);
+
+  const safe=v=>String(v??"").replace(/[&<>"']/g,c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+
+  const dateText=v=>{
+    if(!v)return "Date not updated";
+    const d=new Date(v);
+    return isNaN(d)?"Date not updated":
+      d.toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
+  };
+
+  const moneyText=v=>{
+    if(!v)return "Cash on Delivery";
+    return String(v).includes("₹")?String(v):"₹"+v;
+  };
+
+  let cachedOrders=[];
+
+  function showPage(mode,title,body){
+    document.body.classList.remove(
+      "orders-view","zv-account-view","zv-orders-view","zv-detail-view"
+    );
+    document.body.classList.add("zv-page-mode",mode);
+    page.innerHTML=`
+      <div class="zv-head">
+        <button class="zv-back" id="zvBack">‹</button>
+        <h2>${title}</h2>
+      </div>${body}`;
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+
+  function menuRow(icon,label,action){
+    return `<div class="zv-menu" data-action="${action}">
+      <span class="zv-menu-icon">${icon}</span>
+      <b>${label}</b><span class="zv-arrow">›</span>
+    </div>`;
+  }
+
+  async function accountPage(){
+    if(!currentUser){
+      openLogin();
+      message("Login to view your account.");
+      return;
+    }
+
+    const photo=currentUser.photoURL
+      ?`<img class="zv-avatar" src="${safe(currentUser.photoURL)}">`
+      :`<div class="zv-avatar">👤</div>`;
+
+    showPage("zv-account-view","Account",`
+      <section class="zv-panel zv-account-user">
+        ${photo}
+        <div>
+          <b>${safe(currentUser.displayName||"Customer")}</b>
+          <div style="font-size:13px;color:#777;margin-top:5px">
+            ${safe(currentUser.email||"")}
+          </div>
+        </div>
+      </section>
+      <section class="zv-panel">
+        ${menuRow("📦","My Orders","orders")}
+        ${menuRow("♡","My Wishlist","wishlist")}
+        ${menuRow("📍","Saved Addresses","addresses")}
+        ${menuRow("🎧","Help & Support","help")}
+        ${menuRow("⚙","Settings","settings")}
+        ${menuRow("↪","Logout","logout")}
+      </section>
+    `);
+
+    page.querySelectorAll("[data-action]").forEach(el=>{
+      el.onclick=async()=>{
+        const action=el.dataset.action;
+
+        if(action==="orders")ordersPage();
+
+        if(action==="wishlist"){
+          document.body.classList.remove("zv-page-mode","zv-account-view");
+          if(window.showWishlist)window.showWishlist();
+        }
+
+        if(action==="addresses"){
+          showPage("zv-account-view","Saved Addresses",
+            '<section class="zv-panel"><div id="savedAddresses"></div></section>');
+          await renderAddresses();
+        }
+
+        if(action==="logout"){
+          if(confirm("Are you sure you want to logout?")){
+            await signOut(auth);
+            document.body.classList.remove("zv-page-mode");
+          }
+        }
+
+        if(action==="help"){
+          showPage("zv-account-view","Help & Support",
+            '<section class="zv-panel">Contact ZORVANA FASHION customer support for help.</section>');
+        }
+
+        if(action==="settings"){
+          showPage("zv-account-view","Settings",
+            '<section class="zv-panel">Account settings</section>');
+        }
+      };
+    });
+
+    document.getElementById("zvBack").onclick=()=>window.goHome?.();
+  }
+
+  function trackingDate(order,status){
+    const rows=Array.isArray(order.tracking)?order.tracking:[];
+    const found=rows.find(x=>
+      String(x.status||"").toLowerCase()===status.toLowerCase()
+    );
+    return found?.updated_at||found?.created_at||null;
+  }
+
+  function statusIndex(status){
+    const s=String(status||"Pending").toLowerCase();
+    if(s.includes("cancel"))return -1;
+    if(s.includes("deliver")&&!s.includes("out"))return 3;
+    if(s.includes("out for"))return 2;
+    if(s.includes("ship")||s.includes("dispatch"))return 1;
+    return 0;
+  }
+
+  function orderCard(o,i){
+    return `<article class="zv-order">
+      <div class="zv-order-top">
+        <span>Order #${safe(o.id)}</span>
+        <span>${dateText(o.created_at||o.order_date)}</span>
+      </div>
+      <div class="zv-order-product">
+        ${o.product_image?`<img src="${safe(o.product_image)}" alt="Product">`:""}
+        <div>
+          <h3>${safe(o.product||"Fashion Product")}</h3>
+          <div>${moneyText(o.product_price||o.amount)}</div>
+          ${o.size?`<small>Size: ${safe(o.size)}</small>`:""}
+        </div>
+      </div>
+      <div class="zv-status">${safe(o.status||"Pending")}</div>
+      <button class="zv-primary" data-detail="${i}">
+        TRACK ORDER / VIEW DETAILS
+      </button>
+    </article>`;
+  }
+
+  async function ordersPage(){
+    if(!currentUser){
+      openLogin();
+      message("Login to see your orders.");
+      return;
+    }
+
+    showPage("zv-orders-view","My Orders",
+      '<div class="zv-panel">Loading your orders...</div>');
+
+    try{
+      const token=await currentUser.getIdToken();
+      const res=await fetch("/api/orders",{
+        headers:{"Authorization":"Bearer "+token}
+      });
+      if(!res.ok)throw new Error("Could not load orders.");
+
+      cachedOrders=await res.json();
+      if(!Array.isArray(cachedOrders))cachedOrders=[];
+
+      page.innerHTML=`
+        <div class="zv-head">
+          <button class="zv-back" id="zvBack">‹</button>
+          <h2>My Orders</h2>
+        </div>
+        ${cachedOrders.length
+          ?cachedOrders.map(orderCard).join("")
+          :'<section class="zv-panel" style="text-align:center;padding:35px 15px"><div style="font-size:42px">📦</div><h3>No orders yet</h3><p style="color:#777">Your orders will appear here.</p><button class="zv-primary" id="zvShop">START SHOPPING</button></section>'
+        }`;
+
+      document.getElementById("zvBack").onclick=accountPage;
+      document.getElementById("zvShop")?.addEventListener("click",()=>window.goHome?.());
+
+      page.querySelectorAll("[data-detail]").forEach(btn=>{
+        btn.onclick=()=>orderDetails(cachedOrders[Number(btn.dataset.detail)]);
+      });
+
+    }catch(e){
+      showPage("zv-orders-view","My Orders",
+        `<section class="zv-panel">${safe(e.message)}</section>`);
+    }
+  }
+
+  function orderDetails(o){
+    if(!o)return;
+
+    const status=o.status||"Pending";
+    const idx=statusIndex(status);
+    const cancelled=idx===-1;
+
+    const stages=["Order Placed","Shipped","Out for Delivery","Delivered"];
+    const statusForDate=["Confirmed","Shipped","Out for Delivery","Delivered"];
+
+    const track=cancelled
+      ?'<div class="zv-status" style="color:#c62828">Order Cancelled</div>'
+      :`<div class="zv-track">${
+        stages.map((stage,i)=>`
+          <div class="zv-track-step ${idx>=i?"done":""}">
+            <div class="zv-track-dot">${idx>=i?"✓":""}</div>
+            ${stage}
+            <div style="margin-top:5px;font-weight:400">
+              ${dateText(trackingDate(o,statusForDate[i]))}
+            </div>
+          </div>`).join("")
+      }</div>`;
+
+    const address=[o.address,o.district,o.state,o.pincode]
+      .filter(Boolean).join(", ");
+
+    const history=(o.tracking||[]).map(t=>`
+      <p>✓ ${safe(t.status)} · ${dateText(t.updated_at||t.created_at)}</p>
+    `).join("")||"<p>Order updates will appear here when available.</p>";
+
+    showPage("zv-detail-view","Order Details",`
+      <section class="zv-panel">
+        <div class="zv-order-top">
+          <b>Order #${safe(o.id)}</b>
+          <span>${dateText(o.created_at||o.order_date)}</span>
+        </div>
+        <div class="zv-order-product">
+          ${o.product_image?`<img src="${safe(o.product_image)}" alt="Product">`:""}
+          <div>
+            <h3>${safe(o.product||"Fashion Product")}</h3>
+            <b>${moneyText(o.product_price||o.amount)}</b>
+            <div style="font-size:12px;color:#777;margin-top:5px">
+              Payment: Cash on Delivery
+            </div>
+          </div>
+        </div>
+        <div class="zv-status">${cancelled?"Order Cancelled":safe(status)}</div>
+        ${track}
+      </section>
+
+      ${o.expected_delivery&&!cancelled?`
+        <section class="zv-panel">
+          <div class="zv-detail-label">EXPECTED DELIVERY</div>
+          <b>${dateText(o.expected_delivery)}</b>
+        </section>`:""}
+
+      <section class="zv-panel">
+        <div class="zv-detail-label">DELIVERY ADDRESS</div>
+        <div class="zv-address">
+          <b>${safe(o.customer_name||o.name||"Customer")}</b><br>
+          ${safe(address||"Address details unavailable")}<br>
+          ${safe(o.phone||"")}
+        </div>
+      </section>
+
+      <section class="zv-panel zv-history">
+        <b>Order Updates</b>${history}
+      </section>
+    `);
+
+    document.getElementById("zvBack").onclick=ordersPage;
+  }
+
+  window.openOrders=ordersPage;
+  window.openProfile=accountPage;
+  window.zorvanaShowOrders=ordersPage;
+  window.zorvanaShowAccount=accountPage;
+})();
