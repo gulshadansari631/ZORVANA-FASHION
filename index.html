@@ -485,5 +485,258 @@ document.querySelectorAll(".card").forEach(card => {
 
 </div>
  <script type="module" src="/auth.js"></script>
+ 
+<style>
+#shopPanelOverlay {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:#0009;
+  z-index:20000;
+  padding:15px;
+  overflow:auto;
+}
+#shopPanel {
+  background:white;
+  color:#222;
+  max-width:520px;
+  width:100%;
+  margin:35px auto;
+  padding:18px;
+  border-radius:12px;
+}
+.shopItem {
+  display:flex;
+  gap:12px;
+  align-items:center;
+  border-bottom:1px solid #ddd;
+  padding:12px 0;
+}
+.shopItem img {
+  width:75px;
+  height:85px;
+  object-fit:contain;
+  background:#f5f5f5;
+  border-radius:6px;
+}
+.shopItemInfo {flex:1;min-width:0}
+.shopItemInfo h3 {font-size:14px;margin-bottom:5px}
+.shopItemInfo p {font-size:13px;margin:4px 0}
+.shopItem button {
+  padding:6px 10px;
+  border:1px solid #ccc;
+  background:white;
+  border-radius:5px;
+  margin:3px;
+}
+.shopRemove {color:#d00}
+.shopHeader {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+}
+.shopHeader button {
+  border:0;
+  background:#eee;
+  padding:8px 12px;
+  border-radius:6px;
+}
+.shopEmpty {text-align:center;padding:30px;color:#777}
+@media(max-width:500px) {
+  #shopPanel {margin:15px auto;padding:13px}
+  .shopItem img {width:65px;height:75px}
+}
+</style>
+
+<div id="shopPanelOverlay" onclick="if(event.target===this)closeShopPanel()">
+  <div id="shopPanel">
+    <div class="shopHeader">
+      <h2 id="shopPanelTitle">My Cart</h2>
+      <button onclick="closeShopPanel()">✕ Close</button>
+    </div>
+    <div id="shopPanelContent"></div>
+  </div>
+</div>
+
+<script>
+let zorCart = [];
+let zorWishlist = [];
+
+try {
+  zorCart = JSON.parse(localStorage.getItem("zorvanaCart")) || [];
+  zorWishlist = JSON.parse(localStorage.getItem("zorvanaWishlist")) || [];
+} catch(e) {
+  zorCart = [];
+  zorWishlist = [];
+}
+
+function saveShopData() {
+  localStorage.setItem("zorvanaCart", JSON.stringify(zorCart));
+  localStorage.setItem("zorvanaWishlist", JSON.stringify(zorWishlist));
+  updateShopCounts();
+}
+
+function updateShopCounts() {
+  const count = document.getElementById("count");
+  const wish = document.getElementById("wishCount");
+  if(count) count.innerText = zorCart.reduce((n,p) => n + p.qty, 0);
+  if(wish) wish.innerText = zorWishlist.length;
+}
+
+function shopEscape(value) {
+  return String(value || "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;",
+    '"':"&quot;", "'":"&#39;"
+  }[c]));
+}
+
+window.addCart = function() {
+  if(requiresSize() && !selectedSize) {
+    alert("Please select a size first.");
+    return;
+  }
+
+  const name = document.getElementById("detailName").innerText;
+  const image = document.getElementById("detailImage").src;
+  const price = document.getElementById("detailPrice").innerText;
+  const size = selectedSize || "Not applicable";
+
+  const existing = zorCart.find(p => p.name === name && p.size === size);
+
+  if(existing) {
+    existing.qty++;
+  } else {
+    zorCart.push({name, image, price, size, qty:1});
+  }
+
+  saveShopData();
+  closeProduct();
+  openCart();
+};
+
+function openCart() {
+  renderShopPanel("cart");
+}
+
+function openWishlist() {
+  renderShopPanel("wishlist");
+}
+
+function closeShopPanel() {
+  document.getElementById("shopPanelOverlay").style.display = "none";
+}
+
+function renderShopPanel(type) {
+  const overlay = document.getElementById("shopPanelOverlay");
+  const title = document.getElementById("shopPanelTitle");
+  const content = document.getElementById("shopPanelContent");
+
+  overlay.style.display = "block";
+
+  if(type === "cart") {
+    title.innerText = "My Cart";
+
+    if(!zorCart.length) {
+      content.innerHTML = '<div class="shopEmpty">Your cart is empty.</div>';
+      return;
+    }
+
+    content.innerHTML = zorCart.map((p,i) => `
+      <div class="shopItem">
+        <img src="${shopEscape(p.image)}" alt="Product">
+        <div class="shopItemInfo">
+          <h3>${shopEscape(p.name)}</h3>
+          <p>${shopEscape(p.price)}</p>
+          <p>Size: ${shopEscape(p.size)}</p>
+          <button onclick="changeCartQty(${i},-1)">−</button>
+          <b>${p.qty}</b>
+          <button onclick="changeCartQty(${i},1)">+</button>
+          <button class="shopRemove" onclick="removeCartItem(${i})">Remove</button>
+        </div>
+      </div>
+    `).join("");
+  } else {
+    title.innerText = "My Wishlist";
+
+    if(!zorWishlist.length) {
+      content.innerHTML = '<div class="shopEmpty">Your wishlist is empty.</div>';
+      return;
+    }
+
+    content.innerHTML = zorWishlist.map((p,i) => `
+      <div class="shopItem">
+        <img src="${shopEscape(p.image)}" alt="Product">
+        <div class="shopItemInfo">
+          <h3>${shopEscape(p.name)}</h3>
+          <p>${shopEscape(p.price)}</p>
+          <button onclick="moveWishToCart(${i})">Add to Cart</button>
+          <button class="shopRemove" onclick="removeWishItem(${i})">Remove</button>
+        </div>
+      </div>
+    `).join("");
+  }
+}
+
+function changeCartQty(index,change) {
+  zorCart[index].qty += change;
+  if(zorCart[index].qty <= 0) zorCart.splice(index,1);
+  saveShopData();
+  renderShopPanel("cart");
+}
+
+function removeCartItem(index) {
+  zorCart.splice(index,1);
+  saveShopData();
+  renderShopPanel("cart");
+}
+
+function removeWishItem(index) {
+  zorWishlist.splice(index,1);
+  saveShopData();
+  renderShopPanel("wishlist");
+}
+
+function moveWishToCart(index) {
+  const p = zorWishlist[index];
+  const existing = zorCart.find(x => x.name === p.name && x.size === "Not applicable");
+
+  if(existing) existing.qty++;
+  else zorCart.push({...p,size:"Not applicable",qty:1});
+
+  saveShopData();
+  openCart();
+}
+
+document.querySelectorAll(".card").forEach(card => {
+  const heart = card.querySelector(".heart");
+  if(!heart) return;
+
+  heart.onclick = function(e) {
+    e.stopPropagation();
+
+    const name = card.dataset.name || card.querySelector("h3").innerText;
+    const image = card.querySelector("img").src;
+    const price = card.querySelector(".price").innerText;
+    const index = zorWishlist.findIndex(p => p.name === name);
+
+    if(index >= 0) {
+      zorWishlist.splice(index,1);
+      heart.innerHTML = "♡";
+    } else {
+      zorWishlist.push({name,image,price});
+      heart.innerHTML = "♥";
+    }
+
+    saveShopData();
+  };
+
+  const name = card.dataset.name || card.querySelector("h3").innerText;
+  if(zorWishlist.some(p => p.name === name)) heart.innerHTML = "♥";
+});
+
+updateShopCounts();
+</script>
+
 </body>
 </html>
