@@ -393,6 +393,7 @@ async function saveProduct() {
     }
 
     message.textContent = "Product successfully added!";
+    loadProducts();
     alert("Product successfully added!");
   } catch (error) {
     message.textContent = error.message;
