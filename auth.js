@@ -189,8 +189,8 @@ async function addressRequest(method = "GET", data = null) {
 // PROFILE ADDRESS MANAGEMENT
 
 async function renderAddresses() {
-  const box = document.getElementById("savedAddresses");
-  const box = document.getElementById("savedAddresses");
+  const box = document.querySelector("#zvPage #zvSavedAddresses") ||
+            document.getElementById("savedAddresses");
   if (!box) return;
 
   box.innerHTML = "<h3>Saved Delivery Addresses</h3>";
