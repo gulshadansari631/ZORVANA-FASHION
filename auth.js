@@ -515,7 +515,7 @@ function updateLoginUI(user) {
   currentUser = user;
 
   document.getElementById("authStatus").textContent =
-    user ? "Welcome, ZORVANA FASHION" : "Please login to order";
+    user ? "Welcome to ZORVANA FASHION" : "Please login to order";
 
   document.getElementById("loginOpen").style.display =
     user ? "none" : "inline-block";
