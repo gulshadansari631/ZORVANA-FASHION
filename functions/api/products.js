@@ -10,17 +10,7 @@ function verifyAdmin(request, env) {
 
 export async function onRequest({ request, env }) {
   if (!env.DB) {
-    return Response.json(
-      { error: "Database missing" },
-      { status: 500 }
-    );
-  }
-
-  if (!verifyAdmin(request, env)) {
-    return Response.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+    return Response.json({ error: "Database missing" }, { status: 500 });
   }
 
   try {
@@ -30,77 +20,117 @@ export async function onRequest({ request, env }) {
         name TEXT NOT NULL,
         category TEXT NOT NULL,
         image TEXT,
+        images TEXT DEFAULT '[]',
         selling_price REAL NOT NULL,
-        mrp REAL,
+        mrp REAL DEFAULT 0,
         discount TEXT,
         description TEXT,
         stock INTEGER DEFAULT 0,
+        highlights TEXT DEFAULT '{}',
+        additional_details TEXT DEFAULT '{}',
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
       )
     `).run();
+
+    const columns = await env.DB.prepare(
+      "PRAGMA table_info(products)"
+    ).all();
+
+    const existing = (columns.results || []).map(c => c.name);
+
+    const migrations = [
+      ["images", "TEXT DEFAULT '[]'"],
+      ["highlights", "TEXT DEFAULT '{}'"],
+      ["additional_details", "TEXT DEFAULT '{}'"]
+    ];
+
+    for (const [name, type] of migrations) {
+      if (!existing.includes(name)) {
+        await env.DB.prepare(
+          `ALTER TABLE products ADD COLUMN ${name} ${type}`
+        ).run();
+      }
+    }
 
     if (request.method === "GET") {
       const result = await env.DB.prepare(
         "SELECT * FROM products ORDER BY id DESC"
       ).all();
 
-      return Response.json(result.results || []);
+      const products = (result.results || []).map(p => ({
+        ...p,
+        images: parseJSON(p.images, p.image ? [p.image] : []),
+        highlights: parseJSON(p.highlights, {}),
+        additional_details: parseJSON(p.additional_details, {})
+      }));
+
+      return Response.json(products);
     }
 
-    if (request.method === "POST") {
+    if (!verifyAdmin(request, env)) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (request.method === "POST" || request.method === "PUT") {
       const p = await request.json();
 
       if (
         !p.name ||
         !p.category ||
-        !Number.isFinite(Number(p.selling_price))
+        !Number.isFinite(Number(p.selling_price)) ||
+        Number(p.selling_price) < 0
       ) {
         return Response.json(
-          { error: "Name, category and price required" },
+          { error: "Name, category and valid price required" },
           { status: 400 }
         );
       }
 
-      const result = await env.DB.prepare(`
-        INSERT INTO products
-        (name, category, image, selling_price, mrp, discount, description, stock)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `).bind(
+      const images = Array.isArray(p.images)
+        ? p.images.filter(url => typeof url === "string" && url.startsWith("https://"))
+        : [];
+
+      const mainImage = images[0] || p.image || "";
+
+      const values = [
         String(p.name).trim(),
         String(p.category),
-        p.image || "",
+        mainImage,
+        JSON.stringify(images.length ? images : (mainImage ? [mainImage] : [])),
         Number(p.selling_price),
         Number(p.mrp) || 0,
-        p.discount || "",
-        p.description || "",
-        Math.max(0, Number(p.stock) || 0)
-      ).run();
+        String(p.discount || ""),
+        String(p.description || ""),
+        Math.max(0, Number(p.stock) || 0),
+        JSON.stringify(p.highlights || {}),
+        JSON.stringify(p.additional_details || {})
+      ];
 
-      return Response.json({
-        success: true,
-        id: result.meta.last_row_id
-      });
-    }
+      if (request.method === "POST") {
+        const result = await env.DB.prepare(`
+          INSERT INTO products
+          (name, category, image, images, selling_price, mrp, discount,
+           description, stock, highlights, additional_details)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(...values).run();
 
-    if (request.method === "PUT") {
-      const p = await request.json();
+        return Response.json({
+          success: true,
+          id: result.meta.last_row_id
+        });
+      }
+
+      if (!Number(p.id)) {
+        return Response.json({ error: "Product ID required" }, { status: 400 });
+      }
 
       await env.DB.prepare(`
         UPDATE products SET
-        name=?, category=?, image=?, selling_price=?,
-        mrp=?, discount=?, description=?, stock=?
+        name=?, category=?, image=?, images=?, selling_price=?, mrp=?,
+        discount=?, description=?, stock=?, highlights=?,
+        additional_details=?
         WHERE id=?
-      `).bind(
-        String(p.name).trim(),
-        String(p.category),
-        p.image || "",
-        Number(p.selling_price),
-        Number(p.mrp) || 0,
-        p.discount || "",
-        p.description || "",
-        Math.max(0, Number(p.stock) || 0),
-        Number(p.id)
-      ).run();
+      `).bind(...values, Number(p.id)).run();
 
       return Response.json({ success: true });
     }
@@ -115,14 +145,17 @@ export async function onRequest({ request, env }) {
       return Response.json({ success: true });
     }
 
-    return new Response("Method not allowed", {
-      status: 405
-    });
+    return new Response("Method not allowed", { status: 405 });
 
   } catch (error) {
-    return Response.json(
-      { error: error.message },
-      { status: 500 }
-    );
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+}
+
+function parseJSON(value, fallback) {
+  try {
+    return value ? JSON.parse(value) : fallback;
+  } catch {
+    return fallback;
   }
 }
