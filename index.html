@@ -228,19 +228,27 @@ function openProductCard(card) {
   const img = card.querySelector("img");
   const name = card.dataset.name ||
     card.querySelector("h3")?.innerText || "Product";
-  const price = card.querySelector(".price")?.innerText || "";
+
+  const priceBox = card.querySelector(".price");
+  const sellingPrice = priceBox?.childNodes[0]?.textContent.trim() || "";
+  const mrp = priceBox?.querySelector(".old")?.innerText || "";
+  const discount = priceBox?.querySelector(".discount")?.innerText || "";
 
   activeProductCategory = card.dataset.category || "";
   selectedSize = "";
 
   document.getElementById("detailImage").src = img?.src || "";
   document.getElementById("detailName").innerText = name;
-  document.getElementById("detailPrice").innerText = price;
+  document.getElementById("detailPrice").innerText = sellingPrice;
+  document.getElementById("detailMRP").innerText = mrp;
+  document.getElementById("detailDiscount").innerText = discount;
 
   setAvailableSizes();
 
   document.getElementById("productModal").style.display = "block";
 }
+
+
 
 function buy(product) {
   if (requiresSize() && !selectedSize) {
