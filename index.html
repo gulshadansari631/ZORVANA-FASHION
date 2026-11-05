@@ -120,7 +120,7 @@ footer p{margin-top:8px;font-size:13px}
 <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400" alt="Men T Shirt">
 <h3>Men's Classic T-Shirt</h3>
 <div class="price">₹599 <span class="old">₹999</span><span class="discount">40% off</span></div>
- onclick="openProductFromButton(this)"
+ <button class="cart" onclick="openProductFromButton(this)">ADD TO CART</button>
 <button class="buy" onclick="buy('Men Classic T Shirt')">BUY NOW</button>
 </div>
 
@@ -129,7 +129,7 @@ footer p{margin-top:8px;font-size:13px}
 <img src="https://images.unsplash.com/photo-1539008835657-9e8e9680c956?w=400" alt="Women's Dress">
 <h3>Women's Fashion Dress</h3>
 <div class="price">₹899 <span class="old">₹1499</span><span class="discount">40% off</span></div>
-onclick="openProductFromButton(this)"
+<button class="cart" onclick="openProductFromButton(this)">ADD TO CART</button>
 <button class="buy" onclick="buy('Womens Fashion Dress')">BUY NOW</button>
 </div>
 
@@ -138,7 +138,7 @@ onclick="openProductFromButton(this)"
 <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400" alt="Sports Shoes">
 <h3>Premium Sports Sneakers</h3>
 <div class="price">₹1,299 <span class="old">₹1999</span><span class="discount">35% off</span></div>
-onclick="openProductFromButton(this)"
+<button class="cart" onclick="openProductFromButton(this)">ADD TO CART</button>
 <button class="buy" onclick="buy('Sports Sneakers')">BUY NOW</button>
 </div>
 
@@ -147,7 +147,7 @@ onclick="openProductFromButton(this)"
 <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400" alt="Watch">
 <h3>Classic Wrist Watch</h3>
 <div class="price">₹999 <span class="old">₹1599</span><span class="discount">37% off</span></div>
-onclick="openProductFromButton(this)"
+<button class="cart" onclick="openProductFromButton(this)">ADD TO CART</button>
 <button class="buy" onclick="buy('Classic Wrist Watch')">BUY NOW</button>
 </div>
 
@@ -156,7 +156,7 @@ onclick="openProductFromButton(this)"
 <img src="https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=400" alt="Sunglasses">
 <h3>Stylish Sunglasses</h3>
 <div class="price">₹499 <span class="old">₹799</span><span class="discount">37% off</span></div>
-onclick="openProductFromButton(this)"
+<button class="cart" onclick="openProductFromButton(this)">ADD TO CART</button>
 <button class="buy" onclick="buy('Stylish Sunglasses')">BUY NOW</button>
 </div>
 
@@ -347,7 +347,7 @@ function filterProducts(){
 </div>
 
 <script>
-let selectedSize = "";
+
 
 function selectSize(btn) {
   selectedSize = btn.innerText;
@@ -430,12 +430,28 @@ document.querySelectorAll(".card").forEach(card => {
 
    <label>Select Size (if applicable)</label>
    <select name="size" id="checkoutSize">
-    <option value="Not selected">Not selected</option>
-    <option>S</option 
-    <option>L</option>
-    <option>XL</option>
-    <option>XXL</option>
-    <option>Not applicable</option>
+    <option value="Not selected">Select Size</option>
+<option value="S">S</option>
+<option value="M">M</option>
+<option value="L">L</option>
+<option value="XL">XL</option>
+<option value="XXL">XXL</option>
+<option value="28">28</option>
+<option value="30">30</option>
+<option value="32">32</option>
+<option value="34">34</option>
+<option value="36">36</option>
+<option value="38">38</option>
+<option value="40">40</option>
+<option value="42">42</option>
+<option value="44">44</option>
+<option value="6">6</option>
+<option value="7">7</option>
+<option value="8">8</option>
+<option value="9">9</option>
+<option value="10">10</option>
+<option value="11">11</option>
+<option value="Not applicable">Not applicable</option>
    </select>
 
    <label>Your Name</label>
