@@ -692,6 +692,8 @@ try{
  <button onclick="copyOrderDetails(${Number(o.id)})">COPY FULL DETAILS</button>
  <button onclick="copyOrderAddress(${Number(o.id)})">COPY ADDRESS</button>
  <button onclick="copyOrderPhone(${Number(o.id)})">COPY PHONE</button>
+ <button class="confirm" onclick="setPinCheck(${Number(o.id)},'Available')">PIN AVAILABLE</button>
+<button class="cancel" onclick="setPinCheck(${Number(o.id)},'Unavailable')">PIN UNAVAILABLE</button>
 </div>
   <p><b>Delivery Partner:</b> ${o.delivery_boy_id||"Not Assigned"}</p>
 
