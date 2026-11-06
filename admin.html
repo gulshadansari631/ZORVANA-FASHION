@@ -661,6 +661,7 @@ async function showOrders(data){
  let partners=[];
  try{
   partners=await loadApprovedDeliveryBoys();
+  window.currentAdminOrders = data;
  }catch(error){
   console.error(error);
  }
@@ -684,6 +685,7 @@ async function showOrders(data){
   <p><b>PIN:</b> ${safe(o.pincode)}</p>
   <p><b>Payment:</b> ${safe(o.payment)}</p>
   <p><b>Status:</b> ${safe(o.status||"Pending")}</p>
+<p><b>Meesho PIN Check:</b> ${safe(o.pin_check_status||"Not Checked")}</p>
   <p><b>Delivery Partner:</b> ${o.delivery_boy_id||"Not Assigned"}</p>
 
   <label>Assign Delivery Boy</label>
