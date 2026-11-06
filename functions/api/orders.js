@@ -263,12 +263,70 @@ export async function onRequest(context) {
         return Response.json({ error: "Unauthorized" }, { status: 401 });
       }
 
-      const body = await request.json();
+            const body = await request.json();
       const id = Number(body.id);
-      const allowedStatuses = ["Confirmed", "Shipped", "Out for Delivery", "Delivered", "Cancelled"];
 
-      if (!Number.isInteger(id) || id <= 0 || !allowedStatuses.includes(body.status)) {
-        return Response.json({ error: "Invalid order ID or status" }, { status: 400 });
+      if (!Number.isInteger(id) || id <= 0) {
+        return Response.json({ error: "Invalid order ID" }, { status: 400 });
+      }
+
+      const columns = await env.DB.prepare(
+        "PRAGMA table_info(orders)"
+      ).all();
+
+      const hasPinColumn = (columns.results || []).some(
+        c => c.name === "pin_check_status"
+      );
+
+      if (!hasPinColumn) {
+        await env.DB.prepare(
+          "ALTER TABLE orders ADD COLUMN pin_check_status TEXT DEFAULT 'Not Checked'"
+        ).run();
+      }
+
+      if (body.pin_check_status) {
+        if (!["Available", "Unavailable"].includes(body.pin_check_status)) {
+          return Response.json({ error: "Invalid PIN status" }, { status: 400 });
+        }
+
+        const result = await env.DB.prepare(`
+          UPDATE orders
+          SET pin_check_status = ?
+          WHERE id = ?
+        `).bind(body.pin_check_status, id).run();
+
+        if (!result.meta.changes) {
+          return Response.json({ error: "Order not found" }, { status: 404 });
+        }
+
+        return Response.json({
+          success: true,
+          message: "PIN verification updated"
+        });
+      }
+
+      const allowedStatuses = [
+        "Confirmed",
+        "Shipped",
+        "Out for Delivery",
+        "Delivered",
+        "Cancelled"
+      ];
+
+      if (!allowedStatuses.includes(body.status)) {
+        return Response.json({ error: "Invalid order status" }, { status: 400 });
+      }
+
+      if (body.status === "Confirmed") {
+        const order = await env.DB.prepare(`
+          SELECT pin_check_status FROM orders WHERE id = ?
+        `).bind(id).first();
+
+        if (!order || order.pin_check_status !== "Available") {
+          return Response.json({
+            error: "First verify PIN code as Available."
+          }, { status: 400 });
+        }
       }
 
       const result = await env.DB.prepare(`
@@ -284,7 +342,10 @@ export async function onRequest(context) {
         VALUES (?, ?)
       `).bind(id, body.status).run();
 
-      return Response.json({ success: true, message: "Order status updated" });
+      return Response.json({
+        success: true,
+        message: "Order status updated"
+      });
 
     } catch (error) {
       return Response.json({ error: "Update failed: " + error.message }, { status: 500 });
