@@ -554,6 +554,35 @@ async function deleteProduct(id){
   alert(error.message);
  }
 }
+ async function loadOrders(){
+ const box=document.getElementById("orders");
+ box.textContent="Loading orders...";
+
+ try{
+  const response=await fetch("/api/orders",{
+   headers:{
+    "X-Admin-Email":adminEmail,
+    "X-Admin-Password":adminPassword
+   }
+  });
+
+  const data=await response.json();
+
+  if(!response.ok){
+   throw new Error(data.error||"Orders load failed");
+  }
+
+  if(!Array.isArray(data)){
+   throw new Error("Invalid orders response");
+  }
+
+  await showOrders(data);
+
+ }catch(error){
+  box.textContent="Orders load failed: "+error.message;
+  console.error(error);
+ }
+}
 async function showOrders(data){
  const box=document.getElementById("orders");
 
