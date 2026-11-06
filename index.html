@@ -65,32 +65,13 @@ footer{background:#171717;color:#ddd;text-align:center;padding:30px 15px;margin-
 .detail-info h2{font-size:23px}.detail-price{font-size:25px;font-weight:bold}.detail-mrp{text-decoration:line-through;color:#999;margin-left:8px}
 .detail-desc{color:#666;line-height:1.6}.pills{display:flex;gap:8px;flex-wrap:wrap}
 .pill{padding:9px 13px;border:1px solid #ddd;background:#fff;border-radius:5px}.pill.selected{border:2px solid #111}
- .size-guide-toggle{
-  margin-top:10px;
-  padding:9px 13px;
-  background:#fff;
-  border:1px solid #d71936;
-  color:#d71936;
-  border-radius:6px;
-  font-weight:bold;
-}
-.size-guide{
-  margin-top:12px;
-  padding:12px;
-  border:1px solid #eee;
-  border-radius:8px;
-  background:#fafafa;
-  overflow-x:auto;
-}
+.size-guide-toggle{margin-top:10px;padding:9px 13px;background:#fff;border:1px solid #d71936;color:#d71936;border-radius:6px;font-weight:bold}
+.size-guide{margin-top:12px;padding:12px;border:1px solid #eee;border-radius:8px;background:#fafafa;overflow-x:auto}
 .size-guide h4{margin:0 0 10px}
 .size-guide table{width:100%;border-collapse:collapse;font-size:12px}
-.size-guide th,.size-guide td{
-  padding:9px 7px;
-  border:1px solid #ddd;
-  text-align:center;
-}
+.size-guide th,.size-guide td{padding:9px 7px;border:1px solid #ddd;text-align:center}
 .size-guide th{background:#f1f1f1}
-.size-guide-note{font-size:11px;color:#777;margin-top:9p}
+.size-guide-note{font-size:11px;color:#777;margin-top:9px}
 .buy-row{display:flex;gap:8px;margin-top:22px;flex-wrap:wrap}.buy-row button{flex:1;padding:13px 8px;border-radius:5px;font-weight:bold}
 .buy{background:var(--red);color:#fff;border:0}.wish{background:#fff;border:1px solid #ccc}.add-cart{background:#171717;color:#fff;border:0}
 .details-list{font-size:13px;line-height:1.8;color:#555}.checkout-box{max-width:520px}
@@ -166,28 +147,25 @@ footer{background:#171717;color:#ddd;text-align:center;padding:30px 15px;margin-
  <div class="service-item"><span>📦</span>Easy<br>Returns</div><div class="service-item"><span>🎧</span>24×7<br>Support</div>
 </section>
 <footer><strong>ZORVANA FASHION</strong><p>Style for every moment.</p><p>© <span id="year"></span> Zorvana Fashion</p></footer>
-<nav class="bottom-nav">
+
+<nav class="bottom-nav" aria-label="Main navigation">
  <button class="active" data-nav="home" onclick="goHome()"><span>⌂</span>Home</button>
  <button data-nav="categories" onclick="goCategories()"><span>▦</span>Categories</button>
- <button data-nav="search" onclick="goSearch()"><span>⌕</span>Search</button>
- <button data-nav="orders" onclick="openOrders()"><span>▣</span>Orders</button>
- <button data-nav="profile" onclick="openProfile()"><span>♙</span>Profile</button>
+ <button data-nav="wishlist" onclick="showWishlist()"><span>♡</span>Wishlist</button>
+ <button data-nav="orders" onclick="setNav('orders');openOrders()"><span>▣</span>Orders</button>
+ <button data-nav="account" onclick="setNav('account');openProfile()"><span>♙</span>Account</button>
 </nav>
+
 <div class="modal" id="productModal"><div class="modal-box">
  <button class="close" onclick="closeProduct()">×</button><div class="detail-grid">
   <div><div class="main-photo"><img id="detailImage" src="" alt="Product"></div><div class="thumbs" id="detailThumbs"></div></div>
   <div class="detail-info"><div class="muted" id="detailCategory"></div><h2 id="detailName"></h2>
    <div><span class="detail-price" id="detailPrice"></span><span class="detail-mrp" id="detailMrp"></span></div>
    <p class="detail-desc" id="detailDescription"></p>
-
 <div id="sizeArea">
   <h4>Select Size</h4>
   <div class="pills" id="sizeOptions"></div>
-
-  <button class="size-guide-toggle" onclick="toggleSizeGuide()">
-    📏 SIZE GUIDE
-  </button>
-
+  <button class="size-guide-toggle" onclick="toggleSizeGuide()">📏 SIZE GUIDE</button>
   <div class="size-guide" id="sizeGuide" style="display:none"></div>
 </div>
    <h4>Highlights</h4><ul class="details-list" id="detailHighlights"></ul><h4>Product Details</h4><ul class="details-list" id="detailMore"></ul>
@@ -210,11 +188,13 @@ footer{background:#171717;color:#ddd;text-align:center;padding:30px 15px;margin-
   <button class="checkout-submit" id="orderButton" type="submit">PLACE ORDER • CASH ON DELIVERY</button>
  </form>
 </div></div>
+
 <script>
 let allProducts=[],currentProduct=null,selectedSize='',wishlist=[];
 try{wishlist=JSON.parse(localStorage.getItem('zorvana_wishlist')||'[]');if(!Array.isArray(wishlist))wishlist=[]}catch(e){wishlist=[]}
 let cart=[];try{cart=JSON.parse(localStorage.getItem('zorvana_cart')||'[]');if(!Array.isArray(cart))cart=[]}catch(e){cart=[]}
 const $=id=>document.getElementById(id);$('year').textContent=new Date().getFullYear();
+
 function money(v){return '₹'+Number(v||0).toLocaleString('en-IN')}
 function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function images(p){let a=Array.isArray(p.images)?p.images:[];if(typeof p.images==='string'){try{a=JSON.parse(p.images)}catch(e){a=[]}}if(p.image)a.unshift(p.image);return [...new Set(a.filter(Boolean))]}
@@ -223,103 +203,207 @@ function sizes(p){if(Array.isArray(p.sizes))return p.sizes.map(String);if(typeof
 function listValue(v){if(Array.isArray(v))return v;if(typeof v==='string'){try{let x=JSON.parse(v);return Array.isArray(x)?x:v.split(/\r?\n/).filter(Boolean)}catch(e){return v.split(/\r?\n/).filter(Boolean)}}if(v&&typeof v==='object')return Object.entries(v).map(([k,x])=>k+': '+x);return []}
 function saveCart(){localStorage.setItem('zorvana_cart',JSON.stringify(cart));$('cartCount').textContent=cart.reduce((n,x)=>n+(Number(x.qty)||1),0)}
 function categoryIs(p,c){return String(p.category||'').trim().toLowerCase()===c.toLowerCase()}
-function card(p){const id=String(p.id),discount=Number(p.discount||0);return `<article class="card" onclick="openProduct('${escapeHtml(id)}')"><div class="card-img"><img loading="lazy" src="${productImage(p)}" alt="${escapeHtml(p.name)}">${discount?`<span class="discount-tag">${discount}% OFF</span>`:''}<button class="card-wish" onclick="event.stopPropagation();toggleWishlist('${escapeHtml(id)}')">♡</button></div><div class="card-info"><h3>${escapeHtml(p.name||'Fashion Product')}</h3><div><span class="price">${money(p.selling_price)}</span><span class="mrp">${p.mrp?money(p.mrp):''}</span></div><div class="card-bottom"><span class="rating">⭐ 4.5</span><button class="add-small" onclick="event.stopPropagation();quickAdd('${escapeHtml(id)}')">🛒</button></div></div></article>`}
+
+function card(p){
+ const id=String(p.id),discount=Number(p.discount||0);
+ return `<article class="card" onclick="openProduct('${escapeHtml(id)}')"><div class="card-img"><img loading="lazy" src="${productImage(p)}" alt="${escapeHtml(p.name)}">${discount?`<span class="discount-tag">${discount}% OFF</span>`:''}<button class="card-wish" onclick="event.stopPropagation();toggleWishlist('${escapeHtml(id)}')">♡</button></div><div class="card-info"><h3>${escapeHtml(p.name||'Fashion Product')}</h3><div><span class="price">${money(p.selling_price)}</span><span class="mrp">${p.mrp?money(p.mrp):''}</span></div><div class="card-bottom"><span class="rating">⭐ 4.5</span><button class="add-small" onclick="event.stopPropagation();quickAdd('${escapeHtml(id)}')">🛒</button></div></div></article>`;
+}
 function renderGrid(id,items,msg){$(id).innerHTML=items.length?items.map(card).join():`<div class="empty">${msg}</div>`}
-function renderHome(){renderGrid('productGrid',allProducts.slice(0,9),'No products available yet.');renderGrid('menHomeGrid',allProducts.filter(p=>categoryIs(p,'Men')).slice(0,6),'Men collection will appear here.');renderGrid('womenHomeGrid',allProducts.filter(p=>categoryIs(p,'Women')).slice(0,6),'Women collection will appear here.');renderGrid('newHomeGrid',allProducts.slice(0,6),'New arrivals coming soon.')}
-async function loadProducts(){try{const r=await fetch('/api/products');if(!r.ok)throw new Error();const d=await r.json();allProducts=Array.isArray(d)?d:(d.products||[]);renderHome();const id=new URLSearchParams(location.search).get('product');if(id)openProduct(id,false)}catch(e){$('productGrid').innerHTML='<div class="empty">Products load nahi ho pa rahe. Refresh karke dekhein.</div>'}}
-function setNav(name){document.querySelectorAll('.bottom-nav button').forEach(b=>b.classList.toggle('active',b.dataset.nav===name))}
-function filterCategory(c,btn){document.querySelectorAll('#categoryNav button').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');$('sectionTitle').textContent=c==='All'?'Trending Now 🔥':c+' Collection';const items=c==='All'?allProducts:allProducts.filter(p=>categoryIs(p,c));renderGrid('productGrid',items,'Is category mein abhi products nahi hain.');document.querySelectorAll('.home-section').forEach(s=>s.style.display='none');$('shop').scrollIntoView({behavior:'smooth'});setNav('categories')}
-function selectCategory(c){const b=[...document.querySelectorAll('#categoryNav button')].find(x=>x.textContent.trim().toLowerCase()===c.toLowerCase());filterCategory(c,b)}
-function searchProducts(){const q=$('searchInput').value.trim().toLowerCase();const items=allProducts.filter(p=>(p.name+' '+p.category+' '+(p.description||'')).toLowerCase().includes(q));$('sectionTitle').textContent='Search Results';renderGrid('productGrid',items,'No matching products found.');document.querySelectorAll('.home-section').forEach(s=>s.style.display='none');$('shop').scrollIntoView({behavior:'smooth'});setNav('search')}
+function renderHome(){
+ renderGrid('productGrid',allProducts.slice(0,9),'No products available yet.');
+ renderGrid('menHomeGrid',allProducts.filter(p=>categoryIs(p,'Men')).slice(0,6),'Men collection will appear here.');
+ renderGrid('womenHomeGrid',allProducts.filter(p=>categoryIs(p,'Women')).slice(0,6),'Women collection will appear here.');
+ renderGrid('newHomeGrid',allProducts.slice(0,6),'New arrivals coming soon.');
+}
+async function loadProducts(){
+ try{
+  const r=await fetch('/api/products');
+  if(!r.ok)throw new Error();
+  const d=await r.json();
+  allProducts=Array.isArray(d)?d:(d.products||[]);
+  renderHome();
+  const id=new URLSearchParams(location.search).get('product');
+  if(id)openProduct(id,false);
+ }catch(e){
+  $('productGrid').innerHTML='<div class="empty">Products load nahi ho pa rahe. Refresh karke dekhein.</div>';
+ }
+}
+function setNav(name){
+ document.querySelectorAll('.bottom-nav button').forEach(b=>b.classList.toggle('active',b.dataset.nav===name));
+}
+function filterCategory(c,btn){
+ document.querySelectorAll('#categoryNav button').forEach(b=>b.classList.remove('active'));
+ if(btn)btn.classList.add('active');
+ $('sectionTitle').textContent=c==='All'?'Trending Now 🔥':c+' Collection';
+ const items=c==='All'?allProducts:allProducts.filter(p=>categoryIs(p,c));
+ renderGrid('productGrid',items,'Is category mein abhi products nahi hain.');
+ document.querySelectorAll('.home-section').forEach(s=>s.style.display='none');
+ $('shop').scrollIntoView({behavior:'smooth'});
+ setNav('categories');
+}
+function selectCategory(c){
+ const b=[...document.querySelectorAll('#categoryNav button')].find(x=>x.textContent.trim().toLowerCase()===c.toLowerCase());
+ filterCategory(c,b);
+}
+function searchProducts(){
+ const q=$('searchInput').value.trim().toLowerCase();
+ const items=allProducts.filter(p=>(p.name+' '+p.category+' '+(p.description||'')).toLowerCase().includes(q));
+ $('sectionTitle').textContent='Search Results';
+ renderGrid('productGrid',items,'No matching products found.');
+ document.querySelectorAll('.home-section').forEach(s=>s.style.display='none');
+ $('shop').scrollIntoView({behavior:'smooth'});
+ setNav('search');
+}
 function searchFor(q){$('searchInput').value=q;searchProducts()}
 $('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')searchProducts()});
-function showAllProducts(){document.querySelectorAll('.home-section').forEach(s=>s.style.display='none');$('sectionTitle').textContent='All Products';renderGrid('productGrid',allProducts,'No products available.');$('shop').scrollIntoView({behavior:'smooth'})}
+function showAllProducts(){
+ document.querySelectorAll('.home-section').forEach(s=>s.style.display='none');
+ $('sectionTitle').textContent='All Products';
+ renderGrid('productGrid',allProducts,'No products available.');
+ $('shop').scrollIntoView({behavior:'smooth'});
+}
 function goShop(){$('shop').scrollIntoView({behavior:'smooth'})}
-function goHome(){document.body.classList.remove('zv-page-mode','zv-account-view','zv-orders-view','zv-detail-view','orders-view');document.querySelectorAll('.home-section').forEach(s=>s.style.display='');document.querySelectorAll('#categoryNav button').forEach(b=>b.classList.toggle('active',b.textContent.trim()==='All'));$('sectionTitle').textContent='Trending Now 🔥';renderHome();setNav('home');window.scrollTo({top:0,behavior:'smooth'})}
+function goHome(){
+ document.body.classList.remove('zv-page-mode','zv-account-view','zv-orders-view','zv-detail-view','orders-view');
+ document.querySelectorAll('.home-section').forEach(s=>s.style.display='');
+ document.querySelectorAll('#categoryNav button').forEach(b=>b.classList.toggle('active',b.textContent.trim()==='All'));
+ $('sectionTitle').textContent='Trending Now 🔥';
+ renderHome();
+ setNav('home');
+ window.scrollTo({top:0,behavior:'smooth'});
+}
 function focusSearch(){$('searchInput').focus();window.scrollTo({top:0,behavior:'smooth'});setNav('search')}
 function goCategories(){goHome();setNav('categories');setTimeout(()=>$('categoryNav').scrollIntoView({behavior:'smooth'}),100)}
 function goSearch(){goHome();setNav('search');setTimeout(focusSearch,100)}
 function toggleMenu(){goCategories()}
-function openProduct(id,update=true){const p=allProducts.find(x=>String(x.id)===String(id));if(!p)return;currentProduct=p;selectedSize='';$('detailCategory').textContent=p.category||'Fashion';$('detailName').textContent=p.name||'Product';$('detailPrice').textContent=money(p.selling_price);$('detailMrp').textContent=p.mrp?money(p.mrp):'';$('detailDescription').textContent=p.description||'';const imgs=images(p);$('detailImage').src=imgs[0]||productImage(p);$('detailThumbs').innerHTML=imgs.map((x,i)=>`<img src="${x}" onclick="$('detailImage').src=this.src" alt="Product ${i+1}">`).join('');const ss=sizes(p);$('sizeArea').style.display=ss.length?'block':'none';$('sizeOptions').innerHTML=ss.map(x=>`<button class="pill" onclick="chooseSize('${escapeHtml(x)}',this)">${escapeHtml(x)}</button>`).join('');$('detailHighlights').innerHTML=listValue(p.highlights).map(x=>`<li>${escapeHtml(x)}</li>`).join('')||'<li>Stylish and comfortable design</li>';$('detailMore').innerHTML=listValue(p.additional_details).map(x=>`<li>${escapeHtml(x)}</li>`).join('')||'<li>Quality fashion product</li>';$('productModal').classList.add('show');document.body.style.overflow='hidden';if(update){const u=new URL(location.href);u.searchParams.set('product',id);history.replaceState({},'',u)}}
-function chooseSize(s,b){selectedSize=s;document.querySelectorAll('#sizeOptions .pill').forEach(x=>x.classList.remove('selected'));b.classList.add('selected')}
- function toggleSizeGuide(){
-  const box=document.getElementById('sizeGuide');
 
-  if(!box)return;
-
-  if(box.style.display!=='none'){
-    box.style.display='none';
-    return;
-  }
-
-  box.style.display='block';
-
-  const category=String(currentProduct?.category||'').toLowerCase();
-  const name=String(currentProduct?.name||'').toLowerCase();
-  const text=category+' '+name;
-
-  let title='Clothing Size Chart';
-  let headers=['Size','Chest (in)','Length (in)'];
-  let rows=[
-    ['S','36','27'],
-    ['M','38','28'],
-    ['L','40','29'],
-    ['XL','42','30'],
-    ['XXL','44','31'],
-    ['XXXL','46','32']
-  ];
-
-  if(/shoe|footwear/.test(text)){
-    title='Footwear Size Chart';
-    headers=['UK Size','Foot Length (cm)'];
-    rows=[
-      ['6','24.5'],['7','25.4'],['8','26.2'],
-      ['9','27.1'],['10','27.9'],['11','28.8']
-    ];
-  }else if(/jean|trouser|pant/.test(text)){
-    title='Jeans & Trousers Size Chart';
-    headers=['Waist Size','Waist (in)'];
-    rows=['28','30','32','34','36','38','40'].map(x=>[x,x]);
-  }else if(/women|girl|dress/.test(text)){
-    title="Women's Clothing Size Chart";
-    rows=[
-      ['XS','32','25'],['S','34','26'],
-      ['M','36','27'],['L','38','28'],
-      ['XL','40','29'],['XXL','42','30']
-    ];
-  }
-
-  box.innerHTML=`
-    <h4>${title}</h4>
-    <table>
-      <thead>
-        <tr>${headers.map(x=>`<th>${x}</th>`).join('')}</tr>
-      </thead>
-      <tbody>
-        ${rows.map(row=>`<tr>${row.map(x=>`<td>${x}</td>`).join('')}</tr>`).join('')}
-      </tbody>
-    </table>
-    <p class="size-guide-note">
-      Measurements are approximate. Actual fit may vary by product.
-    </p>
-  `;
+function openProduct(id,update=true){
+ const p=allProducts.find(x=>String(x.id)===String(id));
+ if(!p)return;
+ currentProduct=p;selectedSize='';
+ $('detailCategory').textContent=p.category||'Fashion';
+ $('detailName').textContent=p.name||'Product';
+ $('detailPrice').textContent=money(p.selling_price);
+ $('detailMrp').textContent=p.mrp?money(p.mrp):'';
+ $('detailDescription').textContent=p.description||'';
+ const imgs=images(p);
+ $('detailImage').src=imgs[0]||productImage(p);
+ $('detailThumbs').innerHTML=imgs.map((x,i)=>`<img src="${x}" onclick="$('detailImage').src=this.src" alt="Product ${i+1}">`).join('');
+ const ss=sizes(p);
+ $('sizeArea').style.display=ss.length?'block':'none';
+ $('sizeOptions').innerHTML=ss.map(x=>`<button class="pill" onclick="chooseSize('${escapeHtml(x)}',this)">${escapeHtml(x)}</button>`).join('');
+ $('detailHighlights').innerHTML=listValue(p.highlights).map(x=>`<li>${escapeHtml(x)}</li>`).join('')||'<li>Stylish and comfortable design</li>';
+ $('detailMore').innerHTML=listValue(p.additional_details).map(x=>`<li>${escapeHtml(x)}</li>`).join('')||'<li>Quality fashion product</li>';
+ $('productModal').classList.add('show');
+ document.body.style.overflow='hidden';
+ if(update){const u=new URL(location.href);u.searchParams.set('product',id);history.replaceState({},'',u)}
 }
-function closeProduct(){$('productModal').classList.remove('show');document.body.style.overflow='';const u=new URL(location.href);u.searchParams.delete('product');history.replaceState({},'',u);currentProduct=null}
+function chooseSize(s,b){
+ selectedSize=s;
+ document.querySelectorAll('#sizeOptions .pill').forEach(x=>x.classList.remove('selected'));
+ b.classList.add('selected');
+}
+function toggleSizeGuide(){
+ const box=document.getElementById('sizeGuide');
+ if(!box)return;
+ if(box.style.display!=='none'){box.style.display='none';return}
+ box.style.display='block';
+ const category=String(currentProduct?.category||'').toLowerCase();
+ const name=String(currentProduct?.name||'').toLowerCase();
+ const text=category+' '+name;
+ let title='Clothing Size Chart';
+ let headers=['Size','Chest (in)','Length (in)'];
+ let rows=[['S','36','27'],['M','38','28'],['L','40','29'],['XL','42','30'],['XXL','44','31'],['XXXL','46','32']];
+ if(/shoe|footwear/.test(text)){
+  title='Footwear Size Chart';headers=['UK Size','Foot Length (cm)'];
+  rows=[['6','24.5'],['7','25.4'],['8','26.2'],['9','27.1'],['10','27.9'],['11','28.8']];
+ }else if(/jean|trouser|pant/.test(text)){
+  title='Jeans & Trousers Size Chart';headers=['Waist Size','Waist (in)'];
+  rows=['28','30','32','34','36','38','40'].map(x=>[x,x]);
+ }else if(/women|girl|dress/.test(text)){
+  title="Women's Clothing Size Chart";
+  rows=[['XS','32','25'],['S','34','26'],['M','36','27'],['L','38','28'],['XL','40','29'],['XXL','42','30']];
+ }
+ box.innerHTML=`<h4>${title}</h4><table><thead><tr>${headers.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map(x=>`<td>${x}</td>`).join('')}</tr>`).join('')}</tbody></table><p class="size-guide-note">Measurements are approximate. Actual fit may vary by product.</p>`;
+}
+function closeProduct(){
+ $('productModal').classList.remove('show');
+ document.body.style.overflow='';
+ const u=new URL(location.href);u.searchParams.delete('product');history.replaceState({},'',u);
+ currentProduct=null;
+}
 function sizeOK(p){if(sizes(p).length&&!selectedSize){alert('Please select a size first.');return false}return true}
-function quickAdd(id){const p=allProducts.find(x=>String(x.id)===String(id));if(!p)return;currentProduct=p;selectedSize='';if(sizes(p).length){openProduct(id);alert('Please select your size, then tap ADD TO CART.');return}addToCart(p,'Not applicable')}
-function addToCart(p,s){const id=String(p.id),old=cart.find(x=>String(x.id)===id&&x.size===s);if(old)old.qty=(Number(old.qty)||1)+1;else cart.push({id,size:s,qty:1});saveCart();alert('Product added to cart.')}
+function quickAdd(id){
+ const p=allProducts.find(x=>String(x.id)===String(id));
+ if(!p)return;
+ currentProduct=p;selectedSize='';
+ if(sizes(p).length){openProduct(id);alert('Please select your size, then tap ADD TO CART.');return}
+ addToCart(p,'Not applicable');
+}
+function addToCart(p,s){
+ const id=String(p.id),old=cart.find(x=>String(x.id)===id&&x.size===s);
+ if(old)old.qty=(Number(old.qty)||1)+1;else cart.push({id,size:s,qty:1});
+ saveCart();alert('Product added to cart.');
+}
 function addCurrentToCart(){if(!currentProduct||!sizeOK(currentProduct))return;addToCart(currentProduct,selectedSize||'Not applicable')}
-function buyCurrentProduct(){if(!currentProduct||!sizeOK(currentProduct))return;$('checkoutProduct').value=currentProduct.name||'';$('checkoutSize').value=selectedSize||'Not applicable';$('checkoutPanel').classList.add('show')}
+function buyCurrentProduct(){
+ if(!currentProduct||!sizeOK(currentProduct))return;
+ $('checkoutProduct').value=currentProduct.name||'';
+ $('checkoutSize').value=selectedSize||'Not applicable';
+ $('checkoutPanel').classList.add('show');
+}
 function closeCheckout(){$('checkoutPanel').classList.remove('show')}
-function toggleWishlist(id){id=String(id);wishlist=wishlist.includes(id)?wishlist.filter(x=>x!==id):[...wishlist,id];localStorage.setItem('zorvana_wishlist',JSON.stringify(wishlist));$('wishCount').textContent=wishlist.length;alert(wishlist.includes(id)?'Added to wishlist':'Removed from wishlist')}
-function showWishlist(){document.querySelectorAll('.home-section').forEach(s=>s.style.display='none');$('sectionTitle').textContent='My Wishlist';renderGrid('productGrid',allProducts.filter(p=>wishlist.includes(String(p.id))),'Your wishlist is empty.');$('shop').scrollIntoView({behavior:'smooth'})}
-function showCart(){cart=cart.filter(x=>allProducts.some(p=>String(p.id)===String(x.id)));saveCart();document.querySelectorAll('.home-section').forEach(s=>s.style.display='none');$('sectionTitle').textContent='My Cart';const grid=$('productGrid');if(!cart.length){grid.innerHTML='<div class="empty">Your cart is empty.</div>';$('shop').scrollIntoView({behavior:'smooth'});return}let total=0;grid.innerHTML=cart.map((x,i)=>{const p=allProducts.find(y=>String(y.id)===String(x.id));const sub=Number(p.selling_price||0)*(Number(x.qty)||1);total+=sub;return `<div class="cart-row"><img src="${productImage(p)}"><div class="cart-info"><b>${escapeHtml(p.name)}</b><p>${money(p.selling_price)} · Size: ${escapeHtml(x.size||'Not applicable')}</p><div class="qty-control"><button onclick="changeQty(${i},-1)">−</button>${x.qty}<button onclick="changeQty(${i},1)">+</button></div><button class="remove-cart" onclick="removeCart(${i})">Remove</button></div><b>${money(sub)}</b></div>`}).join('')+`<div class="cart-total">Cart Total: ${money(total)}<br><button class="checkout-submit" onclick="checkoutCart()">PROCEED TO CHECKOUT • COD</button></div>`;$('shop').scrollIntoView({behavior:'smooth'})}
+
+function toggleWishlist(id){
+ id=String(id);
+ wishlist=wishlist.includes(id)?wishlist.filter(x=>x!==id):[...wishlist,id];
+ localStorage.setItem('zorvana_wishlist',JSON.stringify(wishlist));
+ $('wishCount').textContent=wishlist.length;
+ alert(wishlist.includes(id)?'Added to wishlist':'Removed from wishlist');
+}
+
+function showWishlist(){
+ document.body.classList.remove('zv-page-mode','zv-account-view','zv-orders-view','zv-detail-view','orders-view');
+ document.querySelectorAll('.home-section').forEach(s=>s.style.display='none');
+ $('sectionTitle').textContent='My Wishlist';
+ renderGrid('productGrid',allProducts.filter(p=>wishlist.includes(String(p.id))),'Your wishlist is empty.');
+ setNav('wishlist');
+ $('shop').scrollIntoView({behavior:'smooth'});
+}
+
+function showCart(){
+ cart=cart.filter(x=>allProducts.some(p=>String(p.id)===String(x.id)));
+ saveCart();
+ document.querySelectorAll('.home-section').forEach(s=>s.style.display='none');
+ $('sectionTitle').textContent='My Cart';
+ const grid=$('productGrid');
+ if(!cart.length){grid.innerHTML='<div class="empty">Your cart is empty.</div>';$('shop').scrollIntoView({behavior:'smooth'});return}
+ let total=0;
+ grid.innerHTML=cart.map((x,i)=>{
+  const p=allProducts.find(y=>String(y.id)===String(x.id));
+  const sub=Number(p.selling_price||0)*(Number(x.qty)||1);total+=sub;
+  return `<div class="cart-row"><img src="${productImage(p)}"><div class="cart-info"><b>${escapeHtml(p.name)}</b><p>${money(p.selling_price)} · Size: ${escapeHtml(x.size||'Not applicable')}</p><div class="qty-control"><button onclick="changeQty(${i},-1)">−</button>${x.qty}<button onclick="changeQty(${i},1)">+</button></div><button class="remove-cart" onclick="removeCart(${i})">Remove</button></div><b>${money(sub)}</b></div>`;
+ }).join('')+`<div class="cart-total">Cart Total: ${money(total)}<br><button class="checkout-submit" onclick="checkoutCart()">PROCEED TO CHECKOUT • COD</button></div>`;
+ $('shop').scrollIntoView({behavior:'smooth'});
+}
 function changeQty(i,n){if(!cart[i])return;cart[i].qty+=n;if(cart[i].qty<=0)cart.splice(i,1);saveCart();showCart()}
 function removeCart(i){cart.splice(i,1);saveCart();showCart()}
-function checkoutCart(){if(!cart.length)return alert('Cart is empty.');if(cart.length>1)return alert('Cart checkout currently supports one product at a time. Please order items separately.');const p=allProducts.find(x=>String(x.id)===String(cart[0].id));if(!p)return;currentProduct=p;selectedSize=cart[0].size==='Not applicable'?'':cart[0].size;$('checkoutProduct').value=p.name||'';$('checkoutSize').value=cart[0].size||'Not applicable';$('checkoutPanel').classList.add('show')}
+function checkoutCart(){
+ if(!cart.length)return alert('Cart is empty.');
+ if(cart.length>1)return alert('Cart checkout currently supports one product at a time. Please order items separately.');
+ const p=allProducts.find(x=>String(x.id)===String(cart[0].id));
+ if(!p)return;
+ currentProduct=p;selectedSize=cart[0].size==='Not applicable'?'':cart[0].size;
+ $('checkoutProduct').value=p.name||'';
+ $('checkoutSize').value=cart[0].size||'Not applicable';
+ $('checkoutPanel').classList.add('show');
+}
 function openOrders(){const b=document.getElementById('myOrdersBtn');if(b)b.click();else alert('Please login first.')}
 function openProfile(){const b=document.getElementById('profileBtn'),l=document.getElementById('loginOpen');if(b&&b.style.display!=='none')b.click();else if(l)l.click();else alert('Please login first.')}
-$('wishCount').textContent=wishlist.length;saveCart();loadProducts();
+
+$('wishCount').textContent=wishlist.length;
+saveCart();
+loadProducts();
 </script>
 <script type="module" src="/auth.js"></script>
 </body>
