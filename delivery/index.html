@@ -43,6 +43,29 @@ button:disabled{opacity:.6}
 .pill{display:inline-block;padding:5px 9px;border-radius:20px;background:#f1f1f1;font-size:12px;font-weight:bold}
 .empty{text-align:center;color:#777;padding:25px 8px;line-height:1.5}
 footer{text-align:center;color:#888;font-size:12px;padding:20px}
+  .order-tabs{
+  display:flex;
+  gap:7px;
+  margin:18px 0 12px;
+}
+.order-tabs button{
+  flex:1;
+  background:#eee;
+  color:#333;
+  padding:11px 5px;
+  font-size:12px;
+}
+.order-tabs button.active{
+  background:#171717;
+  color:white;
+}
+.order-count{
+  display:inline-block;
+  margin-left:4px;
+  padding:2px 6px;
+  border-radius:12px;
+  background:#ffffff33;
+}
 </style>
 </head>
 <body>
@@ -112,6 +135,19 @@ footer{text-align:center;color:#888;font-size:12px;padding:20px}
 <strong>Assigned Orders</strong>
 <button type="button" id="refreshOrders" class="logout">REFRESH</button>
 </div>
+  <div class="order-tabs">
+  <button type="button" class="active" data-order-tab="Assigned">
+    Assigned <span id="countAssigned">0</span>
+  </button>
+
+  <button type="button" data-order-tab="Out for Delivery">
+    On the Way <span id="countOut">0</span>
+  </button>
+
+  <button type="button" data-order-tab="Delivered">
+    Delivered <span id="countDelivered">0</span>
+  </button>
+</div>
 <div id="ordersList">
 <div class="empty">Loading your orders...</div>
 </div>
@@ -143,10 +179,30 @@ appId:"1:328407308597:web:3a36dbb2e6c80e971ad47c"
 const app=initializeApp(firebaseConfig);
 const auth=getAuth(app);
 const $=id=>document.getElementById(id);
+const LOGIN_TTL = 30 * 24 * 60 * 60 * 1000;
 
-let deliveryToken=sessionStorage.getItem("zorvana_delivery_token")||"";
-let deliveryName=sessionStorage.getItem("zorvana_delivery_name")||"Delivery Partner";
+let savedLogin = null;
 
+try {
+  savedLogin = JSON.parse(
+    localStorage.getItem("zorvana_delivery_login") || "null"
+  );
+} catch(e) {}
+
+let deliveryToken =
+  savedLogin && savedLogin.expiresAt > Date.now()
+    ? savedLogin.token : "";
+
+let deliveryName =
+  savedLogin && savedLogin.expiresAt > Date.now()
+    ? savedLogin.name : "Delivery Partner";
+
+if (!deliveryToken) {
+  localStorage.removeItem("zorvana_delivery_login");
+}
+
+let allOrders = [];
+let activeOrderTab = "Assigned";
 function message(text){
 $("message").textContent=text;
 }
@@ -222,121 +278,184 @@ if(!response.ok)throw new Error(result.error||"Request failed");
 return result;
 }
 
+function renderOrders(){
+  const filtered = allOrders.filter(order => {
+    const status = String(order.status || "Pending");
+
+    if(activeOrderTab === "Assigned"){
+      return status !== "Out for Delivery" && status !== "Delivered";
+    }
+
+    return status === activeOrderTab;
+  });
+
+  $("ordersList").innerHTML = "";
+
+  if(!filtered.length){
+    $("ordersList").innerHTML =
+      '<div class="empty">Is section mein abhi koi order nahi hai.</div>';
+    return;
+  }
+
+  filtered.forEach(order => {
+    const pick = (keys, fallback = "Not available") => {
+      for(const key of keys){
+        if(order[key] !== undefined && order[key] !== null &&
+           String(order[key]).trim() !== ""){
+          return String(order[key]);
+        }
+      }
+      return fallback;
+    };
+
+    const id = pick(["id","order_id"], "");
+    const customer = pick(
+      ["customer_name","name","full_name","shipping_name","user_name"],
+      "Customer"
+    );
+    const phone = pick(
+      ["customer_phone","phone","mobile","shipping_phone","contact_number"],
+      ""
+    );
+
+    const addressParts = [
+      pick(["address","shipping_address","full_address"],""),
+      pick(["city","district"],""),
+      pick(["state"],""),
+      pick(["pincode","postal_code","zip"],"")
+    ].filter(x => x);
+
+    const address = addressParts.length
+      ? addressParts.join(", ")
+      : "Address not available";
+
+    const product = pick(
+      ["product_name","product","items","item_name"],
+      "Order details"
+    );
+    const price = pick(
+      ["total_amount","total","amount","price","product_price"],
+      ""
+    );
+    const status = pick(["status"],"Pending");
+
+    const box = document.createElement("div");
+    box.className = "order";
+
+    const heading = document.createElement("h3");
+    heading.textContent = "Order #" + id;
+    box.appendChild(heading);
+
+    const pill = document.createElement("span");
+    pill.className = "pill";
+    pill.textContent = status;
+    box.appendChild(pill);
+
+    function addLine(label,value){
+      const p = document.createElement("p");
+      const strong = document.createElement("strong");
+      strong.textContent = label + ": ";
+      p.append(strong,document.createTextNode(value));
+      box.appendChild(p);
+    }
+
+    addLine("Customer",customer);
+    addLine("Phone",phone || "Not available");
+    addLine("Address",address);
+    addLine("Product",product);
+    if(price) addLine("Amount",price);
+
+    const actions = document.createElement("div");
+    actions.className = "order-actions";
+
+    if(phone){
+      const call = document.createElement("a");
+      call.className = "call";
+      call.href = "tel:" + phone;
+      call.textContent = "CALL CUSTOMER";
+      actions.appendChild(call);
+    }
+
+    if(addressParts.length){
+      const map = document.createElement("a");
+      map.className = "map";
+      map.target = "_blank";
+      map.rel = "noopener";
+      map.href =
+        "https://www.google.com/maps/search/?api=1&query=" +
+        encodeURIComponent(address);
+      map.textContent = "OPEN MAP";
+      actions.appendChild(map);
+    }
+
+    if(status !== "Delivered"){
+      const button = document.createElement("button");
+      button.className =
+        status === "Out for Delivery" ? "delivered" : "deliver";
+
+      button.textContent =
+        status === "Out for Delivery"
+          ? "MARK DELIVERED"
+          : "OUT FOR DELIVERY";
+
+      button.onclick = () => updateStatus(
+        id,
+        status === "Out for Delivery"
+          ? "Delivered"
+          : "Out for Delivery",
+        button
+      );
+
+      actions.appendChild(button);
+    }
+
+    box.appendChild(actions);
+    $("ordersList").appendChild(box);
+  });
+}
+
 async function loadOrders(){
-$("ordersList").innerHTML='<div class="empty">Loading your orders...</div>';
+  $("ordersList").innerHTML =
+    '<div class="empty">Loading your orders...</div>';
 
-try{
-const response=await fetch("/api/delivery/orders",{
-headers:{"Authorization":"Bearer "+deliveryToken}
-});
+  try{
+    const response = await fetch("/api/delivery/orders",{
+      headers:{
+        "Authorization":"Bearer " + deliveryToken
+      }
+    });
 
-const data=await response.json();
-if(!response.ok)throw new Error(data.error||"Could not load orders");
+    const data = await response.json();
 
-const orders=Array.isArray(data)?data:(data.orders||[]);
+    if(!response.ok){
+      throw new Error(data.error || "Could not load orders");
+    }
 
-if(!orders.length){
-$("ordersList").innerHTML='<div class="empty">Abhi aapko koi order assign nahi hua hai.<br>New order assign hone par yahan dikhega.</div>';
-return;
+    allOrders = Array.isArray(data)
+      ? data
+      : (data.orders || []);
+
+    $("countAssigned").textContent =
+      allOrders.filter(o =>
+        !["Out for Delivery","Delivered"].includes(
+          String(o.status || "Pending")
+        )
+      ).length;
+
+    $("countOut").textContent =
+      allOrders.filter(o => o.status === "Out for Delivery").length;
+
+    $("countDelivered").textContent =
+      allOrders.filter(o => o.status === "Delivered").length;
+
+    renderOrders();
+
+  }catch(error){
+    $("ordersList").innerHTML = '<div class="empty"></div>';
+    $("ordersList").firstChild.textContent = error.message;
+  }
 }
 
-$("ordersList").innerHTML="";
-
-orders.forEach(order=>{
-const pick=(keys,fallback="Not available")=>{
-for(const key of keys){
-if(order[key]!==undefined&&order[key]!==null&&String(order[key]).trim()!==""){
-return String(order[key]);
-}
-}
-return fallback;
-};
-
-const id=pick(["id","order_id"],"");
-const customer=pick(["customer_name","name","full_name","shipping_name","user_name"],"Customer");
-const phone=pick(["customer_phone","phone","mobile","shipping_phone","contact_number"],"");
-const addressParts=[
-pick(["address","shipping_address","full_address"],""),
-pick(["city","district"],""),
-pick(["state"],""),
-pick(["pincode","postal_code","zip"],"")
-].filter(x=>x);
-
-const address=addressParts.length?addressParts.join(", "):"Address not available";
-const product=pick(["product_name","product","items","item_name"],"Order details");
-const price=pick(["total_amount","total","amount","price","product_price"],"");
-const status=pick(["status"],"Pending");
-
-const box=document.createElement("div");
-box.className="order";
-
-const heading=document.createElement("h3");
-heading.textContent="Order #"+id;
-box.appendChild(heading);
-
-const pill=document.createElement("span");
-pill.className="pill";
-pill.textContent=status;
-box.appendChild(pill);
-
-function addLine(label,value){
-const p=document.createElement("p");
-const strong=document.createElement("strong");
-strong.textContent=label+": ";
-p.append(strong,document.createTextNode(value));
-box.appendChild(p);
-}
-
-addLine("Customer",customer);
-addLine("Phone",phone||"Not available");
-addLine("Address",address);
-addLine("Product",product);
-if(price)addLine("Amount",price);
-
-const actions=document.createElement("div");
-actions.className="order-actions";
-
-if(phone){
-const call=document.createElement("a");
-call.className="call";
-call.href="tel:"+phone;
-call.textContent="CALL CUSTOMER";
-actions.appendChild(call);
-}
-
-if(addressParts.length){
-const map=document.createElement("a");
-map.className="map";
-map.target="_blank";
-map.rel="noopener";
-map.href="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(address);
-map.textContent="OPEN MAP";
-actions.appendChild(map);
-}
-
-if(status!=="Delivered"){
-const button=document.createElement("button");
-button.className=status==="Out for Delivery"?"delivered":"deliver";
-button.textContent=status==="Out for Delivery"?"MARK DELIVERED":"OUT FOR DELIVERY";
-
-button.onclick=()=>updateStatus(
-id,
-status==="Out for Delivery"?"Delivered":"Out for Delivery",
-button
-);
-
-actions.appendChild(button);
-}
-
-box.appendChild(actions);
-$("ordersList").appendChild(box);
-});
-
-}catch(error){
-$("ordersList").innerHTML='<div class="empty"></div>';
-$("ordersList").firstChild.textContent=error.message;
-}
-}
 
 async function updateStatus(id,status,button){
 if(!id){
@@ -369,8 +488,7 @@ button.disabled=false;
 
 function logout(){
 deliveryToken="";
-sessionStorage.removeItem("zorvana_delivery_token");
-sessionStorage.removeItem("zorvana_delivery_name");
+localStorage.removeItem("zorvana_delivery_login");
 signOut(auth).catch(()=>{});
 showLogin();
 $("loginForm").reset();
@@ -425,8 +543,11 @@ throw new Error(result.error||"Login failed");
 deliveryToken=result.idToken;
 deliveryName=result.name||"Delivery Partner";
 
-sessionStorage.setItem("zorvana_delivery_token",deliveryToken);
-sessionStorage.setItem("zorvana_delivery_name",deliveryName);
+localStorage.setItem("zorvana_delivery_login",JSON.stringify({
+  token:deliveryToken,
+  name:deliveryName,
+  expiresAt:Date.now()+LOGIN_TTL
+}));
 
 showDashboard(deliveryName);
 
@@ -496,7 +617,17 @@ loading(form,false);
 $("statusLogout").onclick=logout;
 $("dashboardLogout").onclick=logout;
 $("refreshOrders").onclick=loadOrders;
+document.querySelectorAll("[data-order-tab]").forEach(button=>{
+  button.onclick=()=>{
+    activeOrderTab=button.dataset.orderTab;
 
+    document.querySelectorAll("[data-order-tab]").forEach(b=>{
+      b.classList.toggle("active",b===button);
+    });
+
+    renderOrders();
+  };
+});
 onAuthStateChanged(auth,async user=>{
 if(user&&!deliveryToken){
 try{
