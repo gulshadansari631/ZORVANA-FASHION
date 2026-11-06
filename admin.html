@@ -1004,7 +1004,7 @@ function addNotificationButton() {
       button.textContent = "NOTIFICATIONS ENABLED";
 
     } catch (error) {
-      status.textContent = error.message;
+      status.textContent = error.message + " | Permission: " + Notification.permission;
       button.disabled = false;
     }
   });
