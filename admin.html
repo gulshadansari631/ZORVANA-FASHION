@@ -926,5 +926,97 @@ async function saveProduct(){
  window.getAdminPushCredentials = () => ({ email: adminEmail, password: adminPassword });
 restoreAdminSession();
 </script>
+ <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
+import {
+  getMessaging,
+  getToken
+} from "https://www.gstatic.com/firebasejs/13.2.0/firebase-messaging.js";
+
+const firebaseApp = initializeApp({
+  apiKey: "AIzaSyC6ljZWr8cDxEtPuziF7DhxQYiykFRocOc",
+  authDomain: "zorvana-fashion-new.firebaseapp.com",
+  projectId: "zorvana-fashion-new",
+  storageBucket: "zorvana-fashion-new.firebasestorage.app",
+  messagingSenderId: "328407308597",
+  appId: "1:328407308597:web:3a36dbb2e6c80e971ad47c"
+}, "zorvana-admin-push");
+
+const messaging = getMessaging(firebaseApp);
+
+function addNotificationButton() {
+  const dashboard = document.getElementById("dashboard");
+
+  if (!dashboard || dashboard.style.display === "none") return;
+  if (document.getElementById("enableOrderNotifications")) return;
+
+  const button = document.createElement("button");
+  button.id = "enableOrderNotifications";
+  button.textContent = "ENABLE ORDER NOTIFICATIONS";
+  button.style.background = "#16853c";
+  button.style.width = "100%";
+
+  const status = document.createElement("p");
+  status.id = "pushStatus";
+
+  dashboard.querySelector("h2").after(button);
+  button.after(status);
+
+  button.addEventListener("click", async () => {
+    try {
+      button.disabled = true;
+      status.textContent = "Setting up notifications...";
+
+      const permission = await Notification.requestPermission();
+
+      if (permission !== "granted") {
+        throw new Error("Notification permission allow karo.");
+      }
+
+      const registration = await navigator.serviceWorker.register("/sw.js");
+
+      await navigator.serviceWorker.ready;
+
+      const token = await getToken(messaging, {
+        vapidKey: "BC8GoVajmZf8pUhSJPsVuyGI0knNE0UnUkU8ccT09So68-G2tQNi92S-P5DQP3TWy3yRTlT7Ul8D0fjGxrAwzeE",
+        serviceWorkerRegistration: registration
+      });
+
+      if (!token) throw new Error("Firebase token nahi mila.");
+
+      const credentials = window.getAdminPushCredentials();
+
+      const response = await fetch("/api/admin/push-token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Admin-Email": credentials.email,
+          "X-Admin-Password": credentials.password
+        },
+        body: JSON.stringify({ token })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) throw new Error(result.error || "Registration failed");
+
+      status.textContent = "Notifications successfully enabled!";
+      button.textContent = "NOTIFICATIONS ENABLED";
+
+    } catch (error) {
+      status.textContent = error.message;
+      button.disabled = false;
+    }
+  });
+}
+
+const observer = new MutationObserver(addNotificationButton);
+observer.observe(document.getElementById("dashboard"), {
+  attributes: true,
+  attributeFilter: ["style"]
+});
+
+addNotificationButton();
+</script>
 </body>
 </html>
