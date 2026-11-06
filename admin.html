@@ -782,6 +782,66 @@ async function assignDeliveryBoy(orderId){
   alert(error.message);
  }
 }
+ function getAdminOrder(id){
+ return window.currentAdminOrders?.find(o=>Number(o.id)===Number(id));
+}
+
+async function copyOrderText(text){
+ try{
+  await navigator.clipboard.writeText(text);
+  alert("Details copied successfully!");
+ }catch(error){
+  const input=document.createElement("textarea");
+  input.value=text;
+  document.body.appendChild(input);
+  input.select();
+  document.execCommand("copy");
+  input.remove();
+  alert("Details copied!");
+ }
+}
+
+function copyOrderDetails(id){
+ const o=getAdminOrder(id);
+ if(!o)return alert("Order not found");
+
+ const text=[
+  "Order: #"+o.id,
+  "Customer: "+o.customer_name,
+  "Phone: "+o.phone,
+  "Address: "+o.address,
+  "District: "+o.district,
+  "State: "+o.state,
+  "PIN: "+o.pincode,
+  "Product: "+o.product,
+  "Size: "+o.size,
+  "Price: "+o.product_price,
+  "Payment: "+o.payment
+ ].join("\n");
+
+ copyOrderText(text);
+}
+
+function copyOrderAddress(id){
+ const o=getAdminOrder(id);
+ if(!o)return alert("Order not found");
+
+ copyOrderText([
+  o.customer_name,
+  o.phone,
+  o.address,
+  o.district,
+  o.state,
+  o.pincode
+ ].join("\n"));
+}
+
+function copyOrderPhone(id){
+ const o=getAdminOrder(id);
+ if(!o)return alert("Order not found");
+
+ copyOrderText(o.phone||"");
+}
 async function updateStatus(id,status){
  try{
   const response=await fetch("/api/orders",{
