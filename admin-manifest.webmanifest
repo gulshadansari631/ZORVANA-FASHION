@@ -1,0 +1,20 @@
+{
+  "id": "/admin-app",
+  "name": "ADMIN",
+  "short_name": "ADMIN",
+  "description": "ZORVANA FASHION Admin Panel",
+  "start_url": "/admin.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#111111",
+  "theme_color": "#111111",
+  "icons": [
+    {
+      "src": "/admin-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
