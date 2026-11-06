@@ -844,6 +844,29 @@ function copyOrderPhone(id){
 
  copyOrderText(o.phone||"");
 }
+ async function setPinCheck(id,status){
+ if(!confirm("Meesho par PIN check karke "+status+" mark karna hai?"))return;
+
+ try{
+  const response=await fetch("/api/orders",{
+   method:"PATCH",
+   headers:{
+    "Content-Type":"application/json",
+    "X-Admin-Email":adminEmail,
+    "X-Admin-Password":adminPassword
+   },
+   body:JSON.stringify({id:id,pin_check_status:status})
+  });
+
+  const result=await response.json();
+  if(!response.ok)throw new Error(result.error||"PIN update failed");
+
+  alert("PIN marked "+status);
+  loadOrders();
+ }catch(error){
+  alert(error.message);
+ }
+}
 async function updateStatus(id,status){
  try{
   const response=await fetch("/api/orders",{
