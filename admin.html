@@ -636,7 +636,7 @@ try{
   </button>
 
   <div class="actions">
-   <button class="confirm" onclick="updateStatus(${Number(o.id)},'Confirmed')">Confirm</button>
+   <button class="confirm" ${o.pin_check_status==="Available"?"":"disabled title='Meesho PIN ko Available mark karne ke baad hi Confirm hoga'"} onclick="updateStatus(${Number(o.id)},'Confirmed')">Confirm</button>
    <button class="shipped" onclick="updateStatus(${Number(o.id)},'Shipped')">Shipped</button>
    <button class="out" onclick="updateStatus(${Number(o.id)},'Out for Delivery')">Out for Delivery</button>
    <button class="delivered" onclick="updateStatus(${Number(o.id)},'Delivered')">Delivered</button>
