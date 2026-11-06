@@ -659,11 +659,13 @@ async function showOrders(data){
  box.innerHTML="Loading delivery partners...";
 
  let partners=[];
- try{
-  partners=await loadApprovedDeliveryBoys();
-  window.currentAdminOrders = data;
- }catch(error){
-  console.error(error);
+window.currentAdminOrders = data;
+
+try{
+ partners=await loadApprovedDeliveryBoys();
+}catch(error){
+ console.error(error);
+}
  }
 
  box.innerHTML="";
