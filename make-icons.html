@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZORVANA Icon Generator</title>
+<style>
+body {
+  background: #080808;
+  color: white;
+  font-family: Arial;
+  text-align: center;
+  padding: 25px;
+}
+button {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  margin: 15px 0;
+  background: #eab83f;
+  color: black;
+  border: 0;
+  border-radius: 10px;
+  font-weight: bold;
+}
+</style>
+</head>
+<body>
+
+<h2>ZORVANA FASHION</h2>
+<p>PNG Icon Generator</p>
+
+<button onclick="downloadIcon(192)">Download 192×192 PNG</button>
+<button onclick="downloadIcon(512)">Download 512×512 PNG</button>
+
+<script>
+function downloadIcon(size) {
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+
+  const ctx = canvas.getContext("2d");
+  const g = ctx.createLinearGradient(0, 0, size, size);
+  g.addColorStop(0, "#fff2a8");
+  g.addColorStop(0.5, "#f5bd38");
+  g.addColorStop(1, "#a96a00");
+
+  ctx.fillStyle = "#050505";
+  ctx.fillRect(0, 0, size, size);
+
+  ctx.strokeStyle = g;
+  ctx.lineWidth = size * 0.018;
+  ctx.beginPath();
+  ctx.arc(size/2, size/2, size*0.455, 0, Math.PI*2);
+  ctx.stroke();
+
+  ctx.fillStyle = g;
+  ctx.font = `bold ${size*0.38}px Georgia`;
+  ctx.textAlign = "center";
+  ctx.fillText("Z", size/2, size*0.57);
+
+  ctx.fillStyle = "white";
+  ctx.font = `bold ${size*0.095}px Georgia`;
+  ctx.fillText("ZORVANA", size/2, size*0.73);
+
+  ctx.fillStyle = g;
+  ctx.font = `bold ${size*0.055}px Arial`;
+  ctx.fillText("FASHION", size/2, size*0.84);
+
+  const link = document.createElement("a");
+  link.download = `icon-${size}.png`;
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+}
+</script>
+
+</body>
+</html>
