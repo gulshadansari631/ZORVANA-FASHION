@@ -688,6 +688,11 @@ try{
   <p><b>Payment:</b> ${safe(o.payment)}</p>
   <p><b>Status:</b> ${safe(o.status||"Pending")}</p>
 <p><b>Meesho PIN Check:</b> ${safe(o.pin_check_status||"Not Checked")}</p>
+<div class="actions">
+ <button onclick="copyOrderDetails(${Number(o.id)})">COPY FULL DETAILS</button>
+ <button onclick="copyOrderAddress(${Number(o.id)})">COPY ADDRESS</button>
+ <button onclick="copyOrderPhone(${Number(o.id)})">COPY PHONE</button>
+</div>
   <p><b>Delivery Partner:</b> ${o.delivery_boy_id||"Not Assigned"}</p>
 
   <label>Assign Delivery Boy</label>
