@@ -554,32 +554,21 @@ async function deleteProduct(id){
   alert(error.message);
  }
 }
-
-async function loadOrders(){
- const box=document.getElementById("orders");
- box.textContent="Loading orders...";
-
- try{
-  const response=await fetch("/api/orders",{
-   headers:{
-    "X-Admin-Email":adminEmail,
-    "X-Admin-Password":adminPassword
-   }
-  });
-
-  if(!response.ok) throw new Error("Could not load orders");
-  showOrders(await response.json());
- }catch(error){
-  box.textContent=error.message;
- }
-}
-
-function showOrders(data){
+async function showOrders(data){
  const box=document.getElementById("orders");
 
  if(!Array.isArray(data)||data.length===0){
   box.innerHTML="<p>No orders found.</p>";
   return;
+ }
+
+ box.innerHTML="Loading delivery partners...";
+
+ let partners=[];
+ try{
+  partners=await loadApprovedDeliveryBoys();
+ }catch(error){
+  console.error(error);
  }
 
  box.innerHTML="";
@@ -601,6 +590,22 @@ function showOrders(data){
   <p><b>PIN:</b> ${safe(o.pincode)}</p>
   <p><b>Payment:</b> ${safe(o.payment)}</p>
   <p><b>Status:</b> ${safe(o.status||"Pending")}</p>
+  <p><b>Delivery Partner:</b> ${o.delivery_boy_id||"Not Assigned"}</p>
+
+  <label>Assign Delivery Boy</label>
+  <select id="deliveryBoy-${Number(o.id)}">
+  <option value="">Select Delivery Partner</option>
+  ${partners.map(p=>`
+   <option value="${Number(p.id)}" ${Number(o.delivery_boy_id)===Number(p.id)?"selected":""}>
+   ${safe(p.name)} - ${safe(p.phone)}
+   </option>
+  `).join("")}
+  </select>
+
+  <button onclick="assignDeliveryBoy(${Number(o.id)})">
+  ASSIGN DELIVERY BOY
+  </button>
+
   <div class="actions">
    <button class="confirm" onclick="updateStatus(${Number(o.id)},'Confirmed')">Confirm</button>
    <button class="shipped" onclick="updateStatus(${Number(o.id)},'Shipped')">Shipped</button>
@@ -612,7 +617,68 @@ function showOrders(data){
   box.appendChild(div);
  });
 }
+async function loadApprovedDeliveryBoys(){
+ try{
+  const response=await fetch("/api/delivery/boys",{
+   headers:{
+    "X-Admin-Email":adminEmail,
+    "X-Admin-Password":adminPassword
+   }
+  });
 
+  const rows=await response.json();
+
+  if(!response.ok) throw new Error(rows.error);
+
+  return rows.filter(p=>p.status==="approved");
+
+ }catch(error){
+  console.error(error);
+  return [];
+ }
+}
+
+async function assignDeliveryBoy(orderId){
+
+ const select=document.getElementById("deliveryBoy-"+orderId);
+ const deliveryBoyId=Number(select.value);
+
+ if(!deliveryBoyId){
+  alert("Please select a delivery partner");
+  return;
+ }
+
+ if(!confirm("Assign this order to selected delivery partner?")) return;
+
+ try{
+
+  const response=await fetch("/api/delivery/assign",{
+   method:"PATCH",
+   headers:{
+    "Content-Type":"application/json",
+    "X-Admin-Email":adminEmail,
+    "X-Admin-Password":adminPassword
+   },
+   body:JSON.stringify({
+    order_id:orderId,
+    delivery_boy_id:deliveryBoyId
+   })
+  });
+
+  const result=await response.json();
+
+  if(!response.ok){
+   throw new Error(result.error||"Assignment failed");
+  }
+
+  alert("Delivery Boy Assigned Successfully!");
+
+  loadOrders();
+
+ }catch(error){
+  alert(error.message);
+ }
+}
 async function updateStatus(id,status){
  try{
   const response=await fetch("/api/orders",{
