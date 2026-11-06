@@ -251,110 +251,34 @@ async function login(){
 
 async function restoreAdminSession(){
  try{
-  const saved = JSON.parse(localStorage.getItem(ADMIN_SESSION_KEY) || "null");
+  const saved=JSON.parse(localStorage.getItem(ADMIN_SESSION_KEY)||"null");
 
-  if(!saved || !saved.email || !saved.password || !saved.expiresAt || Date.now() >= saved.expiresAt){
+  if(!saved||!saved.email||!saved.password||!saved.expiresAt||Date.now()>=saved.expiresAt){
    clearAdminSession();
    return;
   }
 
   await verifyAdminSession(saved.email,saved.password);
 
-  adminEmail = saved.email;
-  adminPassword = saved.password;
+  adminEmail=saved.email;
+  adminPassword=saved.password;
 
-        const body = await request.json();
-      const id = Number(body.id);
+  document.getElementById("loginBox").style.display="none";
+  document.getElementById("dashboard").style.display="block";
+  showAdminTab("products");
 
-      if (!Number.isInteger(id) || id <= 0) {
-        return Response.json({ error: "Invalid order ID" }, { status: 400 });
-      }
-
-      // PIN verification column create if missing
-      const columns = await env.DB.prepare(
-        "PRAGMA table_info(orders)"
-      ).all();
-
-      const hasPinColumn = (columns.results || []).some(
-        c => c.name === "pin_check_status"
-      );
-
-      if (!hasPinColumn) {
-        await env.DB.prepare(
-          "ALTER TABLE orders ADD COLUMN pin_check_status TEXT DEFAULT 'Not Checked'"
-        ).run();
-      }
-
-      // Admin marks PIN availability
-      if (body.pin_check_status) {
-        const pinStatus = body.pin_check_status;
-
-        if (!["Available", "Unavailable"].includes(pinStatus)) {
-          return Response.json({ error: "Invalid PIN status" }, { status: 400 });
-        }
-
-        const result = await env.DB.prepare(`
-          UPDATE orders
-          SET pin_check_status = ?
-          WHERE id = ?
-        `).bind(pinStatus, id).run();
-
-        if (!result.meta.changes) {
-          return Response.json({ error: "Order not found" }, { status: 404 });
-        }
-
-        return Response.json({
-          success: true,
-          message: "PIN verification updated"
-        });
-      }
-
-      const allowedStatuses = [
-        "Confirmed", "Shipped", "Out for Delivery",
-        "Delivered", "Cancelled"
-      ];
-
-      if (!allowedStatuses.includes(body.status)) {
-        return Response.json({ error: "Invalid order status" }, { status: 400 });
-      }
-
-      // Order cannot be confirmed until PIN is available
-      if (body.status === "Confirmed") {
-        const order = await env.DB.prepare(`
-          SELECT pin_check_status FROM orders WHERE id = ?
-        `).bind(id).first();
-
-        if (!order || order.pin_check_status !== "Available") {
-          return Response.json({
-            error: "First verify PIN code as Available."
-          }, { status: 400 });
-        }
-      }
-
-      const result = await env.DB.prepare(`
-        UPDATE orders SET status = ? WHERE id = ?
-      `).bind(body.status, id).run();
-
-      if (!result.meta.changes) {
-        return Response.json({ error: "Order not found" }, { status: 404 });
-      }
-
-      await env.DB.prepare(`
-        INSERT INTO order_tracking (order_id, status)
-        VALUES (?, ?)
-      `).bind(id, body.status).run();
-
-      return Response.json({
-        success: true,
-        message: "Order status updated"
-      });
- document.getElementById("dashboard").style.display = "none";
- document.getElementById("loginBox").style.display = "block";
- document.getElementById("message").textContent = "";
-
- cancelEditProduct();
+ }catch(error){
+  clearAdminSession();
+ }
 }
 
+function logout(){
+ clearAdminSession();
+ document.getElementById("dashboard").style.display="none";
+ document.getElementById("loginBox").style.display="block";
+ document.getElementById("message").textContent="";
+ cancelEditProduct();
+}
 function safe(value){
  const span=document.createElement("span");
  span.textContent=value??"";
