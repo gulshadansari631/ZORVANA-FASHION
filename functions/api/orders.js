@@ -54,7 +54,7 @@ async function saveOrder(env, customerUid, customer, item) {
       customer_uid, product_image, product_price
     )
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Cash on Delivery',
-      'Confirmed', ?, ?, ?)
+      'PIN Verification Pending', ?, ?, ?)
   `).bind(
     item.product,
     item.size,
@@ -73,7 +73,7 @@ async function saveOrder(env, customerUid, customer, item) {
 
   await env.DB.prepare(`
     INSERT INTO order_tracking (order_id, status)
-    VALUES (?, 'Confirmed')
+    VALUES (?, 'PIN Verification Pending')
   `).bind(orderId).run();
 
   return orderId;
