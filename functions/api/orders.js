@@ -1,4 +1,139 @@
+function base64Url(value) {
+  const bytes = new TextEncoder().encode(value);
+  let binary = "";
+  bytes.forEach(byte => binary += String.fromCharCode(byte));
+  return btoa(binary).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+}
 
+async function getFirebaseAccessToken(serviceAccount) {
+  const now = Math.floor(Date.now() / 1000);
+
+  const header = base64Url(JSON.stringify({
+    alg: "RS256",
+    typ: "JWT"
+  }));
+
+  const claim = base64Url(JSON.stringify({
+    iss: serviceAccount.client_email,
+    scope: "https://www.googleapis.com/auth/firebase.messaging",
+    aud: "https://oauth2.googleapis.com/token",
+    iat: now,
+    exp: now + 3600
+  }));
+
+  const unsigned = `${header}.${claim}`;
+
+  const pem = serviceAccount.private_key
+    .replace(/-----BEGIN PRIVATE KEY-----/g, "")
+    .replace(/-----END PRIVATE KEY-----/g, "")
+    .replace(/\s/g, "");
+
+  const binary = Uint8Array.from(
+    atob(pem),
+    char => char.charCodeAt(0)
+  );
+
+  const key = await crypto.subtle.importKey(
+    "pkcs8",
+    binary,
+    {
+      name: "RSASSA-PKCS1-v1_5",
+      hash: "SHA-256"
+    },
+    false,
+    ["sign"]
+  );
+
+  const signature = await crypto.subtle.sign(
+    "RSASSA-PKCS1-v1_5",
+    key,
+    new TextEncoder().encode(unsigned)
+  );
+
+  const signatureBase64 = btoa(
+  String.fromCharCode(...new Uint8Array(signature))
+).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+
+const assertion = `${unsigned}.${signatureBase64}`;
+
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: new URLSearchParams({
+      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      assertion
+    })
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error("Firebase access token failed");
+  }
+
+  return result.access_token;
+}
+
+async function notifyAdminNewOrder(env, orderIds, items) {
+  try {
+    if (!env.FIREBASE_SERVICE_ACCOUNT) return;
+
+    const serviceAccount = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT);
+
+    const tokensResult = await env.DB.prepare(
+      "SELECT token FROM admin_push_tokens"
+    ).all();
+
+    const tokens = (tokensResult.results || []).map(row => row.token);
+
+    if (!tokens.length) return;
+
+    const accessToken = await getFirebaseAccessToken(serviceAccount);
+    const total = items.reduce((sum, item) => {
+      const price = Number(String(item.price || "0").replace(/[^\d.]/g, ""));
+      return sum + (Number.isFinite(price) ? price : 0);
+    }, 0);
+
+    for (const token of tokens) {
+      const response = await fetch(
+        `https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: {
+              token,
+              data: {
+                title: "New ZORVANA Order!",
+                body: `Order #${orderIds.join(", #")} | Amount: ₹${total}`,
+                url: "https://zorvana-fashion.pages.dev/admin.html"
+              }
+            }
+          })
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+
+        if (error.error?.details?.some(
+          detail => detail.errorCode === "UNREGISTERED"
+        )) {
+          await env.DB.prepare(
+            "DELETE FROM admin_push_tokens WHERE token = ?"
+          ).bind(token).run();
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Admin push notification failed:", error);
+  }
+}
 async function verifyCustomer(request, env) {
   const authHeader = request.headers.get("Authorization") || "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
