@@ -1,16 +1,16 @@
 {
-  "name": "ZORVANA FASHION Delivery",
-  "short_name": "ZORVANA Delivery",
-  "description": "ZORVANA FASHION Delivery Partner App",
-  "start_url": "/delivery/",
-  "scope": "/delivery/",
+  "name": "ZORVANA FASHION",
+  "short_name": "ZORVANA",
+  "description": "ZORVANA FASHION Online Shopping App",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f4f5f7",
-  "theme_color": "#171717",
+  "background_color": "#050505",
+  "theme_color": "#050505",
   "icons": [
     {
-      "src": "/delivery/icon.svg",
+      "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
