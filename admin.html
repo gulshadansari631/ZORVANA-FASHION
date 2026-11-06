@@ -923,6 +923,7 @@ async function saveProduct(){
 }
 
 /* Page open hote hi saved 7-day session check karo */
+ window.getAdminPushCredentials = () => ({ email: adminEmail, password: adminPassword });
 restoreAdminSession();
 </script>
 </body>
