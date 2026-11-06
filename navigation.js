@@ -2,6 +2,7 @@
 (function () {
   let backStack = [];
   let restoring = false;
+  let skipNextSave = false;
 
   function currentView() {
     const body = document.body;
@@ -11,8 +12,8 @@
     if (body.classList.contains("zv-orders-view") ||
         body.classList.contains("orders-view")) return "orders";
     if (body.classList.contains("zv-account-view")) return "account";
-    if (document.getElementById("productModal")?.classList.contains("show")) return "product";
     if (document.getElementById("checkoutPanel")?.classList.contains("show")) return "checkout";
+    if (document.getElementById("productModal")?.classList.contains("show")) return "product";
     if (title.includes("Wishlist")) return "wishlist";
     if (title.includes("Cart")) return "cart";
     if (title.includes("Search")) return "search";
@@ -31,9 +32,8 @@
     backStack.push({
       view: currentView(),
       scroll: window.scrollY,
-      title: document.getElementById("sectionTitle")?.textContent || "",
       query: document.getElementById("searchInput")?.value || "",
-      productId: window.currentProduct?.id || null
+      productId: new URLSearchParams(location.search).get("product")
     });
 
     history.pushState({ zorvana: true }, "", location.href);
@@ -74,8 +74,10 @@
         break;
 
       case "product":
-        if (item.productId != null) {
+        if (item.productId) {
           window.openProduct?.(item.productId, false);
+        } else {
+          window.goHome?.();
         }
         break;
 
@@ -97,7 +99,7 @@
         behavior: "auto"
       });
       restoring = false;
-    }, 350);
+    }, 500);
   }
 
   function wrapFunction(name) {
@@ -105,7 +107,12 @@
     if (typeof original !== "function") return;
 
     window[name] = function (...args) {
-      savePage();
+      if (skipNextSave) {
+        skipNextSave = false;
+      } else {
+        savePage();
+      }
+
       return original.apply(this, args);
     };
   }
@@ -121,7 +128,9 @@
     "selectCategory",
     "searchProducts",
     "showAllProducts",
-    "openProduct"
+    "openProduct",
+    "buyCurrentProduct",
+    "checkoutCart"
   ].forEach(wrapFunction);
 
   document.addEventListener("click", function (event) {
@@ -134,10 +143,30 @@
       return;
     }
 
-    if (
-      event.target.closest("[data-action]") ||
-      event.target.closest("[data-detail]")
-    ) {
+    const navButton = event.target.closest(".bottom-nav [data-nav]");
+
+    if (navButton) {
+      savePage();
+      skipNextSave = true;
+      return;
+    }
+
+    const action = event.target.closest("[data-action]");
+    const detail = event.target.closest("[data-detail]");
+
+    if (action) {
+      const actionName = action.dataset.action;
+
+      if (actionName === "wishlist") {
+        savePage();
+        skipNextSave = true;
+      } else {
+        savePage();
+      }
+      return;
+    }
+
+    if (detail) {
       savePage();
     }
   }, true);
