@@ -1,0 +1,121 @@
+
+/* ZORVANA FASHION - SAVED ADDRESSES DESIGN */
+
+#zvSavedAddresses {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#zvSavedAddresses h3 {
+  font-size: 19px;
+  margin: 8px 0 18px;
+  color: #171717;
+}
+
+#zvSavedAddresses #addressFormBox {
+  width: 100%;
+  margin-top: 18px;
+}
+
+#zvSavedAddresses #addressFormBox h3 {
+  font-size: 17px;
+  margin-bottom: 15px;
+}
+
+#zvSavedAddresses #addressFormBox input,
+#zvSavedAddresses #addressFormBox textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px;
+  margin: 10px 0;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  color: #222;
+  font-size: 14px;
+  outline: none;
+}
+
+#zvSavedAddresses #addressFormBox input:focus,
+#zvSavedAddresses #addressFormBox textarea:focus {
+  border-color: #d71936;
+}
+
+#zvSavedAddresses #addressFormBox textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+#zvSavedAddresses button {
+  padding: 11px 15px;
+  border: 0;
+  border-radius: 7px;
+  margin: 5px 5px 5px 0;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#zvSavedAddresses > button {
+  background: #d71936;
+  color: white;
+  padding: 13px 18px;
+}
+
+#zvSavedAddresses #saveAddress {
+  width: 100%;
+  background: #d71936;
+  color: white;
+  padding: 14px;
+  margin-top: 12px;
+}
+
+#zvSavedAddresses #cancelAddress {
+  width: 100%;
+  background: #eee !important;
+  color: #333 !important;
+  padding: 13px;
+}
+
+#zvSavedAddresses .addressCard {
+  background: white;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  padding: 15px;
+  margin: 14px 0;
+  box-shadow: 0 2px 8px #00000008;
+}
+
+#zvSavedAddresses .addressCard b {
+  font-size: 15px;
+  color: #171717;
+}
+
+#zvSavedAddresses .addressCard p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #666;
+}
+
+#zvSavedAddresses .addressCard button {
+  background: #f3f3f3;
+  color: #222;
+}
+
+#zvSavedAddresses .addressCard button[style*="rgb(211, 47, 47)"] {
+  background: #d71936 !important;
+  color: white !important;
+}
+
+@media (max-width: 600px) {
+  #zvSavedAddresses {
+    padding: 0;
+  }
+
+  #zvSavedAddresses #addressFormBox input,
+  #zvSavedAddresses #addressFormBox textarea {
+    font-size: 14px;
+    min-height: 45px;
+  }
+}
