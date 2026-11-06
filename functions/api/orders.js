@@ -301,6 +301,7 @@ export async function onRequest(context) {
         const orderId = await saveOrder(env, customerUid, customer, item);
         orderIds.push(orderId);
       }
+      await notifyAdminNewOrder(env, orderIds, cleanItems);
 
       return Response.json({
         success: true,
