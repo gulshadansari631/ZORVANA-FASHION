@@ -92,6 +92,7 @@ footer{text-align:center;color:#888;font-size:12px;padding:20px}
 <div class="form-title">Welcome Back!</div>
 <input type="tel" id="loginPhone" placeholder="10 Digit Mobile Number" maxlength="10" pattern="[0-9]{10}" required>
 <input type="password" id="loginPassword" placeholder="Password" required>
+  <button type="button" id="forgotPasswordBtn" style="width:100%;background:transparent;color:#2874f0;padding:8px;text-align:right;font-weight:normal">Forgot Password?</button>
 <button class="submit" type="submit">LOGIN</button>
 </form>
 
@@ -166,7 +167,9 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/13.2.0/firebase-
 import {
 getAuth,
 createUserWithEmailAndPassword,
+sendPasswordResetEmail,
 signOut,
+onAuthStateChanged
 onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
 
@@ -497,7 +500,27 @@ showLogin();
 $("loginForm").reset();
 message("");
 }
+$("forgotPasswordBtn").onclick=async()=>{
+  const email=prompt("Enter your registered email address:");
+  if(!email) return;
 
+  const btn=$("forgotPasswordBtn");
+  btn.disabled=true;
+  message("Sending reset link...");
+
+  try{
+    await sendPasswordResetEmail(auth,email.trim());
+    message("Password reset link sent. Check your email inbox and spam folder.");
+    $("message").style.color="green";
+  }catch(error){
+    message(error.code==="auth/user-not-found"
+      ? "Email is not registered."
+      : "Could not send reset link. Check your email.");
+    $("message").style.color="red";
+  }finally{
+    btn.disabled=false;
+  }
+};
 $("loginTab").onclick=()=>{
 $("loginForm").classList.remove("hidden");
 $("registerForm").classList.add("hidden");
