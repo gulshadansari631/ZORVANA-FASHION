@@ -119,3 +119,32 @@
     min-height: 45px;
   }
 }
+
+/* Hide duplicate checkout address fields when a saved address exists */
+
+#checkoutPanel:has(#checkoutAddressPanel .addressCard)
+#orderForm label:has(+ input[name="customer_name"]),
+#checkoutPanel:has(#checkoutAddressPanel .addressCard)
+#orderForm input[name="customer_name"],
+#checkoutPanel:has(#checkoutAddressPanel .addressCard)
+#orderForm label:has(+ input[name="phone"]),
+#checkoutPanel:has(#checkoutAddressPanel .addressCard)
+#orderForm input[name="phone"],
+#checkoutPanel:has(#checkoutAddressPanel .addressCard)
+#orderForm label:has(+ textarea[name="address"]),
+#checkoutPanel:has(#checkoutAddressPanel .addressCard)
+#orderForm textarea[name="address"],
+#checkoutPanel:has(#checkoutAddressPanel .addressCard)
+#orderForm label:has(+ input[name="state"]),
+#checkoutPanel:has(#checkoutAddressPanel .addressCard)
+#orderForm input[name="state"],
+#checkoutPanel:has(#checkoutAddressPanel .addressCard)
+#orderForm label:has(+ input[name="district"]),
+#checkoutPanel:has(#checkoutAddressPanel .addressCard)
+#orderForm input[name="district"],
+#checkoutPanel:has(#checkoutAddressPanel .addressCard)
+#orderForm label:has(+ input[name="pincode"]),
+#checkoutPanel:has(#checkoutAddressPanel .addressCard)
+#orderForm input[name="pincode"] {
+  display: none !important;
+}
