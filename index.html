@@ -418,5 +418,112 @@ if ("serviceWorker" in navigator) {
   });
 }
 </script>
+ <script>
+(function () {
+  const form = document.getElementById("orderForm");
+  if (!form) return;
+
+  const pin = form.querySelector('[name="pincode"]');
+  const state = form.querySelector('[name="state"]');
+  const district = form.querySelector('[name="district"]');
+
+  if (!pin || !state || !district) return;
+
+  let verifiedPin = "";
+  let checking = false;
+  let allowSubmit = false;
+
+  const message = document.createElement("small");
+  message.style.display = "block";
+  message.style.marginTop = "5px";
+  pin.insertAdjacentElement("afterend", message);
+
+  async function verifyPin() {
+    const value = pin.value.trim();
+
+    verifiedPin = "";
+    pin.setCustomValidity("");
+
+    if (!/^[0-9]{6}$/.test(value)) {
+      message.textContent = "6 digit PIN code enter karein.";
+      message.style.color = "red";
+      return false;
+    }
+
+    checking = true;
+    message.textContent = "PIN code check ho raha hai...";
+    message.style.color = "#555";
+
+    try {
+      const response = await fetch(
+        "/api/pincode?pin=" + encodeURIComponent(value)
+      );
+      const result = await response.json();
+
+      if (!response.ok || !result.valid) {
+        throw new Error("Ye PIN code India Post mein nahi mila.");
+      }
+
+      if (pin.value.trim() !== value) return false;
+
+      state.value = result.state || "";
+      district.value = result.district || "";
+
+      verifiedPin = value;
+
+      message.textContent =
+        "✓ Valid PIN: " + result.district + ", " + result.state +
+        ". Aap State aur District edit kar sakte hain.";
+
+      message.style.color = "green";
+      return true;
+
+    } catch (error) {
+      pin.setCustomValidity(error.message);
+      message.textContent = "✗ " + error.message;
+      message.style.color = "red";
+      return false;
+
+    } finally {
+      checking = false;
+    }
+  }
+
+  pin.addEventListener("input", function () {
+    this.value = this.value.replace(/[^0-9]/g, "").slice(0, 6);
+    verifiedPin = "";
+    this.setCustomValidity("");
+    message.textContent = "";
+  });
+
+  pin.addEventListener("blur", verifyPin);
+
+  form.addEventListener("submit", async function (event) {
+    if (allowSubmit) {
+      allowSubmit = false;
+      return;
+    }
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    if (checking) {
+      message.textContent = "PIN verification complete hone ka wait karein.";
+      return;
+    }
+
+    if (verifiedPin !== pin.value.trim()) {
+      const valid = await verifyPin();
+      if (!valid) {
+        pin.reportValidity();
+        return;
+      }
+    }
+
+    allowSubmit = true;
+    form.requestSubmit();
+  }, true);
+})();
+</script>
 </body>
 </html>
