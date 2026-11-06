@@ -1,0 +1,78 @@
+function verifyAdmin(request, env) {
+  return Boolean(
+    env.ADMIN_EMAIL &&
+    env.ADMIN_PASSWORD &&
+    request.headers.get("X-Admin-Email") === env.ADMIN_EMAIL &&
+    request.headers.get("X-Admin-Password") === env.ADMIN_PASSWORD
+  );
+}
+
+export async function onRequest({ request, env }) {
+  if (!env.DB) {
+    return Response.json({ error: "Database missing" }, { status: 500 });
+  }
+
+  if (!verifyAdmin(request, env)) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (request.method !== "PATCH") {
+    return Response.json({ error: "Method not allowed" }, { status: 405 });
+  }
+
+  try {
+    const body = await request.json();
+    const orderId = Number(body.order_id);
+    const deliveryBoyId = Number(body.delivery_boy_id);
+
+    if (
+      !Number.isInteger(orderId) || orderId <= 0 ||
+      !Number.isInteger(deliveryBoyId) || deliveryBoyId <= 0
+    ) {
+      return Response.json({ error: "Invalid details" }, { status: 400 });
+    }
+
+    const partner = await env.DB.prepare(
+      "SELECT id, status FROM delivery_boys WHERE id = ?"
+    ).bind(deliveryBoyId).first();
+
+    if (!partner || partner.status !== "approved") {
+      return Response.json(
+        { error: "Delivery partner not approved" },
+        { status: 400 }
+      );
+    }
+
+    const order = await env.DB.prepare(
+      "SELECT id, status FROM orders WHERE id = ?"
+    ).bind(orderId).first();
+
+    if (!order) {
+      return Response.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    if (["Delivered", "Cancelled"].includes(order.status)) {
+      return Response.json(
+        { error: "Order cannot be assigned" },
+        { status: 400 }
+      );
+    }
+
+    await env.DB.prepare(`
+      UPDATE orders
+      SET delivery_boy_id = ?, assigned_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).bind(deliveryBoyId, orderId).run();
+
+    return Response.json({
+      success: true,
+      message: "Order assigned successfully"
+    });
+
+  } catch (error) {
+    return Response.json(
+      { error: error.message || "Assignment failed" },
+      { status: 500 }
+    );
+  }
+}
