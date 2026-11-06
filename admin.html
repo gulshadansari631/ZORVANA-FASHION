@@ -58,6 +58,7 @@ button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:whi
 <div class="tabs">
 <button onclick="showAdminTab('products')">PRODUCT MANAGEMENT</button>
 <button onclick="showAdminTab('orders')">ORDER MANAGEMENT</button>
+ <button onclick="showAdminTab('delivery')">DELIVERY MANAGEMENT</button>
 </div>
 
 <section id="productsSection">
@@ -165,7 +166,21 @@ button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:whi
 <button onclick="loadOrders()">Refresh Orders</button>
 <div id="orders">Loading orders...</div>
 </section>
+<section id="deliverySection" style="display:none">
+<h3>Delivery Partner Management</h3>
 
+<button onclick="loadDeliveryBoys()">
+Refresh Delivery Partners
+</button>
+
+<div class="order" id="deliverySummary">
+Loading summary...
+</div>
+
+<div id="deliveryBoys">
+Loading delivery partners...
+</div>
+</section>
 </div>
 </div>
 
@@ -284,10 +299,131 @@ function safe(value){
 function showAdminTab(tab){
  document.getElementById("productsSection").style.display=tab==="products"?"block":"none";
  document.getElementById("ordersSection").style.display=tab==="orders"?"block":"none";
+ document.getElementById("deliverySection").style.display=tab==="delivery"?"block":"none";
+
  if(tab==="products") loadProducts();
  if(tab==="orders") loadOrders();
+ if(tab==="delivery") loadDeliveryBoys();
+}
+async function loadDeliveryBoys(){
+ const box=document.getElementById("deliveryBoys");
+ const summary=document.getElementById("deliverySummary");
+
+ box.textContent="Loading...";
+ summary.textContent="Loading...";
+
+ try{
+  const response=await fetch("/api/delivery/boys",{
+   headers:{
+    "X-Admin-Email":adminEmail,
+    "X-Admin-Password":adminPassword
+   }
+  });
+
+  const rows=await response.json();
+
+  if(!response.ok) throw new Error(rows.error||"Loading failed");
+
+  const counts={
+   pending:0,
+   approved:0,
+   rejected:0,
+   suspended:0
+  };
+
+  rows.forEach(p=>{
+   if(counts[p.status]!==undefined) counts[p.status]++;
+  });
+
+  summary.textContent=
+   "Total: "+rows.length+
+   " | Pending: "+counts.pending+
+   " | Approved: "+counts.approved+
+   " | Rejected: "+counts.rejected+
+   " | Suspended: "+counts.suspended;
+
+  box.innerHTML="";
+
+  if(!rows.length){
+   box.textContent="No delivery applications found.";
+   return;
+  }
+
+  rows.forEach(p=>{
+   const card=document.createElement("div");
+   card.className="order";
+
+   card.innerHTML=`
+    <h3>${safe(p.name)}</h3>
+    <p>Email: ${safe(p.email)}</p>
+    <p>Phone: ${safe(p.phone)}</p>
+    <p>Vehicle: ${safe(p.vehicle_type)}</p>
+    <p>Number: ${safe(p.vehicle_number)}</p>
+    <p><b>Status: ${safe(p.status).toUpperCase()}</b></p>
+    <div class="actions">
+    ${
+     p.status==="pending" ? `
+      <button class="confirm"
+       onclick="updateDeliveryStatus(${Number(p.id)},'approved')">APPROVE</button>
+      <button class="cancel"
+       onclick="updateDeliveryStatus(${Number(p.id)},'rejected')">REJECT</button>
+     ` : ""
+    }
+    ${
+     p.status==="approved" ? `
+      <button class="cancel"
+       onclick="updateDeliveryStatus(${Number(p.id)},'suspended')">SUSPEND</button>
+     ` : ""
+    }
+    ${
+     p.status==="suspended" ? `
+      <button class="confirm"
+       onclick="updateDeliveryStatus(${Number(p.id)},'approved')">REACTIVATE</button>
+     ` : ""
+    }
+    </div>
+   `;
+
+   box.appendChild(card);
+  });
+
+ }catch(error){
+  box.textContent=error.message;
+ }
 }
 
+async function updateDeliveryStatus(id,status){
+
+ const action={
+  approved:"approve",
+  rejected:"reject",
+  suspended:"suspend"
+ };
+
+ if(!confirm("Are you sure you want to "+action[status]+" this partner?")) return;
+
+ try{
+  const response=await fetch("/api/delivery/boys",{
+   method:"PATCH",
+   headers:{
+    "Content-Type":"application/json",
+    "X-Admin-Email":adminEmail,
+    "X-Admin-Password":adminPassword
+   },
+   body:JSON.stringify({id,status})
+  });
+
+  const result=await response.json();
+
+  if(!response.ok) throw new Error(result.error||"Update failed");
+
+  alert("Delivery Partner status updated!");
+  loadDeliveryBoys();
+
+ }catch(error){
+  alert(error.message);
+ }
+}
 async function loadProducts(){
  const box=document.getElementById("productList");
  box.textContent="Loading products...";
