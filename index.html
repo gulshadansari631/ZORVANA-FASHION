@@ -179,7 +179,19 @@ footer{background:#171717;color:#ddd;text-align:center;padding:30px 15px;margin-
  color:var(--red);
 }
 .modal,.checkout{display:none;position:fixed;inset:0;z-index:1000;background:#0009;overflow:auto;padding:15px}
-.modal.show,.checkout.show{display:block}.modal-box,.checkout-box{background:#fff;max-width:950px;margin:15px auto;border-radius:12px;padding:22px;position:relative}
+.modal.show,.checkout.show{display:block}
+.modal-box,.checkout-box{
+ background:#fff;
+ max-width:950px;
+ margin:15px auto;
+ border-radius:12px;
+ padding:22px;
+ position:relative;
+}
+.modal-box{
+ max-height:calc(100vh - 30px);
+ overflow-y:auto;
+}
 .close{position:absolute;right:12px;top:10px;border:0;background:#eee;border-radius:50%;width:35px;height:35px;font-size:21px;z-index:2}
 .detail-grid{
  display:flex;
