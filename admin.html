@@ -978,10 +978,27 @@ async function saveProduct(){
 
       const permission = await Notification.requestPermission();
 
-      if (permission !== "granted") {
+            if (permission !== "granted") {
+        let permissionState = "not available";
+
+        try {
+          const result = await navigator.permissions.query({
+            name: "notifications"
+          });
+          permissionState = result.state;
+        } catch (e) {
+          permissionState = "check not supported";
+        }
+
         status.textContent =
-          "Permission nahi mili. Browser notification permission allow karo.";
+          "Permission: " + permission +
+          " | Browser state: " + permissionState +
+          " | Secure: " + window.isSecureContext +
+          " | Top-level: " + (window.top === window) +
+          " | Service Worker: " + ("serviceWorker" in navigator);
+
         return;
+      }
       }
 
       status.textContent = "Firebase connect ho raha hai...";
