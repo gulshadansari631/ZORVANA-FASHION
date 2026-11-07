@@ -276,6 +276,18 @@ function selectCategory(c){
  const b=[...document.querySelectorAll('#categoryNav button')].find(x=>x.textContent.trim().toLowerCase()===c.toLowerCase());
  filterCategory(c,b);
 }
+ function filterProductType(type){
+ const items=allProducts.filter(p=>
+  String(p.product_type||'').trim().toLowerCase()===type.toLowerCase()
+ );
+
+ $('sectionTitle').textContent=type+' Collection';
+ renderGrid('productGrid',items,'Is category mein abhi products nahi hain.');
+
+ document.querySelectorAll('.home-section').forEach(s=>s.style.display='none');
+ $('shop').scrollIntoView({behavior:'smooth'});
+ setNav('categories');
+}
 function searchProducts(){
  const q=$('searchInput').value.trim().toLowerCase();
  const items=allProducts.filter(p=>(p.name+' '+p.category+' '+(p.description||'')).toLowerCase().includes(q));
