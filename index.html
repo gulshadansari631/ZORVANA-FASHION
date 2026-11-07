@@ -312,7 +312,6 @@ footer{background:#171717;color:#ddd;text-align:center;padding:30px 15px;margin-
  <button data-nav="wishlist" onclick="showWishlist()"><span>♡</span>Wishlist</button>
  <button data-nav="account" onclick="setNav('account');openProfile()"><span>♙</span>Account</button>
  <button data-nav="orders" onclick="setNav('orders');openOrders()"><span>📦</span>My Orders</button>
- <button class="image-wishlist" onclick="toggleWishlist(currentProduct.id)">♡</button>
 </nav>
 
 <div class="modal" id="productModal">
@@ -321,7 +320,10 @@ footer{background:#171717;color:#ddd;text-align:center;padding:30px 15px;margin-
   <div class="detail-grid">
    <div>
     <div class="main-photo"><img id="detailImage" src="" alt="Product"></div>
-    <div class="thumbs" id="detailThumbs"></div>
+    <div class="main-photo">
+ <img id="detailImage" src="" alt="Product">
+ <button class="image-wishlist" onclick="toggleWishlist(currentProduct.id)">♡</button>
+</div>
    </div>
    <div class="detail-info">
     <div class="muted" id="detailCategory"></div>
