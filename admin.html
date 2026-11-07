@@ -969,7 +969,7 @@ async function saveProduct(){
   cancelEditProduct();
   message.textContent=wasEditing?"Product successfully updated!":"Product successfully added!";
   alert(wasEditing?"Product update ho gaya!":"Product add ho gaya!");
-  loadProducts();
+  showAdminTab("allProducts");
 
  }catch(error){
   message.textContent=error.message;
