@@ -178,21 +178,18 @@ footer{background:#171717;color:#ddd;text-align:center;padding:30px 15px;margin-
  <div class="hero-mark">✦</div>
 </section>
 <div class="quick-cats">
- <button class="quick-cat" onclick="filterProductType('Jackets')"><span class="cat-icon">🧥</span>Jackets</button>
- <button class="quick-cat" onclick="filterProductType('Hoodies')"><span class="cat-icon">🧥</span>Hoodies</button>
- <button class="quick-cat" onclick="filterProductType('T-Shirts')"><span class="cat-icon">👕</span>T-Shirts</button>
- <button class="quick-cat" onclick="filterProductType('Shirts')"><span class="cat-icon">👔</span>Shirts</button>
- <button class="quick-cat" onclick="filterProductType('Jeans')"><span class="cat-icon">👖</span>Jeans</button>
- <button class="quick-cat" onclick="filterProductType('Shoes')"><span class="cat-icon">👟</span>Shoes</button>
- <button class="quick-cat" onclick="filterProductType('Dresses')"><span class="cat-icon">👗</span>Dresses</button>
- <button class="quick-cat" onclick="filterProductType('Kurtis')"><span class="cat-icon">👚</span>Kurtis</button>
- <button class="quick-cat" onclick="filterProductType('Watches')"><span class="cat-icon">⌚</span>Watches</button>
- <button class="quick-cat" onclick="filterProductType('Bags')"><span class="cat-icon">👜</span>Bags</button>
- <button class="quick-cat" onclick="filterProductType('Mobiles')"><span class="cat-icon">📱</span>Mobiles</button>
- <button class="quick-cat" onclick="filterProductType('Earphones')"><span class="cat-icon">🎧</span>Earphones</button>
- <button class="quick-cat" onclick="filterProductType('Chargers')"><span class="cat-icon">🔌</span>Chargers</button>
- <button class="quick-cat" onclick="filterProductType('Speakers')"><span class="cat-icon">🔊</span>Speakers</button>
- <button class="quick-cat" onclick="filterProductType('Sunglasses')"><span class="cat-icon">🕶️</span>Sunglasses</button>
+ <button class="quick-cat" onclick="showCategorySubcategories('Men')"><span class="cat-icon">👔</span>Men</button>
+ <button class="quick-cat" onclick="showCategorySubcategories('Women')"><span class="cat-icon">👗</span>Women</button>
+ <button class="quick-cat" onclick="showCategorySubcategories('Kids')"><span class="cat-icon">🧒</span>Kids</button>
+ <button class="quick-cat" onclick="showCategorySubcategories('Mobiles')"><span class="cat-icon">📱</span>Mobiles</button>
+ <button class="quick-cat" onclick="showCategorySubcategories('Watches')"><span class="cat-icon">⌚</span>Watches</button>
+ <button class="quick-cat" onclick="showCategorySubcategories('Electronics')"><span class="cat-icon">🎧</span>Electronics</button>
+ <button class="quick-cat" onclick="showCategorySubcategories('Shoes')"><span class="cat-icon">👟</span>Shoes</button>
+ <button class="quick-cat" onclick="showCategorySubcategories('Accessories')"><span class="cat-icon">👜</span>Accessories</button>
+</div>
+<div id="subcategoryPanel" class="subcategory-panel">
+ <h3 id="subcategoryTitle">Choose Subcategory</h3>
+ <div id="subcategoryList" class="subcategory-list"></div>
 </div>
 <main class="wrap" id="shop">
  <div class="section-head"><h2 id="sectionTitle">Trending Now 🔥</h2><button class="section-link" onclick="showAllProducts()">View All →</button></div>
