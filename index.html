@@ -739,9 +739,15 @@ function goSearch(){goHome();setNav('search');setTimeout(focusSearch,100)}
 function toggleMenu(){goCategories()}
 
 function openProduct(id,update=true){
- const p=allProducts.find(x=>String(x.id)===String(id));
- if(!p)return;
- currentProduct=p;selectedSize='';
+  const p=allProducts.find(x=>String(x.id)===String(id));
+ if(!p){
+  console.error('Product not found:',id);
+  return;
+ }
+ currentProduct=p;
+ selectedSize='';
+ $('productModal').classList.add('show');
+ document.body.style.overflow='hidden';
  $('detailCategory').textContent=p.category||'Fashion';
  $('detailName').textContent=p.name||'Product';
  $('detailPrice').textContent=money(p.selling_price);
