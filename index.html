@@ -434,7 +434,7 @@ function setNav(name){
 function filterCategory(c,btn){
  document.querySelectorAll('#categoryNav button').forEach(b=>b.classList.remove('active'));
  if(btn)btn.classList.add('active');
- $('sectionTitle').textContent=c==='All'?'Trending Now 🔥':c+' Collection';
+ $('sectionTitle').textContent=c==='All'?'Latest Products':c+' Collection';
  const items=c==='All'?allProducts:allProducts.filter(p=>categoryIs(p,c));
  renderGrid('productGrid',items,'Is category mein abhi products nahi hain.');
  document.querySelectorAll('.home-section').forEach(s=>s.style.display='none');
@@ -552,7 +552,7 @@ function goHome(){
  document.body.classList.remove('zv-page-mode','zv-account-view','zv-orders-view','zv-detail-view','orders-view');
  document.querySelectorAll('.home-section').forEach(s=>s.style.display='');
  document.querySelectorAll('#categoryNav button').forEach(b=>b.classList.toggle('active',b.textContent.trim()==='All'));
- $('sectionTitle').textContent='Trending Now 🔥';
+ $('sectionTitle').textContent='Latest Products';
  renderHome();
  setNav('home');
  window.scrollTo({top:0,behavior:'smooth'});
