@@ -615,6 +615,10 @@ try{
   <p><b>Status:</b> ${safe(o.status||"Pending")}</p>
 <p><b>Meesho PIN Check:</b> ${safe(o.pin_check_status||"Not Checked")}</p>
 <div class="actions">
+<button style="background:#25D366"
+ onclick="shareOrderWhatsApp(${Number(o.id)})">
+ SHARE ON WHATSAPP
+</button>
  <button onclick="copyOrderDetails(${Number(o.id)})">COPY FULL DETAILS</button>
  <button onclick="copyOrderAddress(${Number(o.id)})">COPY ADDRESS</button>
  <button onclick="copyOrderPhone(${Number(o.id)})">COPY PHONE</button>
@@ -774,6 +778,35 @@ function copyOrderPhone(id){
  if(!confirm("Meesho par PIN check karke "+status+" mark karna hai?"))return;
 
  try{
+  function shareOrderWhatsApp(id) {
+  const o = getAdminOrder(id);
+
+  if (!o) {
+    alert("Order not found");
+    return;
+  }
+
+  const message = [
+    "ZORVANA FASHION - NEW ORDER",
+    "Order ID: #" + o.id,
+    "Customer: " + (o.customer_name || ""),
+    "Phone: " + (o.phone || ""),
+    "Product: " + (o.product || ""),
+    "Price: " + (o.product_price || ""),
+    "Size: " + (o.size || ""),
+    "Address: " + (o.address || ""),
+    "District: " + (o.district || ""),
+    "State: " + (o.state || ""),
+    "PIN: " + (o.pincode || ""),
+    "Payment: " + (o.payment || ""),
+    "Status: " + (o.status || "Pending")
+  ].join("\n");
+
+  window.open(
+    "https://wa.me/?text=" + encodeURIComponent(message),
+    "_blank"
+  );
+}
   const response=await fetch("/api/orders",{
    method:"PATCH",
    headers:{
