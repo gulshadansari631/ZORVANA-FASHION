@@ -319,6 +319,7 @@ async function restoreAdminSession(){
 
   if(!saved||!saved.email||!saved.password||!saved.expiresAt||Date.now()>=saved.expiresAt){
    clearAdminSession();
+   document.getElementById("loginBox").style.display="block";
    return;
   }
 
@@ -333,6 +334,7 @@ async function restoreAdminSession(){
 
  }catch(error){
   clearAdminSession();
+  document.getElementById("loginBox").style.display="block";
  }
 }
 
