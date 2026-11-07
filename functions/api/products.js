@@ -126,9 +126,9 @@ export async function onRequest({ request, env }) {
       if (request.method === "POST") {
         const result = await env.DB.prepare(`
           INSERT INTO products
-          (name, category, product_type, image, images, selling_price, mrp,
-           discount, description, stock, highlights, additional_details, sizes)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (name, category, product_type, variant_group_id, image, images, selling_price, mrp,
+       discount, description, stock, highlights, additional_details, sizes)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(...values).run();
 
         return Response.json({
