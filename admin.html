@@ -958,6 +958,7 @@ async function saveProduct(){
  const message=document.getElementById("productMessage");
  const name=document.getElementById("productName").value.trim();
  const category=document.getElementById("productCategory").value;
+ const productType=document.getElementById("productType").value;
  const price=document.getElementById("productPrice").value;
 
  if(!name||!category||!price||(!editingProductId&&!files.length)){
