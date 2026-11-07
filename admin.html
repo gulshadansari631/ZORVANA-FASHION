@@ -494,20 +494,24 @@ async function loadProducts(){
 
   box.innerHTML="";
 
-  allProducts.forEach(p=>{
+    allProducts.forEach(p=>{
    const div=document.createElement("div");
-   div.className="order";
+   div.className="admin-product-card";
 
    const img=document.createElement("img");
    img.src=p.image||"";
-   img.style.cssText="width:100%;max-width:260px;height:280px;object-fit:contain;display:block;margin:0 auto";
+   img.className="admin-product-image";
    img.alt=p.name||"Product";
 
    const heading=document.createElement("h3");
    heading.textContent=p.name||"";
 
    const info=document.createElement("p");
-   info.textContent="Category: "+(p.category||"")+" | Selling Price: ₹"+(p.selling_price||0)+" | MRP: ₹"+(p.mrp||0)+" | Stock: "+(p.stock||0);
+   info.textContent=
+    "Category: "+(p.category||"")+
+    "\nSelling Price: ₹"+(p.selling_price||0)+
+    "\nMRP: ₹"+(p.mrp||0)+
+    "\nStock: "+(p.stock||0);
 
    const edit=document.createElement("button");
    edit.className="edit";
@@ -522,7 +526,6 @@ async function loadProducts(){
    div.append(img,heading,info,edit,del);
    box.appendChild(div);
   });
-
  }catch(error){
   box.textContent=error.message;
  }
