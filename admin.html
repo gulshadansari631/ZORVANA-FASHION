@@ -778,35 +778,7 @@ function copyOrderPhone(id){
  if(!confirm("Meesho par PIN check karke "+status+" mark karna hai?"))return;
 
  try{
-  function shareOrderWhatsApp(id) {
-  const o = getAdminOrder(id);
-
-  if (!o) {
-    alert("Order not found");
-    return;
-  }
-
-  const message = [
-    "ZORVANA FASHION - NEW ORDER",
-    "Order ID: #" + o.id,
-    "Customer: " + (o.customer_name || ""),
-    "Phone: " + (o.phone || ""),
-    "Product: " + (o.product || ""),
-    "Price: " + (o.product_price || ""),
-    "Size: " + (o.size || ""),
-    "Address: " + (o.address || ""),
-    "District: " + (o.district || ""),
-    "State: " + (o.state || ""),
-    "PIN: " + (o.pincode || ""),
-    "Payment: " + (o.payment || ""),
-    "Status: " + (o.status || "Pending")
-  ].join("\n");
-
-  window.open(
-    "https://wa.me/?text=" + encodeURIComponent(message),
-    "_blank"
-  );
-}
+  
   const response=await fetch("/api/orders",{
    method:"PATCH",
    headers:{
@@ -826,8 +798,31 @@ function copyOrderPhone(id){
   alert(error.message);
  }
 }
-async function updateStatus(id,status){
- try{
+function shareOrderWhatsApp(id) {
+  const o = getAdminOrder(id);
+  if (!o) return alert("Order not found");
+
+  const message = [
+    "ZORVANA FASHION - NEW ORDER",
+    "Order ID: #" + o.id,
+    "Customer: " + (o.customer_name || ""),
+    "Phone: " + (o.phone || ""),
+    "Product: " + (o.product || ""),
+    "Price: " + (o.product_price || ""),
+    "Size: " + (o.size || ""),
+    "Address: " + (o.address || ""),
+    "District: " + (o.district || ""),
+    "State: " + (o.state || ""),
+    "PIN: " + (o.pincode || ""),
+    "Payment: " + (o.payment || ""),
+    "Status: " + (o.status || "Pending")
+  ].join("\n");
+
+  window.location.href =
+    "https://wa.me/?text=" + encodeURIComponent(message);
+}
+ async function updateStatus(id,status){
+  try{
   const response=await fetch("/api/orders",{
    method:"PATCH",
    headers:{
