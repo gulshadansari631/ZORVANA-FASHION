@@ -389,33 +389,38 @@ function renderHome(){
  renderGrid('newHomeGrid',latest,'New arrivals coming soon.');
 
  const categoryImages={
-  mainCatMen:['Men','👔'],
-  mainCatWomen:['Women','👗'],
-  mainCatKids:['Kids','🧒'],
-  mainCatMobiles:['Mobiles','📱'],
-  mainCatWatches:['Watches','⌚'],
-  mainCatElectronics:['Electronics','🎧'],
-  mainCatShoes:['Shoes','👟'],
-  mainCatAccessories:['Accessories','👜']
- };
+ mainCatMen:['Men','👔',''],
+ mainCatWomen:['Women','👗',''],
+ mainCatKids:['Kids','🧒','https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=500&q=80'],
+ mainCatMobiles:['Mobiles','📱','https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=500&q=80'],
+ mainCatWatches:['Watches','⌚','https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=500&q=80'],
+ mainCatElectronics:['Electronics','🎧','https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=500&q=80'],
+ mainCatShoes:['Shoes','👟','https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=500&q=80'],
+ mainCatAccessories:['Accessories','👜','https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=500&q=80']
+};
 
- Object.entries(categoryImages).forEach(([id,config])=>{
-  const [category,icon]=config;
-  const typeProducts=allProducts.filter(p=>
-   String(p.product_type||'').trim().toLowerCase()===category.toLowerCase()
-  );
-  const mainProducts=allProducts.filter(p=>
-   categoryIs(p,category)
-  );
-  const product=typeProducts[0]||mainProducts[0];
-  const box=$(id);
+Object.entries(categoryImages).forEach(([id,config])=>{
+ const [category,icon,fallbackImage]=config;
 
-  if(box){
-   box.innerHTML=product
-    ?`<img src="${escapeHtml(productImage(product))}" alt="${escapeHtml(category)}">`
-    :icon;
-  }
- });
+ const typeProducts=allProducts.filter(p=>
+  String(p.product_type||'').trim().toLowerCase()===category.toLowerCase()
+ );
+
+ const mainProducts=allProducts.filter(p=>
+  categoryIs(p,category)
+ );
+
+ const product=typeProducts[0]||mainProducts[0];
+ const box=$(id);
+
+ if(box){
+  const photo=product?productImage(product):fallbackImage;
+
+  box.innerHTML=photo
+   ?`<img src="${escapeHtml(photo)}" alt="${escapeHtml(category)}" onerror="this.parentElement.textContent='${icon}'">`
+   :icon;
+ }
+});
 }
 async function loadProducts(){
  try{
