@@ -446,7 +446,7 @@ async function updateDeliveryStatus(id,status){
  }
 }
 async function loadProducts(){
- const box=document.getElementById("productList");
+ const box=document.getElementById("allProductList");
  box.textContent="Loading products...";
 
  try{
@@ -468,7 +468,7 @@ async function loadProducts(){
 
    const img=document.createElement("img");
    img.src=p.image||"";
-   img.style.cssText="width:100px;height:110px;object-fit:contain";
+   img.style.cssText="width:100%;max-width:260px;height:280px;object-fit:contain;display:block;margin:0 auto";
    img.alt=p.name||"Product";
 
    const heading=document.createElement("h3");
@@ -495,7 +495,6 @@ async function loadProducts(){
   box.textContent=error.message;
  }
 }
-
 function editProduct(id){
  const p=allProducts.find(item=>Number(item.id)===id);
  if(!p) return;
