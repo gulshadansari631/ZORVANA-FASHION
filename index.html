@@ -290,7 +290,7 @@ function selectCategory(c){
 }
 function searchProducts(){
  const q=$('searchInput').value.trim().toLowerCase();
- const items=allProducts.filter(p=>(p.name+' '+p.category+' '+(p.description||'')).toLowerCase().includes(q));
+ const items=allProducts.filter(p=>(p.name+' '+p.category+' '+(p.product_type||'')+' '+(p.description||'')).toLowerCase().includes(q));
  $('sectionTitle').textContent='Search Results';
  renderGrid('productGrid',items,'No matching products found.');
  document.querySelectorAll('.home-section').forEach(s=>s.style.display='none');
