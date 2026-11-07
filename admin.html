@@ -963,44 +963,19 @@ async function saveProduct(){
     });
   }
 
-  button.addEventListener("click", async () => {
+    let adminPushOptInRequested = false;
+  let adminPushRegistrationInProgress = false;
+  let notificationPermissionStatus = null;
+
+  async function subscribeToAdminPush() {
+    if (adminPushRegistrationInProgress) return;
+    if (Notification.permission !== "granted") return;
+    if (!adminEmail || !adminPassword) return;
+
+    adminPushRegistrationInProgress = true;
+    button.disabled = true;
+
     try {
-      if (!("Notification" in window)) {
-        throw new Error("Is browser mein notifications supported nahi hain.");
-      }
-
-      if (!adminEmail || !adminPassword) {
-        throw new Error("Pehle Admin login karo.");
-      }
-
-      button.disabled = true;
-      status.textContent = "Notification permission check ho raha hai...";
-
-      const permission = await Notification.requestPermission();
-
-            if (permission !== "granted") {
-        let permissionState = "not available";
-
-        try {
-          const result = await navigator.permissions.query({
-            name: "notifications"
-          });
-          permissionState = result.state;
-        } catch (e) {
-          permissionState = "check not supported";
-        }
-
-        status.textContent =
-          "Permission: " + permission +
-          " | Browser state: " + permissionState +
-          " | Secure: " + window.isSecureContext +
-          " | Top-level: " + (window.top === window) +
-          " | Service Worker: " + ("serviceWorker" in navigator);
-
-        return;
-      }
-     
-
       status.textContent = "Firebase connect ho raha hai...";
 
       if (!window.firebase) {
@@ -1031,9 +1006,7 @@ async function saveProduct(){
         serviceWorkerRegistration: registration
       });
 
-      if (!token) {
-        throw new Error("FCM token nahi mila. Dobara try karo.");
-      }
+      if (!token) throw new Error("FCM token nahi mila.");
 
       status.textContent = "Admin device register ho raha hai...";
 
@@ -1044,7 +1017,7 @@ async function saveProduct(){
           "X-Admin-Email": adminEmail,
           "X-Admin-Password": adminPassword
         },
-        body: JSON.stringify({ token: token })
+        body: JSON.stringify({ token })
       });
 
       const result = await response.json();
@@ -1057,10 +1030,70 @@ async function saveProduct(){
       button.textContent = "NOTIFICATIONS ENABLED";
 
     } catch (error) {
-      status.textContent = error.message;
-      console.error("Admin push error:", error);
+      status.textContent = "Error: " + error.message;
     } finally {
+      adminPushRegistrationInProgress = false;
       button.disabled = false;
+    }
+  }
+
+  if ("Notification" in window && navigator.permissions) {
+    navigator.permissions.query({ name: "notifications" })
+      .then(permissionStatus => {
+        notificationPermissionStatus = permissionStatus;
+
+        permissionStatus.onchange = () => {
+          if (
+            adminPushOptInRequested &&
+            permissionStatus.state === "granted"
+          ) {
+            subscribeToAdminPush();
+          }
+        };
+      })
+      .catch(error => console.error(error));
+  }
+
+  button.addEventListener("click", async () => {
+    try {
+      if (!("Notification" in window)) {
+        throw new Error("Notifications supported nahi hain.");
+      }
+
+      if (!adminEmail || !adminPassword) {
+        throw new Error("Pehle Admin login karo.");
+      }
+
+      adminPushOptInRequested = true;
+
+      if (Notification.permission === "granted") {
+        await subscribeToAdminPush();
+        return;
+      }
+
+      status.textContent = "Chrome notification permission maang raha hai...";
+
+      const permission = await Notification.requestPermission();
+
+      if (permission === "granted") {
+        await subscribeToAdminPush();
+        return;
+      }
+
+      if (
+        notificationPermissionStatus &&
+        notificationPermissionStatus.state === "prompt"
+      ) {
+        status.textContent =
+          "Chrome ke address bar ke paas Get notifications? mein Allow dabao. Permission milte hi registration hoga.";
+        return;
+      }
+
+      status.textContent =
+        "Notification permission denied hai. Chrome Site Controls se Allow karo.";
+
+    } catch (error) {
+      status.textContent = error.message;
     }
   });
 })();
