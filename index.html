@@ -321,6 +321,33 @@ function selectCategory(c){
  const b=[...document.querySelectorAll('#categoryNav button')].find(x=>x.textContent.trim().toLowerCase()===c.toLowerCase());
  filterCategory(c,b);
 }
+ function showCategorySubcategories(category){
+ const subcategories={
+  Men:['Jackets','Hoodies','T-Shirts','Shirts','Jeans','Shoes'],
+  Women:['Dresses','Tops','Kurtis','Sarees','Jeans','Shoes'],
+  Kids:['Baby Clothes','Boys Wear','Girls Wear'],
+  Mobiles:['Mobiles'],
+  Watches:['Watches'],
+  Electronics:['Earphones','Chargers','Speakers','Other Electronics'],
+  Shoes:['Shoes'],
+  Accessories:['Bags','Sunglasses','Other Accessories']
+ };
+
+ const list=subcategories[category]||[];
+
+ $('subcategoryTitle').textContent=category+' Categories';
+
+ $('subcategoryList').innerHTML=list.map(type=>
+  `<button type="button" onclick="filterProductType('${type}')">${type}</button>`
+ ).join('');
+
+ $('subcategoryPanel').classList.add('show');
+
+ $('subcategoryPanel').scrollIntoView({
+  behavior:'smooth',
+  block:'nearest'
+ });
+}
  function filterProductType(type){
  const items=allProducts.filter(p=>
   String(p.product_type||'').trim().toLowerCase()===type.toLowerCase()
