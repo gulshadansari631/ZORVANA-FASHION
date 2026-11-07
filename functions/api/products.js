@@ -1,4 +1,3 @@
-
 function verifyAdmin(request, env) {
   return Boolean(
     env.ADMIN_EMAIL &&
@@ -19,6 +18,7 @@ export async function onRequest({ request, env }) {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         category TEXT NOT NULL,
+        product_type TEXT DEFAULT '',
         image TEXT,
         images TEXT DEFAULT '[]',
         selling_price REAL NOT NULL,
@@ -40,6 +40,7 @@ export async function onRequest({ request, env }) {
     const existing = (columns.results || []).map(c => c.name);
 
     const migrations = [
+      ["product_type", "TEXT DEFAULT ''"],
       ["images", "TEXT DEFAULT '[]'"],
       ["highlights", "TEXT DEFAULT '{}'"],
       ["additional_details", "TEXT DEFAULT '{}'"],
@@ -107,6 +108,7 @@ export async function onRequest({ request, env }) {
       const values = [
         String(p.name).trim(),
         String(p.category),
+        String(p.product_type || ""),
         mainImage,
         JSON.stringify(images.length ? images : (mainImage ? [mainImage] : [])),
         Number(p.selling_price),
@@ -122,9 +124,9 @@ export async function onRequest({ request, env }) {
       if (request.method === "POST") {
         const result = await env.DB.prepare(`
           INSERT INTO products
-          (name, category, image, images, selling_price, mrp, discount,
-           description, stock, highlights, additional_details, sizes)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          (name, category, product_type, image, images, selling_price, mrp,
+           discount, description, stock, highlights, additional_details, sizes)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(...values).run();
 
         return Response.json({
@@ -139,9 +141,9 @@ export async function onRequest({ request, env }) {
 
       await env.DB.prepare(`
         UPDATE products SET
-        name=?, category=?, image=?, images=?, selling_price=?, mrp=?,
-        discount=?, description=?, stock=?, highlights=?,
-        additional_details=?, sizes=?
+        name=?, category=?, product_type=?, image=?, images=?,
+        selling_price=?, mrp=?, discount=?, description=?, stock=?,
+        highlights=?, additional_details=?, sizes=?
         WHERE id=?
       `).bind(...values, Number(p.id)).run();
 
