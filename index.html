@@ -789,9 +789,17 @@ function openProduct(id,update=true){
    const color=v.highlights?.Color||v.highlights?.color||v.name;
    return `<button class="pill ${String(v.id)===String(p.id)?'selected':''}" onclick="openProduct('${v.id}',false)">${escapeHtml(color)}</button>`;
   }).join(''):'';
- const ss=sizes(p);
- $('sizeArea').style.display=ss.length?'block':'none';
- $('sizeOptions').innerHTML=ss.map(x=>`<button class="pill" onclick="chooseSize('${escapeHtml(x)}',this)">${escapeHtml(x)}</button>`).join('');
+ const ss=Array.isArray(p.sizes)?p.sizes:sizes(p);
+const sizeArea=$('sizeArea');
+const sizeOptions=$('sizeOptions');
+
+sizeArea.style.display='block';
+sizeOptions.style.display='flex';
+sizeOptions.style.flexWrap='wrap';
+sizeOptions.style.gap='8px';
+sizeOptions.innerHTML=ss.length
+ ?ss.map(x=>`<button type="button" onclick="chooseSize('${escapeHtml(x)}',this)" style="display:inline-flex;padding:10px 16px;background:#fff;color:#222;border:1px solid #999;border-radius:6px;font-size:14px;font-weight:700;">${escapeHtml(x)}</button>`).join('')
+ :'<span style="color:#c00">No sizes available</span>';
  $('detailHighlights').innerHTML=listValue(p.highlights).map(x=>`<li>${escapeHtml(x)}</li>`).join('')||'<li>Stylish and comfortable design</li>';
  $('detailMore').innerHTML=listValue(p.additional_details).map(x=>`<li>${escapeHtml(x)}</li>`).join('')||'<li>Quality fashion product</li>';
    const related=allProducts.filter(x=>
