@@ -557,7 +557,7 @@ Object.entries(categoryImages).forEach(([id,config])=>{
 }
 async function loadProducts(){
  try{
-  const r=await fetch('/api/products');
+  const r=await fetch('/api/products',{cache:'no-store'});
   if(!r.ok)throw new Error();
   const d=await r.json();
   allProducts=Array.isArray(d)?d:(d.products||[]);
