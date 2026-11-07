@@ -109,9 +109,9 @@ export async function onRequest({ request, env }) {
       const values = [
         String(p.name).trim(),
         String(p.category),
-        String(p.product_type || ""),
                 String(p.product_type || ""),
         String(p.variant_group_id || ""),
+        mainImage,
         mainImage,
         JSON.stringify(images.length ? images : (mainImage ? [mainImage] : [])),
         Number(p.selling_price),
