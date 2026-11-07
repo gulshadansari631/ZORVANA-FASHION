@@ -330,6 +330,35 @@ function renderHome(){
  renderGrid('menHomeGrid',men,'Men collection will appear here.');
  renderGrid('womenHomeGrid',women,'Women collection will appear here.');
  renderGrid('newHomeGrid',latest,'New arrivals coming soon.');
+
+ const categoryImages={
+  mainCatMen:['Men','👔'],
+  mainCatWomen:['Women','👗'],
+  mainCatKids:['Kids','🧒'],
+  mainCatMobiles:['Mobiles','📱'],
+  mainCatWatches:['Watches','⌚'],
+  mainCatElectronics:['Electronics','🎧'],
+  mainCatShoes:['Shoes','👟'],
+  mainCatAccessories:['Accessories','👜']
+ };
+
+ Object.entries(categoryImages).forEach(([id,config])=>{
+  const [category,icon]=config;
+  const typeProducts=allProducts.filter(p=>
+   String(p.product_type||'').trim().toLowerCase()===category.toLowerCase()
+  );
+  const mainProducts=allProducts.filter(p=>
+   categoryIs(p,category)
+  );
+  const product=typeProducts[0]||mainProducts[0];
+  const box=$(id);
+
+  if(box){
+   box.innerHTML=product
+    ?`<img src="${escapeHtml(productImage(product))}" alt="${escapeHtml(category)}">`
+    :icon;
+  }
+ });
 }
 async function loadProducts(){
  try{
