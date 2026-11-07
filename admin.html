@@ -555,6 +555,7 @@ async function loadProducts(){
    del.onclick=()=>deleteProduct(Number(p.id));
 
    div.append(img,heading,info,edit,del);
+     document.getElementById("productType").value=p.product_type||"";
    box.appendChild(div);
   });
  }catch(error){
