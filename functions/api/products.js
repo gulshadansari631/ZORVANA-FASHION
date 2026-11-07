@@ -97,9 +97,16 @@ export async function onRequest({ request, env }) {
 
       const mainImage = images[0] || p.image || "";
 
-      const allowedSizes = [
+            const allowedSizes = [
         "XS", "S", "M", "L", "XL", "XXL", "XXXL",
-        "28", "30", "32", "34", "36", "38", "40", "42", "44"
+        "28", "30", "32", "34", "36", "38", "40", "42", "44",
+        "UK 6", "UK 7", "UK 8", "UK 9", "UK 10", "UK 11",
+        "6 Months", "9 Months", "12 Months", "18 Months",
+        "2-3 Years", "3-4 Years", "4-5 Years", "5-6 Years",
+        "6-7 Years", "7-8 Years", "8-9 Years", "9-10 Years",
+        "10-11 Years", "11-12 Years", "12-13 Years",
+        "13-14 Years", "14-15 Years",
+        "Free Size", "Not applicable"
       ];
 
       const sizes = Array.isArray(p.sizes)
