@@ -112,7 +112,6 @@ export async function onRequest({ request, env }) {
                 String(p.product_type || ""),
         String(p.variant_group_id || ""),
         mainImage,
-        mainImage,
         JSON.stringify(images.length ? images : (mainImage ? [mainImage] : [])),
         Number(p.selling_price),
         Number(p.mrp) || 0,
