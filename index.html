@@ -231,35 +231,39 @@ footer{background:#171717;color:#ddd;text-align:center;padding:30px 15px;margin-
  <h3 id="subcategoryTitle">Choose Subcategory</h3>
  <div id="subcategoryList" class="subcategory-list"></div>
 </div>
-<main class="wrap" id="shop">
- <div class="section-head"><h2 id="sectionTitle">Trending Now 🔥</h2><button class="section-link" onclick="showAllProducts()">View All →</button></div>
- <div class="products" id="productGrid"><div class="empty">Loading products...</div></div>
- <section class="home-section"><div class="section-head"><h2>Men's Collection</h2><button class="section-link" onclick="selectCategory('Men')">View All →</button></div><div class="products" id="menHomeGrid"></div></section>
- <section class="home-section"><div class="section-head"><h2>Women's Collection</h2><button class="section-link" onclick="selectCategory('Women')">View All →</button></div><div class="products" id="womenHomeGrid"></div></section>
- <section class="home-section"><div class="section-head"><h2>New Arrivals</h2><button class="section-link" onclick="showAllProducts()">View All →</button></div><div class="products" id="newHomeGrid"></div></section>
-</main>
-<section class="offer-banner"><div><h2>Special Offer 👑</h2><strong>UP TO 50% OFF</strong><p>On Selected Collection</p></div><button onclick="goShop()">SHOP NOW →</button></section>
-<section class="service-strip">
- <div class="service-item"><span>🚚</span>Free Shipping<br>Above ₹999</div><div class="service-item"><span>🛡️</span>Secure<br>Shopping</div>
- <div class="service-item"><span>📦</span>Easy<br>Returns</div><div class="service-item"><span>🎧</span>24×7<br>Support</div>
-</section>
-<footer><strong>ZORVANA FASHION</strong><p>Style for every moment.</p><p>© <span id="year"></span> Zorvana Fashion</p></footer>
+const categoryImages={
+ mainCatMen:['Men','👔',''],
+ mainCatWomen:['Women','👗',''],
+ mainCatKids:['Kids','🧒','https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=500&q=80'],
+ mainCatMobiles:['Mobiles','📱','https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=500&q=80'],
+ mainCatWatches:['Watches','⌚','https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=500&q=80'],
+ mainCatElectronics:['Electronics','🎧','https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=500&q=80'],
+ mainCatShoes:['Shoes','👟','https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=500&q=80'],
+ mainCatAccessories:['Accessories','👜','https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=500&q=80']
+};
 
-<nav class="bottom-nav" aria-label="Main navigation">
- <button class="active" data-nav="home" onclick="goHome()"><span>⌂</span>Home</button>
- <button data-nav="categories" onclick="goCategories()"><span>▦</span>Categories</button>
- <button data-nav="wishlist" onclick="showWishlist()"><span>♡</span>Wishlist</button>
- <button data-nav="orders" onclick="setNav('orders');openOrders()"><span>▣</span>Orders</button>
- <button data-nav="account" onclick="setNav('account');openProfile()"><span>♙</span>Account</button>
-</nav>
+Object.entries(categoryImages).forEach(([id,config])=>{
+ const [category,icon,fallbackImage]=config;
 
-<div class="modal" id="productModal"><div class="modal-box">
- <button class="close" onclick="closeProduct()">×</button><div class="detail-grid">
-  <div><div class="main-photo"><img id="detailImage" src="" alt="Product"></div><div class="thumbs" id="detailThumbs"></div></div>
-  <div class="detail-info"><div class="muted" id="detailCategory"></div><h2 id="detailName"></h2>
-   <div><span class="detail-price" id="detailPrice"></span><span class="detail-mrp" id="detailMrp"></span></div>
-   <p class="detail-desc" id="detailDescription"></p>
-<div id="sizeArea">
+ const typeProducts=allProducts.filter(p=>
+  String(p.product_type||'').trim().toLowerCase()===category.toLowerCase()
+ );
+
+ const mainProducts=allProducts.filter(p=>
+  categoryIs(p,category)
+ );
+
+ const product=typeProducts[0]||mainProducts[0];
+ const box=$(id);
+
+ if(box){
+  const photo=product?productImage(product):fallbackImage;
+
+  box.innerHTML=photo
+   ?`<img src="${escapeHtml(photo)}" alt="${escapeHtml(category)}" onerror="this.parentElement.textContent='${icon}'">`
+   :icon;
+ }
+});
   <h4>Select Size</h4>
   <div class="pills" id="sizeOptions"></div>
   <button class="size-guide-toggle" onclick="toggleSizeGuide()">📏 SIZE GUIDE</button>
