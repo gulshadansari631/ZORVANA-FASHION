@@ -143,7 +143,7 @@ export async function onRequest({ request, env }) {
 
       await env.DB.prepare(`
         UPDATE products SET
-        name=?, category=?, product_type=?, image=?, images=?,
+                name=?, category=?, product_type=?, variant_group_id=?, image=?, images=?,
         selling_price=?, mrp=?, discount=?, description=?, stock=?,
         highlights=?, additional_details=?, sizes=?
         WHERE id=?
