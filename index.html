@@ -445,6 +445,30 @@ function selectCategory(c){
  const b=[...document.querySelectorAll('#categoryNav button')].find(x=>x.textContent.trim().toLowerCase()===c.toLowerCase());
  filterCategory(c,b);
 }
+ function getMainCategoryProducts(category){
+ const types={
+  Electronics:['Earphones','Chargers','Speakers','Other Electronics'],
+  Accessories:['Bags','Sunglasses','Other Accessories']
+ };
+
+ if(['Men','Women','Kids'].includes(category)){
+  return allProducts.filter(p=>categoryIs(p,category));
+ }
+
+ if(types[category]){
+  return allProducts.filter(p=>
+   categoryIs(p,category) ||
+   types[category].some(t=>
+    String(p.product_type||'').trim().toLowerCase()===t.toLowerCase()
+   )
+  );
+ }
+
+ return allProducts.filter(p=>
+  categoryIs(p,category) ||
+  String(p.product_type||'').trim().toLowerCase()===category.toLowerCase()
+ );
+}
  function showCategorySubcategories(category){
  const subcategories={
   Men:['Jackets','Hoodies','T-Shirts','Shirts','Jeans','Shoes'],
