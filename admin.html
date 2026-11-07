@@ -923,7 +923,130 @@ async function saveProduct(){
 }
 
 /* Page open hote hi saved 7-day session check karo */
- 
+ /* ===== ADMIN ORDER PUSH NOTIFICATIONS ===== */
+
+(function setupAdminPush() {
+  const dashboard = document.getElementById("dashboard");
+  const heading = dashboard.querySelector("h2");
+
+  const button = document.createElement("button");
+  button.id = "enableOrderNotifications";
+  button.textContent = "ENABLE ORDER NOTIFICATIONS";
+  button.style.background = "#16853c";
+
+  const status = document.createElement("p");
+  status.id = "adminPushStatus";
+  status.style.cssText = "font-weight:bold;color:#2874f0;margin:10px 0;";
+
+  heading.insertAdjacentElement("afterend", button);
+  button.insertAdjacentElement("afterend", status);
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC6ljZWr8cDxEtPuziF7DhxQYiykFRocOc",
+    authDomain: "zorvana-fashion-new.firebaseapp.com",
+    projectId: "zorvana-fashion-new",
+    storageBucket: "zorvana-fashion-new.firebasestorage.app",
+    messagingSenderId: "328407308597",
+    appId: "1:328407308597:web:3a36dbb2e6c80e971ad47c"
+  };
+
+  const vapidKey =
+    "BC8GoVajmZf8pUhSJPsVuyGI0knNE0UnUkU8ccT09So68-G2tQNi92S-P5DQP3TWy3yRTl7T7Ul8D0fjGxrAwzeE";
+
+  function loadFirebaseScript(url) {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = url;
+      script.onload = resolve;
+      script.onerror = () => reject(new Error("Firebase SDK load nahi hua"));
+      document.head.appendChild(script);
+    });
+  }
+
+  button.addEventListener("click", async () => {
+    try {
+      if (!("Notification" in window)) {
+        throw new Error("Is browser mein notifications supported nahi hain.");
+      }
+
+      if (!adminEmail || !adminPassword) {
+        throw new Error("Pehle Admin login karo.");
+      }
+
+      button.disabled = true;
+      status.textContent = "Notification permission check ho raha hai...";
+
+      const permission = await Notification.requestPermission();
+
+      if (permission !== "granted") {
+        status.textContent =
+          "Permission nahi mili. Browser notification permission allow karo.";
+        return;
+      }
+
+      status.textContent = "Firebase connect ho raha hai...";
+
+      if (!window.firebase) {
+        await loadFirebaseScript(
+          "https://www.gstatic.com/firebasejs/13.2.0/firebase-app-compat.js"
+        );
+      }
+
+      if (!firebase.messaging) {
+        await loadFirebaseScript(
+          "https://www.gstatic.com/firebasejs/13.2.0/firebase-messaging-compat.js"
+        );
+      }
+
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+
+      const registration =
+        await navigator.serviceWorker.register("/sw.js");
+
+      await navigator.serviceWorker.ready;
+
+      const messaging = firebase.messaging();
+
+      const token = await messaging.getToken({
+        vapidKey: vapidKey,
+        serviceWorkerRegistration: registration
+      });
+
+      if (!token) {
+        throw new Error("FCM token nahi mila. Dobara try karo.");
+      }
+
+      status.textContent = "Admin device register ho raha hai...";
+
+      const response = await fetch("/api/admin/push-token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Admin-Email": adminEmail,
+          "X-Admin-Password": adminPassword
+        },
+        body: JSON.stringify({ token: token })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Device registration failed");
+      }
+
+      status.textContent = "Order notifications successfully enabled!";
+      button.textContent = "NOTIFICATIONS ENABLED";
+
+    } catch (error) {
+      status.textContent = error.message;
+      console.error("Admin push error:", error);
+    } finally {
+      button.disabled = false;
+    }
+  });
+})();
 restoreAdminSession();
 </script>
 
