@@ -140,9 +140,43 @@ header{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid 
 .service-strip{max-width:1218px;margin:24px auto;padding:17px 8px;border:1px solid #eee;border-radius:12px;display:grid;grid-template-columns:repeat(4,1fr)}
 .service-item{text-align:center;font-size:12px;font-weight:bold}.service-item span{display:block;font-size:27px;margin-bottom:6px}
 footer{background:#171717;color:#ddd;text-align:center;padding:30px 15px;margin-top:40px}footer strong{font-size:20px;letter-spacing:2px;color:#fff}
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:#fff;border-top:1px solid #eee;display:grid;grid-template-columns:repeat(5,1fr);padding:8px 3px calc(8px + env(safe-area-inset-bottom));box-shadow:0 -3px 14px #0000000c}
-.bottom-nav button{border:0;background:none;color:#444;font-size:12px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:60px}
-.bottom-nav button span{font-size:29px;line-height:1.1;font-weight:400}.bottom-nav button.active{color:var(--red)}
+.bottom-nav{
+ position:fixed;
+ bottom:0;
+ left:0;
+ right:0;
+ z-index:100;
+ background:#fff;
+ border-top:1px solid #eee;
+ display:grid;
+ grid-template-columns:repeat(5,1fr);
+ padding:10px 3px calc(10px + env(safe-area-inset-bottom));
+ box-shadow:0 -3px 14px #0000000c;
+}
+
+.bottom-nav button{
+ border:0;
+ background:none;
+ color:#444;
+ font-size:14px;
+ font-weight:700;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ gap:6px;
+ min-height:76px;
+}
+
+.bottom-nav button span{
+ font-size:35px;
+ line-height:1.1;
+ font-weight:400;
+}
+
+.bottom-nav button.active{
+ color:var(--red);
+}
 .modal,.checkout{display:none;position:fixed;inset:0;z-index:1000;background:#0009;overflow:auto;padding:15px}
 .modal.show,.checkout.show{display:block}.modal-box,.checkout-box{background:#fff;max-width:950px;margin:15px auto;border-radius:12px;padding:22px;position:relative}
 .close{position:absolute;right:12px;top:10px;border:0;background:#eee;border-radius:50%;width:35px;height:35px;font-size:21px;z-index:2}
