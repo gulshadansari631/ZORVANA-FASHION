@@ -497,6 +497,7 @@ function editProduct(id){
  if(!p) return;
 
  editingProductId=id;
+ showAdminTab("products");
  existingProductImages=p.images|| (p.image?[p.image]:[]);
 
  document.getElementById("productName").value=p.name||"";
