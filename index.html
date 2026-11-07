@@ -394,7 +394,20 @@ function renderHome(){
  renderGrid('menHomeGrid',men,'Men collection will appear here.');
  renderGrid('womenHomeGrid',women,'Women collection will appear here.');
  renderGrid('newHomeGrid',latest,'New arrivals coming soon.');
+const topsProducts=allProducts.filter(p=>
+ String(p.product_type||'').trim().toLowerCase()==='tops'
+);
 
+const topsSection=$('topsHomeSection');
+
+if(topsSection){
+ if(topsProducts.length){
+  topsSection.style.display='';
+  renderGrid('topsHomeGrid',topsProducts.slice(0,6),'');
+ }else{
+  topsSection.style.display='none';
+ }
+}
  const categoryImages={
  mainCatMen:['Men','👔',''],
  mainCatWomen:['Women','👗',''],
