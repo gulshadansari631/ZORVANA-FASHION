@@ -535,12 +535,24 @@ $('subcategoryList').innerHTML=list.map(type=>{
   <span class="subcategory-name">${escapeHtml(type)}</span>
  </button>`;
 }).join('');
- $('subcategoryPanel').classList.add('show');
+  $('subcategoryPanel').classList.add('show');
 
- $('subcategoryPanel').scrollIntoView({
+ const categoryProducts=getMainCategoryProducts(category);
+
+ $('sectionTitle').textContent=category+' Products';
+
+ renderGrid(
+  'productGrid',
+  categoryProducts,
+  'Is category mein abhi products nahi hain.'
+ );
+
+ $('shop').scrollIntoView({
   behavior:'smooth',
-  block:'nearest'
+  block:'start'
  });
+
+ setNav('categories');
 }
  function filterProductType(type){
  const items=allProducts.filter(p=>
