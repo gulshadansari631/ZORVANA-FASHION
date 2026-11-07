@@ -319,8 +319,10 @@ function showAdminTab(tab){
  document.getElementById("productsSection").style.display=tab==="products"?"block":"none";
  document.getElementById("ordersSection").style.display=tab==="orders"?"block":"none";
  document.getElementById("deliverySection").style.display=tab==="delivery"?"block":"none";
+ document.getElementById("allProductsSection").style.display=tab==="allProducts"?"block":"none";
 
  if(tab==="products") loadProducts();
+ if(tab==="allProducts") loadProducts();
  if(tab==="orders") loadOrders();
  if(tab==="delivery") loadDeliveryBoys();
 }
