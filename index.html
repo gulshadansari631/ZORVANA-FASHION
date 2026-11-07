@@ -493,7 +493,26 @@ function money(v){return '₹'+Number(v||0).toLocaleString('en-IN')}
 function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function images(p){let a=Array.isArray(p.images)?p.images:[];if(typeof p.images==='string'){try{a=JSON.parse(p.images)}catch(e){a=[]}}if(p.image)a.unshift(p.image);return [...new Set(a.filter(Boolean))]}
 function productImage(p){return images(p)[0]||'https://placehold.co/500x600?text=Zorvana'}
-function sizes(p){if(Array.isArray(p.sizes))return p.sizes.map(String);if(typeof p.sizes==='string'){try{let x=JSON.parse(p.sizes);return Array.isArray(x)?x.map(String):[]}catch(e){}}return []}
+function sizes(p){
+ let value=p?.sizes;
+ for(let i=0;i<3;i++){
+  if(Array.isArray(value)){
+   return [...new Set(value.map(x=>String(x).trim()).filter(Boolean))];
+  }
+  if(typeof value==='string'){
+   const raw=value.trim();
+   if(!raw)return [];
+   try{
+    value=JSON.parse(raw);
+    continue;
+   }catch(e){
+    return [...new Set(raw.split(/[,|\n]/).map(x=>x.trim()).filter(Boolean))];
+   }
+  }
+  return [];
+ }
+ return Array.isArray(value)?value.map(String).filter(Boolean):[];
+}
 function listValue(v){if(Array.isArray(v))return v;if(typeof v==='string'){try{let x=JSON.parse(v);return Array.isArray(x)?x:v.split(/\r?\n/).filter(Boolean)}catch(e){return v.split(/\r?\n/).filter(Boolean)}}if(v&&typeof v==='object')return Object.entries(v).map(([k,x])=>k+': '+x);return []}
 function saveCart(){localStorage.setItem('zorvana_cart',JSON.stringify(cart));$('cartCount').textContent=cart.reduce((n,x)=>n+(Number(x.qty)||1),0)}
 function categoryIs(p,c){return String(p.category||'').trim().toLowerCase()===c.toLowerCase()}
