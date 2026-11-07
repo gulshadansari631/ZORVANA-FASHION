@@ -961,7 +961,7 @@ async function saveProduct(){
  const productType=document.getElementById("productType").value;
  const price=document.getElementById("productPrice").value;
 
- if(!name||!category||!price||(!editingProductId&&!files.length)){
+ if(!name||!category||!productType||!price||(!editingProductId&&!files.length)){
   message.textContent="Name, category, price aur photo zaroori hain.";
   return;
  }
@@ -999,6 +999,7 @@ async function saveProduct(){
   const productData={
    id:editingProductId,
    name,
+   product_type:productType,
    category,
    sizes:Array.from(document.querySelectorAll('input[name="productSize"]:checked')).map(box=>box.value),
    images,
