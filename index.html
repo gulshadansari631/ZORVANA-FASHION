@@ -500,8 +500,21 @@ function categoryIs(p,c){return String(p.category||'').trim().toLowerCase()===c.
 
 function card(p){
  const id=String(p.id),discount=Number(p.discount||0);
- return `<article class="card" onclick="openProduct('${escapeHtml(id)}')"><div class="card-img"><img loading="lazy" src="${productImage(p)}" alt="${escapeHtml(p.name)}">${discount?`<span class="discount-tag">${discount}% OFF</span>`:''}<button class="card-wish" onclick="event.stopPropagation();toggleWishlist('${escapeHtml(id)}')">♡</button></div><div class="card-info"><h3>${escapeHtml(p.name||'Fashion Product')}</h3><div><span class="price">${money(p.selling_price)}</span><span class="mrp">${p.mrp?money(p.mrp):''}</span></div><div class="card-bottom"><span class="rating">⭐ 4.5</span><button class="add-small" onclick="event.stopPropagation();quickAdd('${escapeHtml(id)}')">🛒</button></div></div></article>`;
-}
+ return `<article class="card" onclick="openProduct('${escapeHtml(id)}')">
+ <div class="card-img" onclick="openProduct('${escapeHtml(id)}')">
+ <img loading="lazy" src="${productImage(p)}" alt="${escapeHtml(p.name)}" onclick="openProduct('${escapeHtml(id)}')">
+ ${discount?`<span class="discount-tag">${discount}% OFF</span>`:''}
+ <button class="card-wish" onclick="event.stopPropagation();toggleWishlist('${escapeHtml(id)}')">♡</button>
+ </div>
+ <div class="card-info">
+ <h3 onclick="openProduct('${escapeHtml(id)}')">${escapeHtml(p.name||'Fashion Product')}</h3>
+ <div><span class="price">${money(p.selling_price)}</span><span class="mrp">${p.mrp?money(p.mrp):''}</span></div>
+ <div class="card-bottom">
+ <span class="rating">⭐ 4.5</span>
+ <button class="add-small" onclick="event.stopPropagation();quickAdd('${escapeHtml(id)}')">🛒</button>
+ </div>
+ </div>
+ </article>`;
 function renderGrid(id,items,msg){$(id).innerHTML=items.length?items.map(card).join():`<div class="empty">${msg}</div>`}
 function renderHome(){
   // Latest products homepage par automatically dikhenge.
