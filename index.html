@@ -371,29 +371,30 @@ function card(p){
 }
 function renderGrid(id,items,msg){$(id).innerHTML=items.length?items.map(card).join():`<div class="empty">${msg}</div>`}
 function renderHome(){
- const used=new Set();
-
  const trending=allProducts.slice(0,6);
- trending.forEach(p=>used.add(String(p.id)));
 
- const men=allProducts.filter(p=>
-  categoryIs(p,'Men')&&!used.has(String(p.id))
- ).slice(0,6);
- men.forEach(p=>used.add(String(p.id)));
+const men=allProducts.filter(p=>
+ categoryIs(p,'Men')
+).slice(0,6);
 
- const women=allProducts.filter(p=>
-  categoryIs(p,'Women')&&!used.has(String(p.id))
- ).slice(0,6);
- women.forEach(p=>used.add(String(p.id)));
+const women=allProducts.filter(p=>
+ categoryIs(p,'Women')
+).slice(0,6);
 
- const latest=allProducts.filter(p=>
-  !used.has(String(p.id))
- ).slice(0,6);
+const used=new Set([
+ ...trending,
+ ...men,
+ ...women
+].map(p=>String(p.id)));
 
- renderGrid('productGrid',trending,'No products available yet.');
- renderGrid('menHomeGrid',men,'Men collection will appear here.');
- renderGrid('womenHomeGrid',women,'Women collection will appear here.');
- renderGrid('newHomeGrid',latest,'New arrivals coming soon.');
+const latest=allProducts.filter(p=>
+ !used.has(String(p.id))
+).slice(0,6);
+
+renderGrid('productGrid',trending,'No products available yet.');
+renderGrid('menHomeGrid',men,'Men collection will appear here.');
+renderGrid('womenHomeGrid',women,'Women collection will appear here.');
+renderGrid('newHomeGrid',latest,'New arrivals coming soon.');
 const topsProducts=allProducts.filter(p=>
  String(p.product_type||'').trim().toLowerCase()==='tops'
 );
