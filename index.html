@@ -368,9 +368,32 @@ function selectCategory(c){
 
  $('subcategoryTitle').textContent=category+' Categories';
 
- $('subcategoryList').innerHTML=list.map(type=>
- `<button type="button" onclick="filterProductType('${type}')">${type}</button>`
-).join('');
+ const icons={
+ Jackets:'🧥',Hoodies:'🧥','T-Shirts':'👕',Shirts:'👔',
+ Jeans:'👖',Shoes:'👟',Dresses:'👗',Tops:'👚',
+ Kurtis:'👚',Sarees:'🥻','Baby Clothes':'👶',
+ 'Boys Wear':'🧒','Girls Wear':'👧',Mobiles:'📱',
+ Watches:'⌚',Bags:'👜',Sunglasses:'🕶️',
+ Earphones:'🎧',Chargers:'🔌',Speakers:'🔊',
+ 'Other Electronics':'💻','Other Accessories':'🎒'
+};
+
+$('subcategoryList').innerHTML=list.map(type=>{
+ const product=allProducts.find(p=>
+  String(p.product_type||'').trim().toLowerCase()===type.toLowerCase()
+ );
+ const photo=product?productImage(product):'';
+
+ return `<button type="button" onclick="filterProductType('${type}')">
+  <span class="subcategory-image">
+   ${photo
+    ?`<img src="${escapeHtml(photo)}" alt="${escapeHtml(type)}">`
+    :`<span class="subcategory-fallback">${icons[type]||'🛍️'}</span>`
+   }
+  </span>
+  <span class="subcategory-name">${escapeHtml(type)}</span>
+ </button>`;
+}).join('');
  $('subcategoryPanel').classList.add('show');
 
  $('subcategoryPanel').scrollIntoView({
