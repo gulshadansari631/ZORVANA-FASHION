@@ -1006,6 +1006,7 @@ async function saveProduct(){
    id:editingProductId,
    name,
    product_type:productType,
+       variant_group_id:document.getElementById("variantGroupId").value.trim(),
    category,
    sizes:Array.from(document.querySelectorAll('input[name="productSize"]:checked')).map(box=>box.value),
    images,
