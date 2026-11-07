@@ -707,6 +707,12 @@ function openProduct(id,update=true){
  $('detailName').textContent=p.name||'Product';
  $('detailPrice').textContent=money(p.selling_price);
  $('detailMrp').textContent=p.mrp?money(p.mrp):'';
+   const mrp=Number(p.mrp)||0;
+  const price=Number(p.selling_price)||0;
+  const discount=mrp>price&&mrp>0
+   ?Math.round(((mrp-price)/mrp)*100)
+   :0;
+  $('detailDiscount').textContent=discount?discount+'% OFF':'';
  $('detailDescription').textContent=p.description||'';
  const imgs=images(p);
  $('detailImage').src=imgs[0]||productImage(p);
