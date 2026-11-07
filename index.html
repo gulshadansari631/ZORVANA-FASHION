@@ -614,6 +614,14 @@ function openProduct(id,update=true){
  const imgs=images(p);
  $('detailImage').src=imgs[0]||productImage(p);
  $('detailThumbs').innerHTML=imgs.map((x,i)=>`<img src="${x}" onclick="$('detailImage').src=this.src" alt="Product ${i+1}">`).join('');
+   const variants=p.variant_group_id
+   ?allProducts.filter(x=>String(x.variant_group_id||'')===String(p.variant_group_id))
+   :[];
+  $('variantArea').style.display=variants.length>1?'block':'none';
+  $('variantOptions').innerHTML=variants.length>1?variants.map(v=>{
+   const color=v.highlights?.Color||v.highlights?.color||v.name;
+   return `<button class="pill ${String(v.id)===String(p.id)?'selected':''}" onclick="openProduct('${v.id}',false)">${escapeHtml(color)}</button>`;
+  }).join(''):'';
  const ss=sizes(p);
  $('sizeArea').style.display=ss.length?'block':'none';
  $('sizeOptions').innerHTML=ss.map(x=>`<button class="pill" onclick="chooseSize('${escapeHtml(x)}',this)">${escapeHtml(x)}</button>`).join('');
