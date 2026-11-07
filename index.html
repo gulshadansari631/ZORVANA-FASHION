@@ -32,10 +32,55 @@ header{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid 
 .hero:after{content:"Z";position:absolute;right:8%;top:-65px;font-size:310px;font-weight:900;color:#ffffff12}
 .hero-content{position:relative;z-index:1}.hero h1{font-size:clamp(30px,5vw,50px);line-height:1.12;margin:0 0 12px}.hero p{margin:0 0 22px;color:#f5dfe3}
 .hero button{background:var(--red);color:#fff;border:0;border-radius:7px;padding:14px 23px;font-weight:bold}.hero-mark{font-size:85px;z-index:1}
-.quick-cats{max-width:1250px;margin:20px auto 30px;padding:0 15px;display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
-.quick-cat{border:0;background:none;text-align:center;font-weight:bold;font-size:13px}
-.cat-icon{width:82px;height:82px;border-radius:50%;margin:0 auto 8px;background:#f3f3f3;display:flex;align-items:center;justify-content:center;font-size:35px}
-.quick-cat:nth-child(2) .cat-icon{background:#fff0f2}.quick-cat:nth-child(3) .cat-icon{background:#fff5df}
+.quick-cats{
+ max-width:1250px;
+ margin:20px auto 15px;
+ padding:0 15px;
+ display:grid;
+ grid-template-columns:repeat(4,minmax(0,1fr));
+ gap:12px;
+}
+.quick-cat{
+ border:1px solid #eee;
+ background:#fff;
+ border-radius:10px;
+ padding:12px 5px;
+ text-align:center;
+ font-weight:bold;
+ font-size:13px;
+ box-shadow:0 2px 7px #00000008;
+}
+.cat-icon{
+ width:65px;
+ height:65px;
+ border-radius:50%;
+ margin:0 auto 8px;
+ background:#f3f3f3;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ font-size:32px;
+}
+.subcategory-panel{
+ display:none;
+ max-width:1250px;
+ margin:0 auto 25px;
+ padding:12px 15px;
+ background:#fff7f8;
+ border-radius:10px;
+}
+.subcategory-panel.show{display:block}
+.subcategory-panel h3{margin:0 0 12px;font-size:16px}
+.subcategory-list{display:flex;flex-wrap:wrap;gap:9px}
+.subcategory-list button{
+ border:1px solid #e5b8c0;
+ background:#fff;
+ color:#333;
+ border-radius:20px;
+ padding:9px 14px;
+ font-size:12px;
+ font-weight:600;
+}
 .wrap{max-width:1250px;margin:25px auto;padding:0 16px}
 .section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:15px}
 .section-head h2{font-size:22px;margin:0;font-weight:800}.section-link{border:0;background:none;color:var(--red);font-weight:bold}
