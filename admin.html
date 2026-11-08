@@ -681,6 +681,36 @@ async function deleteProduct(id){
   console.error(error);
  }
 }
+ async function clearAllOldOrders() {
+  const confirmDelete = confirm(
+    "WARNING!\n\nKya aap sach mein sabhi purane orders aur unki tracking history delete karna chahte hain?\n\nNaye orders ki numbering Order #1 se shuru hogi.\n\nYe action undo nahi hoga."
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+    const response = await fetch("/api/orders", {
+      method: "DELETE",
+      headers: {
+        "X-Admin-Email": adminEmail,
+        "X-Admin-Password": adminPassword
+      }
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Orders delete nahi hue.");
+    }
+
+    alert("Purane sabhi orders delete ho gaye. Ab numbering Order #1 se shuru hogi.");
+
+    await loadOrders();
+
+  } catch (error) {
+    alert(error.message);
+  }
+}
 async function showOrders(data){
  const box=document.getElementById("orders");
 
