@@ -487,6 +487,27 @@ export async function onRequest(context) {
       return Response.json({ error: "Update failed: " + error.message }, { status: 500 });
     }
   }
+  if (request.method === "DELETE") {
+    if (!verifyAdmin(request, env)) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
+    try {
+      await env.DB.batch([
+        env.DB.prepare("DELETE FROM order_tracking"),
+        env.DB.prepare("DELETE FROM orders"),
+        env.DB.prepare("DELETE FROM sqlite_sequence WHERE name = 'orders'")
+      ]);
+
+      return Response.json({
+        success: true,
+        message: "All old orders cleared. New numbering starts from 1."
+      });
+    } catch (error) {
+      return Response.json({
+        error: "Could not clear orders: " + error.message
+      }, { status: 500 });
+    }
+  }
   return new Response("Method not allowed", { status: 405 });
 }
