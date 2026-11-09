@@ -807,13 +807,6 @@ function openProduct(id,update=true){
   const discount=mrp>price&&mrp>0
    ?Math.round(((mrp-price)/mrp)*100)
    :0;
- window.addEventListener('popstate',()=>{
- if($('productModal').classList.contains('show')){
-  $('productModal').classList.remove('show');
-  document.body.style.overflow='';
-  currentProduct=null;
- }
-});
   $('detailDiscount').textContent=discount?discount+'% OFF':'';
  $('detailDescription').textContent=p.description||'';
  const imgs=images(p);
@@ -907,6 +900,13 @@ function closeProduct(){
  const u=new URL(location.href);u.searchParams.delete('product');history.replaceState({},'',u);
  currentProduct=null;
 }
+ window.addEventListener('popstate',()=>{
+ if($('productModal').classList.contains('show')){
+  $('productModal').classList.remove('show');
+  document.body.style.overflow='';
+  currentProduct=null;
+ }
+});
 function sizeOK(p){if(sizes(p).length&&!selectedSize){alert('Please select a size first.');return false}return true}
 function quickAdd(id){
  const p=allProducts.find(x=>String(x.id)===String(id));
