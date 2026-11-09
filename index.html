@@ -864,7 +864,7 @@ sizeOptions.innerHTML=ss.length
   renderGrid('relatedProducts',related,'');
  $('productModal').classList.add('show');
  document.body.style.overflow='hidden';
- if(update){const u=new URL(location.href);u.searchParams.set('product',id);history.replaceState({},'',u)}
+ if(update){const u=new URL(location.href);u.searchParams.set('product',id);history.pushState({productModal:true},'',u)}
 }
 function chooseSize(s,b){
  selectedSize=s;
