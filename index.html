@@ -818,7 +818,7 @@ $('detailImage').ontouchstart=e=>{
 };
 $('detailImage').ontouchend=e=>{
  const diff=e.changedTouches[0].clientX-Number($('detailImage').dataset.touchX);
- if(Math.abs(diff)>50){
+ if(Math.abs(diff)>50 && imgs.length>1){
   detailPhotoIndex=(detailPhotoIndex+(diff<0?1:-1)+imgs.length)%imgs.length;
   $('detailImage').src=imgs[detailPhotoIndex];
  }
