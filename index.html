@@ -807,6 +807,11 @@ function openProduct(id,update=true){
  const imgs=images(p);
  $('detailImage').src=imgs[0]||productImage(p);
    const variants=p.variant_group_id
+    if($('detailThumbs')){
+ $('detailThumbs').innerHTML=imgs.map((x,i)=>
+  `<img src="${x}" onclick="$('detailImage').src=this.src" alt="Product view ${i+1}">`
+ ).join('');
+}
    ?allProducts.filter(x=>String(x.variant_group_id||'')===String(p.variant_group_id))
    :[];
   $('variantArea').style.display=variants.length>1?'block':'none';
