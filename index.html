@@ -155,42 +155,44 @@ header{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid 
 .service-item{text-align:center;font-size:12px;font-weight:bold}.service-item span{display:block;font-size:27px;margin-bottom:6px}
 footer{background:#171717;color:#ddd;text-align:center;padding:30px 15px;margin-top:40px}footer strong{font-size:20px;letter-spacing:2px;color:#fff}
 .bottom-nav{
- position:fixed;
- bottom:0;
- left:0;
- right:0;
- z-index:100;
- background:#fff;
- border-top:1px solid #eee;
- display:grid;
- grid-template-columns:repeat(5,1fr);
- padding:10px 2px calc(10px + env(safe-area-inset-bottom));
- box-shadow:0 -3px 14px #0000000c;
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  z-index:100;
+  background:#fff;
+  border-top:1px solid #eee;
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  padding:7px 3px calc(7px + env(safe-area-inset-bottom));
+  box-shadow:0 -3px 14px #0000000c;
 }
 
 .bottom-nav button{
- border:0;
- background:none;
- color:#444;
- font-size:18px;
- font-weight:700;
- display:flex;
- flex-direction:column;
- align-items:center;
- justify-content:center;
- gap:8px;
- min-height:100px;
- padding:5px 0;
+  border:0;
+  background:none;
+  color:#555;
+  font-size:11px;
+  font-weight:600;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  min-width:0;
+  min-height:65px;
+  padding:5px 1px;
+  white-space:nowrap;
 }
 
 .bottom-nav button span{
- font-size:48px;
- line-height:1.1;
- font-weight:400;
+  font-size:24px;
+  line-height:1;
+  font-weight:400;
 }
 
 .bottom-nav button.active{
- color:var(--red);
+  color:var(--red);
 }
 .modal,.checkout{display:none;position:fixed;inset:0;z-index:1000;background:#0009;overflow:auto;padding:15px}
 .modal.show,.checkout.show{display:block}
