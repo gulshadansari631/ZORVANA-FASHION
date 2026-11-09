@@ -807,6 +807,13 @@ function openProduct(id,update=true){
   const discount=mrp>price&&mrp>0
    ?Math.round(((mrp-price)/mrp)*100)
    :0;
+ window.addEventListener('popstate',()=>{
+ if($('productModal').classList.contains('show')){
+  $('productModal').classList.remove('show');
+  document.body.style.overflow='';
+  currentProduct=null;
+ }
+});
   $('detailDiscount').textContent=discount?discount+'% OFF':'';
  $('detailDescription').textContent=p.description||'';
  const imgs=images(p);
