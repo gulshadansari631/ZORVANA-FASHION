@@ -813,9 +813,11 @@ if($('detailThumbs'))$('detailThumbs').innerHTML=imgs.map((x,i)=>`<img src="${x}
    :[];
   $('variantArea').style.display=variants.length>1?'block':'none';
   $('variantOptions').innerHTML=variants.length>1?variants.map(v=>{
-   const color=v.highlights?.Color||v.highlights?.color||v.name;
-   return `<button class="pill ${String(v.id)===String(p.id)?'selected':''}" onclick="openProduct('${v.id}',false)">${escapeHtml(color)}</button>`;
-  }).join(''):'';
+ const photo=productImage(v);
+ return `<button type="button" class="variant-photo ${String(v.id)===String(p.id)?'selected':''}" onclick="openProduct('${v.id}',false)" title="${escapeHtml(v.highlights?.Color||v.highlights?.color||v.name)}">
+ <img src="${photo}" alt="Product colour">
+ </button>`;
+}).join(''):'';
  const ss=Array.isArray(p.sizes)?p.sizes:sizes(p);
 const sizeArea=$('sizeArea');
 const sizeOptions=$('sizeOptions');
