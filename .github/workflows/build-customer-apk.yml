@@ -15,6 +15,7 @@ permissions:
 
 jobs:
   build:
+    name: Build Android Customer App
     runs-on: ubuntu-latest
 
     steps:
@@ -30,10 +31,7 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: |
-            platform-tools
-            platforms;android-35
-            build-tools;35.0.0
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -41,11 +39,12 @@ jobs:
           gradle-version: '8.11.1'
 
       - name: Build customer APK
-        run: gradle -p android-customer :app:assembleDebug
+        run: gradle -p android-customer :app:assembleDebug --no-daemon
 
-      - name: Upload debug APK
+      - name: Upload customer APK
         uses: actions/upload-artifact@v4
         with:
-          name: zorvana-customer-debug-apk
+          name: ZORVANA-CUSTOMER-APK
           path: android-customer/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+          retention-days: 7
