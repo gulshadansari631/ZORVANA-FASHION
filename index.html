@@ -831,7 +831,7 @@ sizeOptions.style.display='flex';
 sizeOptions.style.flexWrap='wrap';
 sizeOptions.style.gap='8px';
 sizeOptions.innerHTML=ss.length
- ?ss.map(x=>`<button type="button" onclick="chooseSize('${escapeHtml(x)}',this)" style="display:inline-flex;padding:10px 16px;background:#fff;color:#222;border:1px solid #999;border-radius:6px;font-size:14px;font-weight:700;">${escapeHtml(x)}</button>`).join('')
+ ?ss.map(x=>`<button type="button" class="pill" onclick="chooseSize('${escapeHtml(x)}',this)">${escapeHtml(x)}</button>`).join('')
  :'<span style="color:#c00">No sizes available</span>';
  $('detailHighlights').innerHTML=listValue(p.highlights).map(x=>`<li>${escapeHtml(x)}</li>`).join('')||'<li>Stylish and comfortable design</li>';
  $('detailMore').innerHTML=listValue(p.additional_details).map(x=>`<li>${escapeHtml(x)}</li>`).join('')||'<li>Quality fashion product</li>';
