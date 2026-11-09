@@ -813,6 +813,18 @@ function openProduct(id,update=true){
  $('detailImage').src=imgs[0]||productImage(p);
    const variants=p.variant_group_id
  ?allProducts.filter(x=>String(x.variant_group_id||'')===String(p.variant_group_id))
+    let detailPhotoIndex=0;
+$('detailImage').ontouchstart=e=>{
+ detailPhotoIndex=imgs.indexOf($('detailImage').src);
+ $('detailImage').dataset.touchX=e.touches[0].clientX;
+};
+$('detailImage').ontouchend=e=>{
+ const diff=e.changedTouches[0].clientX-Number($('detailImage').dataset.touchX);
+ if(Math.abs(diff)>50){
+  detailPhotoIndex=(detailPhotoIndex+(diff<0?1:-1)+imgs.length)%imgs.length;
+  $('detailImage').src=imgs[detailPhotoIndex];
+ }
+};
  :[];
 
 if($('detailThumbs')){
