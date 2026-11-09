@@ -829,6 +829,9 @@ if($('detailThumbs')){
   `<img src="${x}" onclick="$('detailImage').src=this.src" alt="Product view ${i+1}">`
  ).join('');
 }
+ const variants=p.variant_group_id
+ ?allProducts.filter(x=>String(x.variant_group_id||'')===String(p.variant_group_id))
+ :[];
   $('variantArea').style.display=variants.length>1?'block':'none';
   $('variantOptions').innerHTML=variants.length>1?variants.map(v=>{
  const photo=productImage(v);
