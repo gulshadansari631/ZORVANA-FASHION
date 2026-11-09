@@ -811,9 +811,7 @@ function openProduct(id,update=true){
  $('detailDescription').textContent=p.description||'';
  const imgs=images(p);
  $('detailImage').src=imgs[0]||productImage(p);
-   const variants=p.variant_group_id
- ?allProducts.filter(x=>String(x.variant_group_id||'')===String(p.variant_group_id))
-    let detailPhotoIndex=0;
+let detailPhotoIndex=0;
 $('detailImage').ontouchstart=e=>{
  detailPhotoIndex=imgs.indexOf($('detailImage').src);
  $('detailImage').dataset.touchX=e.touches[0].clientX;
@@ -825,7 +823,6 @@ $('detailImage').ontouchend=e=>{
   $('detailImage').src=imgs[detailPhotoIndex];
  }
 };
- :[];
 
 if($('detailThumbs')){
  $('detailThumbs').innerHTML=imgs.map((x,i)=>
