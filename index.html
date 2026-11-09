@@ -826,7 +826,7 @@ $('detailImage').ontouchend=e=>{
 
 if($('detailThumbs')){
  $('detailThumbs').innerHTML=imgs.map((x,i)=>
-  `<img src="${x}" onclick="$('detailImage').src=this.src" alt="Product view ${i+1}">`
+  `<img src="${x}" onclick="detailPhotoIndex=${i};$('detailImage').src=this.src" alt="Product view ${i+1}">`
  ).join('');
 }
  const variants=p.variant_group_id
