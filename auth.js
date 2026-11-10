@@ -690,10 +690,6 @@ document.getElementById("myOrdersBtn").onclick = async () => {
       const item = document.createElement("div");
       item.className = "customerOrder";
 
-      const number = document.createElement("p");
-number.textContent = "Order #" + order.id;
-item.appendChild(number);
-
       const productRow = document.createElement("div");
       productRow.className = "orderProduct";
 
