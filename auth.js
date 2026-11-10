@@ -1107,7 +1107,6 @@ window.openProfile = function() {
   function orderCard(o,i){
     return `<article class="zv-order">
       <div class="zv-order-top">
-        <span>Order #${safe(o.id)}</span>
         <span>${dateText(o.created_at||o.order_date)}</span>
       </div>
       <div class="zv-order-product">
