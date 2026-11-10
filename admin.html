@@ -323,11 +323,6 @@ async function verifyAdminSession(email,password){
    "X-Admin-Password":password
   }
  });
- if(!response.ok) throw new Error("Admin login expired");
-}
-
-async function login(){
- function toggleAdminPassword(){
  const field=document.getElementById("password");
  field.type=field.type==="password"?"text":"password";
 }
