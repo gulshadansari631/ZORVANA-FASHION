@@ -85,7 +85,10 @@ button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:whi
 <h2>Admin Login</h2>
 <p>Enter your admin email and password</p>
 <input type="email" id="email" placeholder="Admin Email">
-<input type="password" id="password" placeholder="Admin Password">
+<div style="display:flex;gap:8px;align-items:center">
+<input type="password" id="password" placeholder="Admin Password" style="flex:1">
+<button type="button" onclick="toggleAdminPassword()" style="margin:8px 0">👁</button>
+</div>
 <button onclick="login()">LOGIN</button>
 <p id="message"></p>
 </div>
