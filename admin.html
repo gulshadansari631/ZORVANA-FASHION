@@ -310,10 +310,54 @@ function saveAdminSession(email,password){
  }));
 }
 
+
 function clearAdminSession(){
  localStorage.removeItem(ADMIN_SESSION_KEY);
  adminEmail = "";
  adminPassword = "";
+}
+
+async function verifyAdminSession(email,password){
+ const response = await fetch("/api/orders",{
+  headers:{
+   "X-Admin-Email":email,
+   "X-Admin-Password":password
+  }
+ });
+ if(!response.ok) throw new Error("Admin login expired");
+}
+
+function toggleAdminPassword(){
+ const field=document.getElementById("password");
+ field.type=field.type==="password"?"text":"password";
+}
+
+async function login(){
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+
+ if(!email || !password){
+  alert("Enter email and password");
+  return;
+ }
+
+ adminEmail=email;
+ adminPassword=password;
+
+ try{
+  await verifyAdminSession(adminEmail,adminPassword);
+  saveAdminSession(adminEmail,adminPassword);
+  document.getElementById("loginBox").style.display="none";
+  document.getElementById("dashboard").style.display="block";
+  showAdminTab("products");
+ }catch(error){
+  clearAdminSession();
+  document.getElementById("message").textContent="Wrong email or password";
+ }
+}
+
+async function restoreAdminSession(){
+ try{
   const saved=JSON.parse(localStorage.getItem(ADMIN_SESSION_KEY)||"null");
 
   if(!saved||!saved.email||!saved.password||!saved.expiresAt||Date.now()>=saved.expiresAt){
@@ -323,7 +367,6 @@ function clearAdminSession(){
   }
 
   await verifyAdminSession(saved.email,saved.password);
-
   adminEmail=saved.email;
   adminPassword=saved.password;
 
@@ -336,6 +379,7 @@ function clearAdminSession(){
   document.getElementById("loginBox").style.display="block";
  }
 }
+
 
 function logout(){
  clearAdminSession();
