@@ -322,10 +322,6 @@ async function verifyAdminSession(email,password){
    "X-Admin-Email":email,
    "X-Admin-Password":password
   }
- });
- const field=document.getElementById("password");
- field.type=field.type==="password"?"text":"password";
-}
  const email = document.getElementById("email").value.trim();
  const password = document.getElementById("password").value;
 
