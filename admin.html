@@ -327,6 +327,10 @@ async function verifyAdminSession(email,password){
 }
 
 async function login(){
+ function toggleAdminPassword(){
+ const field=document.getElementById("password");
+ field.type=field.type==="password"?"text":"password";
+}
  const email = document.getElementById("email").value.trim();
  const password = document.getElementById("password").value;
 
