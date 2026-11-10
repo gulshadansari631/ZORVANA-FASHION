@@ -1200,7 +1200,6 @@ window.openProfile = function() {
     showPage("zv-detail-view","Order Details",`
       <section class="zv-panel">
         <div class="zv-order-top">
-          <b>Order #${safe(o.id)}</b>
           <span>${dateText(o.created_at||o.order_date)}</span>
         </div>
         <div class="zv-order-product">
