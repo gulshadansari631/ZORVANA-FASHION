@@ -342,7 +342,7 @@ async function login(){
  adminEmail = email;
  adminPassword = password;
 
- try{
+ try
   await verifyAdminSession(adminEmail,adminPassword);
   saveAdminSession(adminEmail,adminPassword);
 
