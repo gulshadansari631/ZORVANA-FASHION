@@ -315,12 +315,25 @@ function clearAdminSession(){
  adminEmail = "";
  adminPassword = "";
 }
-
 async function verifyAdminSession(email,password){
  const response = await fetch("/api/orders",{
   headers:{
    "X-Admin-Email":email,
-   "
+   "X-Admin-Password":password
+  }
+ });
+ if(!response.ok) throw new Error("Admin login expired");
+}
+
+function toggleAdminPassword(){
+ const field=document.getElementById("password");
+ field.type=field.type==="password"?"text":"password";
+}
+
+async function login(){
+ const email = document.getElementById("email").value.trim();
+ const password = document.getElementById("password").value;
+
  if(!email || !password){
   alert("Enter email and password");
   return;
@@ -341,6 +354,8 @@ async function verifyAdminSession(email,password){
   clearAdminSession();
   document.getElementById("message").textContent = "Wrong email or password";
  }
+}
+
 }
 
 async function restoreAdminSession(){
