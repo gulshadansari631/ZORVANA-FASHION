@@ -320,11 +320,7 @@ async function verifyAdminSession(email,password){
  const response = await fetch("/api/orders",{
   headers:{
    "X-Admin-Email":email,
-   "X-Admin-Password":password
-  }
- const email = document.getElementById("email").value.trim();
- const password = document.getElementById("password").value;
-
+   "
  if(!email || !password){
   alert("Enter email and password");
   return;
