@@ -1,6 +1,6 @@
 
 const encoder = new TextEncoder();
-const ITERATIONS = 150000;
+const ITERATIONS = 10000;
 
 function safeEqual(a, b) {
   if (typeof a !== "string" || typeof b !== "string") return false;
