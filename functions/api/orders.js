@@ -312,7 +312,7 @@ export async function onRequest(context) {
     try {
       let result;
 
-      if (verifyAdmin(request, env)) {
+      if (await verifyAdmin(request, env)) {
         result = await env.DB.prepare("SELECT * FROM orders ORDER BY id DESC").all();
       } else {
         const customerUid = await verifyCustomer(request, env);
@@ -388,7 +388,7 @@ export async function onRequest(context) {
         return Response.json({ success: true, message: "Order cancelled successfully" });
       }
 
-      if (!verifyAdmin(request, env)) {
+      if (!await verifyAdmin(request, env)) {
         return Response.json({ error: "Unauthorized" }, { status: 401 });
       }
 
@@ -481,7 +481,7 @@ export async function onRequest(context) {
     }
   }
   if (request.method === "DELETE") {
-    if (!verifyAdmin(request, env)) {
+    if (!await verifyAdmin(request, env)) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
