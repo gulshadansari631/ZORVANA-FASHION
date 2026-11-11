@@ -4,7 +4,7 @@ export async function onRequest({ request, env }) {
     return Response.json({ error: "Database missing" }, { status: 500 });
   }
 
-  if (!verifyAdmin(request, env)) {
+  if (!await verifyAdmin(request, env)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
