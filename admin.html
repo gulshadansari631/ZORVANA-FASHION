@@ -93,18 +93,6 @@ button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:whi
 <p id="message"></p>
 </div>
 
-<h2>Reset Admin Password</h2>
-<p>OTP registered email par bheja jayega.</p>
-<input type="email" id="resetEmail" value="gulshadansari631@gmail.com" readonly>
-<button type="button" onclick="sendAdminOTP()">SEND OTP</button>
-<input type="text" id="resetOTP" placeholder="6-digit OTP" inputmode="numeric" maxlength="6">
-<input type="password" id="newAdminPassword" placeholder="New Password (10-128 characters)">
-<input type="password" id="confirmAdminPassword" placeholder="Confirm New Password">
-<button type="button" onclick="submitAdminPasswordReset()">RESET PASSWORD</button>
-<button type="button" onclick="backToAdminLogin()">BACK TO LOGIN</button>
-<p id="resetMessage"></p>
-</div>
-
 <div class="dashboard" id="dashboard" style="display:none">
 <button class="logout" onclick="logout()">LOGOUT</button>
 <h2>Store Management</h2>
