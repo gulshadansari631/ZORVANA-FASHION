@@ -15,6 +15,7 @@ export async function onRequestPost({ request, env }) {
         { status: 401 }
       );
     }
+    const body = await request.json();
     const token = body.token;
 
     if (!token || typeof token !== "string" || token.length > 4096) {
