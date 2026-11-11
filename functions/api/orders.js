@@ -159,13 +159,6 @@ async function verifyCustomer(request, env) {
   }
 }
 
-function verifyAdmin(request, env) {
-  return Boolean(
-    env.ADMIN_EMAIL &&
-    env.ADMIN_PASSWORD &&
-    request.headers.get("X-Admin-Email") === env.ADMIN_EMAIL &&
-    request.headers.get("X-Admin-Password") === env.ADMIN_PASSWORD
-  );
 }
 
 function clean(value, max = 500) {
