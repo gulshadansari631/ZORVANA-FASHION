@@ -64,7 +64,7 @@ export async function onRequest({ request, env }) {
       return Response.json(products);
     }
 
-    if (!verifyAdmin(request, env)) {
+    if (!await verifyAdmin(request, env)) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
