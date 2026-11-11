@@ -159,7 +159,6 @@ async function verifyCustomer(request, env) {
   }
 }
 
-}
 
 function clean(value, max = 500) {
   return String(value ?? "").trim().slice(0, max);
