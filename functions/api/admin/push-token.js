@@ -1,21 +1,20 @@
+import { verifyAdmin } from "../../lib/admin-auth.js";
+
 export async function onRequestPost({ request, env }) {
   try {
-    const email = request.headers.get("X-Admin-Email");
-    const password = request.headers.get("X-Admin-Password");
+    if (!env.DB) {
+      return Response.json(
+        { error: "Database missing" },
+        { status: 500 }
+      );
+    }
 
-    if (
-      !env.ADMIN_EMAIL ||
-      !env.ADMIN_PASSWORD ||
-      email !== env.ADMIN_EMAIL ||
-      password !== env.ADMIN_PASSWORD
-    ) {
+    if (!await verifyAdmin(request, env)) {
       return Response.json(
         { error: "Unauthorized" },
         { status: 401 }
       );
     }
-
-    const body = await request.json();
     const token = body.token;
 
     if (!token || typeof token !== "string" || token.length > 4096) {
