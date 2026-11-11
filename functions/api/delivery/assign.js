@@ -1,12 +1,4 @@
-function verifyAdmin(request, env) {
-  return Boolean(
-    env.ADMIN_EMAIL &&
-    env.ADMIN_PASSWORD &&
-    request.headers.get("X-Admin-Email") === env.ADMIN_EMAIL &&
-    request.headers.get("X-Admin-Password") === env.ADMIN_PASSWORD
-  );
-}
-
+import { verifyAdmin } from "../../lib/admin-auth.js";
 export async function onRequest({ request, env }) {
   if (!env.DB) {
     return Response.json({ error: "Database missing" }, { status: 500 });
