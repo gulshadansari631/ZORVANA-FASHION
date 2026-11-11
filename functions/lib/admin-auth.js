@@ -63,36 +63,63 @@ async function setupCredentialsTable(db) {
 export async function checkAdminCredentials(request, env) {
   try {
     const email = (request.headers.get("X-Admin-Email") || "")
-      .trim().toLowerCase();
+      .trim()
+      .toLowerCase();
 
-    const password = request.headers.get("X-Admin-Password") || "";
+    const password =
+      request.headers.get("X-Admin-Password") || "";
 
     const configuredEmail = (env.ADMIN_EMAIL || "")
-      .trim().toLowerCase();
+      .trim()
+      .toLowerCase();
 
     if (!env.DB) {
-      return { ok: false, code: "DB_BINDING_MISSING",
-        message: "Cloudflare DB binding missing." };
+      return {
+        ok: false,
+        code: "DB_BINDING_MISSING",
+        message: "Cloudflare DB binding missing."
+      };
     }
 
     if (!configuredEmail) {
-      return { ok: false, code: "ADMIN_EMAIL_MISSING",
-        message: "ADMIN_EMAIL Production variable missing." };
+      return {
+        ok: false,
+        code: "ADMIN_EMAIL_MISSING",
+        message: "ADMIN_EMAIL Production variable missing."
+      };
     }
 
     if (!env.ADMIN_PASSWORD) {
-      return { ok: false, code: "ADMIN_PASSWORD_MISSING",
-        message: "ADMIN_PASSWORD Production secret missing." };
+      return {
+        ok: false,
+        code: "ADMIN_PASSWORD_MISSING",
+        message: "ADMIN_PASSWORD Production secret missing."
+      };
     }
 
     if (!email || !password) {
-      return { ok: false, code: "FIELDS_MISSING",
-        message: "Email aur password enter karein." };
+      return {
+        ok: false,
+        code: "FIELDS_MISSING",
+        message: "Email aur password enter karein."
+      };
     }
 
     if (!safeEqual(email, configuredEmail)) {
-      return { ok: false, code: "EMAIL_MISMATCH",
-        message: "Admin email Cloudflare ADMIN_EMAIL se match nahi karta." };
+      return {
+        ok: false,
+        code: "EMAIL_MISMATCH",
+        message: "Admin email Cloudflare ADMIN_EMAIL se match nahi karta."
+      };
+    }
+
+    // Cloudflare secret is the source of truth.
+    if (!safeEqual(password, env.ADMIN_PASSWORD)) {
+      return {
+        ok: false,
+        code: "SECRET_PASSWORD_MISMATCH",
+        message: "Entered password Cloudflare ADMIN_PASSWORD secret se match nahi karta."
+      };
     }
 
     await setupCredentialsTable(env.DB);
@@ -101,28 +128,20 @@ export async function checkAdminCredentials(request, env) {
       "SELECT password_hash, password_salt FROM admin_credentials WHERE id = 1"
     ).first();
 
+    // If the saved hash already matches, login succeeds.
     if (saved) {
       const submittedHash = await hashPassword(
         password,
         saved.password_salt
       );
 
-      if (!safeEqual(submittedHash, saved.password_hash)) {
-        return {
-          ok: false,
-          code: "SAVED_PASSWORD_MISMATCH",
-          message: "Database mein saved password alag hai. Cloudflare secret badalne se saved password automatic update nahi hota."
-        };
+      if (safeEqual(submittedHash, saved.password_hash)) {
+        return { ok: true };
       }
-
-      return { ok: true };
     }
 
-    if (!safeEqual(password, env.ADMIN_PASSWORD)) {
-      return { ok: false, code: "SECRET_PASSWORD_MISMATCH",
-        message: "Entered password Cloudflare ADMIN_PASSWORD secret se match nahi karta." };
-    }
-
+    // First login or changed Cloudflare password:
+    // update only the admin credential row.
     const salt = randomSalt();
     const passwordHash = await hashPassword(password, salt);
 
@@ -130,7 +149,10 @@ export async function checkAdminCredentials(request, env) {
       INSERT INTO admin_credentials
         (id, password_hash, password_salt, updated_at)
       VALUES (1, ?, ?, ?)
-      ON CONFLICT(id) DO NOTHING
+      ON CONFLICT(id) DO UPDATE SET
+        password_hash = excluded.password_hash,
+        password_salt = excluded.password_salt,
+        updated_at = excluded.updated_at
     `).bind(passwordHash, salt, Date.now()).run();
 
     const current = await env.DB.prepare(
@@ -138,15 +160,24 @@ export async function checkAdminCredentials(request, env) {
     ).first();
 
     if (!current) {
-      return { ok: false, code: "CREDENTIAL_SAVE_FAILED",
-        message: "Password verify hua, lekin database mein save nahi ho saka." };
+      return {
+        ok: false,
+        code: "CREDENTIAL_SAVE_FAILED",
+        message: "Password verify hua, lekin database mein save nahi ho saka."
+      };
     }
 
-    const finalHash = await hashPassword(password, current.password_salt);
+    const finalHash = await hashPassword(
+      password,
+      current.password_salt
+    );
 
     if (!safeEqual(finalHash, current.password_hash)) {
-      return { ok: false, code: "CREDENTIAL_MISMATCH",
-        message: "Database password verification fail hui." };
+      return {
+        ok: false,
+        code: "CREDENTIAL_MISMATCH",
+        message: "Database password verification fail hui."
+      };
     }
 
     return { ok: true };
