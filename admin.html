@@ -317,15 +317,27 @@ function clearAdminSession(){
  adminPassword = "";
 }
 
+
 async function verifyAdminSession(email,password){
- const response = await fetch("/api/orders",{
+ const response = await fetch("/api/admin/login",{
+  method:"POST",
   headers:{
+   "Content-Type":"application/json",
    "X-Admin-Email":email,
    "X-Admin-Password":password
-  }
+  },
+  body:JSON.stringify({check:true})
  });
- if(!response.ok) throw new Error("Admin login expired");
+
+ const result = await response.json().catch(()=>({}));
+
+ if(!response.ok){
+  throw new Error(result.error || "Admin login failed (HTTP "+response.status+")");
+ }
+
+ return true;
 }
+
 
 function toggleAdminPassword(){
  const field=document.getElementById("password");
