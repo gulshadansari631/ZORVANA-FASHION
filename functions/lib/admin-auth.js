@@ -182,16 +182,32 @@ export async function checkAdminCredentials(request, env) {
 
     return { ok: true };
 
+
   } catch (error) {
-    console.error("Admin authentication error:", error);
+    const errorName =
+      error && typeof error.name === "string"
+        ? error.name
+        : "UnknownError";
+
+    const errorMessage =
+      error && typeof error.message === "string"
+        ? error.message
+        : "Unknown server error";
+
+    console.error("ADMIN_AUTH_DIAGNOSTIC", {
+      name: errorName,
+      message: errorMessage
+    });
 
     return {
       ok: false,
       code: "AUTH_SERVER_ERROR",
-      message: "Admin authentication server error. Cloudflare Functions logs check karein."
+      message:
+        "Admin authentication server error. Check Cloudflare Functions logs."
     };
   }
 }
+
 
 export async function verifyAdmin(request, env) {
   const result = await checkAdminCredentials(request, env);
