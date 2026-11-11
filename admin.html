@@ -90,7 +90,21 @@ button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:whi
 <button type="button" onclick="toggleAdminPassword()" style="margin:8px 0">👁</button>
 </div>
 <button onclick="login()">LOGIN</button>
+<button type="button" onclick="showPasswordReset()">FORGOT PASSWORD?</button>
 <p id="message"></p>
+</div>
+
+<div class="login" id="passwordResetBox" style="display:none">
+<h2>Reset Admin Password</h2>
+<p>OTP registered email par bheja jayega.</p>
+<input type="email" id="resetEmail" value="gulshadansari631@gmail.com" readonly>
+<button type="button" onclick="sendAdminOTP()">SEND OTP</button>
+<input type="text" id="resetOTP" placeholder="6-digit OTP" inputmode="numeric" maxlength="6">
+<input type="password" id="newAdminPassword" placeholder="New Password (10-128 characters)">
+<input type="password" id="confirmAdminPassword" placeholder="Confirm New Password">
+<button type="button" onclick="submitAdminPasswordReset()">RESET PASSWORD</button>
+<button type="button" onclick="backToAdminLogin()">BACK TO LOGIN</button>
+<p id="resetMessage"></p>
 </div>
 
 <div class="dashboard" id="dashboard" style="display:none">
@@ -331,7 +345,86 @@ function toggleAdminPassword(){
  const field=document.getElementById("password");
  field.type=field.type==="password"?"text":"password";
 }
+function showPasswordReset(){
+ document.getElementById("loginBox").style.display="none";
+ document.getElementById("passwordResetBox").style.display="block";
+ document.getElementById("resetMessage").textContent="";
+}
 
+function backToAdminLogin(){
+ document.getElementById("passwordResetBox").style.display="none";
+ document.getElementById("loginBox").style.display="block";
+}
+
+async function sendAdminOTP(){
+ const message=document.getElementById("resetMessage");
+ message.textContent="Sending OTP...";
+
+ try{
+  const response=await fetch("/api/admin/password-reset",{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({action:"send"})
+  });
+
+  const data=await response.json();
+  if(!response.ok) throw new Error(data.error||"OTP could not be sent.");
+
+  message.textContent="OTP sent. Inbox aur spam folder check karo.";
+ }catch(error){
+  message.textContent=error.message;
+ }
+}
+
+async function submitAdminPasswordReset(){
+ const otp=document.getElementById("resetOTP").value.trim();
+ const password=document.getElementById("newAdminPassword").value;
+ const confirm=document.getElementById("confirmAdminPassword").value;
+ const message=document.getElementById("resetMessage");
+
+ if(!/^[0-9]{6}$/.test(otp)){
+  message.textContent="Enter 6-digit OTP.";
+  return;
+ }
+
+ if(password.length<10||password.length>128){
+  message.textContent="Password 10 to 128 characters ka hona chahiye.";
+  return;
+ }
+
+ if(password!==confirm){
+  message.textContent="Passwords match nahi karte.";
+  return;
+ }
+
+ message.textContent="Resetting password...";
+
+ try{
+  const response=await fetch("/api/admin/password-reset",{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({
+    action:"reset",
+    otp:otp,
+    newPassword:password
+   })
+  });
+
+  const data=await response.json();
+  if(!response.ok) throw new Error(data.error||"Reset failed.");
+
+  clearAdminSession();
+
+  document.getElementById("passwordResetBox").style.display="none";
+  document.getElementById("loginBox").style.display="block";
+  document.getElementById("email").value="gulshadansari631@gmail.com";
+  document.getElementById("password").value="";
+  document.getElementById("message").textContent="Password reset successful. Ab naye password se login karo.";
+
+ }catch(error){
+  message.textContent=error.message;
+ }
+}
 async function login(){
  const email=document.getElementById("email").value.trim();
  const password=document.getElementById("password").value;
