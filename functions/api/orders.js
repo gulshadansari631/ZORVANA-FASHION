@@ -1,3 +1,4 @@
+import { verifyAdmin } from "../lib/admin-auth.js";
 function base64Url(value) {
   const bytes = new TextEncoder().encode(value);
   let binary = "";
