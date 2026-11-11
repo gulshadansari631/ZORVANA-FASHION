@@ -362,7 +362,7 @@ async function login(){
   showAdminTab("products");
  }catch(error){
   clearAdminSession();
-  document.getElementById("message").textContent="Wrong email or password";
+  document.getElementById("message").textContent=error.message || "Login failed";
  }
 }
 
