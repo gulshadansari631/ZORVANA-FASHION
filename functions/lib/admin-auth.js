@@ -60,19 +60,39 @@ async function setupCredentialsTable(db) {
   `).run();
 }
 
-export async function verifyAdmin(request, env) {
+export async function checkAdminCredentials(request, env) {
   try {
-    const email = request.headers.get("X-Admin-Email") || "";
+    const email = (request.headers.get("X-Admin-Email") || "")
+      .trim().toLowerCase();
+
     const password = request.headers.get("X-Admin-Password") || "";
 
-    if (
-      !env.DB ||
-      !env.ADMIN_EMAIL ||
-      !email ||
-      !password ||
-      !safeEqual(email, env.ADMIN_EMAIL)
-    ) {
-      return false;
+    const configuredEmail = (env.ADMIN_EMAIL || "")
+      .trim().toLowerCase();
+
+    if (!env.DB) {
+      return { ok: false, code: "DB_BINDING_MISSING",
+        message: "Cloudflare DB binding missing." };
+    }
+
+    if (!configuredEmail) {
+      return { ok: false, code: "ADMIN_EMAIL_MISSING",
+        message: "ADMIN_EMAIL Production variable missing." };
+    }
+
+    if (!env.ADMIN_PASSWORD) {
+      return { ok: false, code: "ADMIN_PASSWORD_MISSING",
+        message: "ADMIN_PASSWORD Production secret missing." };
+    }
+
+    if (!email || !password) {
+      return { ok: false, code: "FIELDS_MISSING",
+        message: "Email aur password enter karein." };
+    }
+
+    if (!safeEqual(email, configuredEmail)) {
+      return { ok: false, code: "EMAIL_MISMATCH",
+        message: "Admin email Cloudflare ADMIN_EMAIL se match nahi karta." };
     }
 
     await setupCredentialsTable(env.DB);
@@ -81,25 +101,28 @@ export async function verifyAdmin(request, env) {
       "SELECT password_hash, password_salt FROM admin_credentials WHERE id = 1"
     ).first();
 
-    // If a password was already reset, verify the new hashed password.
     if (saved) {
       const submittedHash = await hashPassword(
         password,
         saved.password_salt
       );
 
-      return safeEqual(submittedHash, saved.password_hash);
+      if (!safeEqual(submittedHash, saved.password_hash)) {
+        return {
+          ok: false,
+          code: "SAVED_PASSWORD_MISMATCH",
+          message: "Database mein saved password alag hai. Cloudflare secret badalne se saved password automatic update nahi hota."
+        };
+      }
+
+      return { ok: true };
     }
 
-    // First login: use the existing Cloudflare secret.
-    if (
-      !env.ADMIN_PASSWORD ||
-      !safeEqual(password, env.ADMIN_PASSWORD)
-    ) {
-      return false;
+    if (!safeEqual(password, env.ADMIN_PASSWORD)) {
+      return { ok: false, code: "SECRET_PASSWORD_MISMATCH",
+        message: "Entered password Cloudflare ADMIN_PASSWORD secret se match nahi karta." };
     }
 
-    // Securely save the existing password as a hash for future logins.
     const salt = randomSalt();
     const passwordHash = await hashPassword(password, salt);
 
@@ -110,22 +133,36 @@ export async function verifyAdmin(request, env) {
       ON CONFLICT(id) DO NOTHING
     `).bind(passwordHash, salt, Date.now()).run();
 
-    // Re-read in case another login or reset happened at the same time.
     const current = await env.DB.prepare(
       "SELECT password_hash, password_salt FROM admin_credentials WHERE id = 1"
     ).first();
 
-    if (!current) return false;
+    if (!current) {
+      return { ok: false, code: "CREDENTIAL_SAVE_FAILED",
+        message: "Password verify hua, lekin database mein save nahi ho saka." };
+    }
 
-    const finalHash = await hashPassword(
-      password,
-      current.password_salt
-    );
+    const finalHash = await hashPassword(password, current.password_salt);
 
-    return safeEqual(finalHash, current.password_hash);
+    if (!safeEqual(finalHash, current.password_hash)) {
+      return { ok: false, code: "CREDENTIAL_MISMATCH",
+        message: "Database password verification fail hui." };
+    }
+
+    return { ok: true };
 
   } catch (error) {
     console.error("Admin authentication error:", error);
-    return false;
+
+    return {
+      ok: false,
+      code: "AUTH_SERVER_ERROR",
+      message: "Admin authentication server error. Cloudflare Functions logs check karein."
+    };
   }
+}
+
+export async function verifyAdmin(request, env) {
+  const result = await checkAdminCredentials(request, env);
+  return result.ok === true;
 }
