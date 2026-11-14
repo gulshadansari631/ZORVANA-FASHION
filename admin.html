@@ -530,16 +530,18 @@ function safe(value){
  return span.innerHTML;
 }
 
-function showAdminTab(tab){
- document.getElementById("productsSection").style.display=tab==="products"?"block":"none";
- document.getElementById("ordersSection").style.display=tab==="orders"?"block":"none";
- document.getElementById("deliverySection").style.display=tab==="delivery"?"block":"none";
- document.getElementById("allProductsSection").style.display=tab==="allProducts"?"block":"none";
+function showAdminTab(tab) {
+  document.getElementById("productsSection").style.display = tab === "products" ? "block" : "none";
+  document.getElementById("ordersSection").style.display = tab === "orders" ? "block" : "none";
+  document.getElementById("deliverySection").style.display = tab === "delivery" ? "block" : "none";
+  document.getElementById("allProductsSection").style.display = tab === "allProducts" ? "block" : "none";
+  document.getElementById("userAccessSection").style.display = tab === "userAccess" ? "block" : "none";
 
- if(tab==="products") loadProducts();
- if(tab==="allProducts") loadProducts();
- if(tab==="orders") loadOrders();
- if(tab==="delivery") loadDeliveryBoys();
+  if (tab === "products") loadProducts();
+  if (tab === "allProducts") loadProducts();
+  if (tab === "orders") loadOrders();
+  if (tab === "delivery") loadDeliveryBoys();
+  if (tab === "userAccess") loadUserAccess();
 }
 async function loadDeliveryBoys(){
  const box=document.getElementById("deliveryBoys");
