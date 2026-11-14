@@ -458,7 +458,72 @@ function logout() {
   auth.signOut();
   cancelEditProduct();
 }
+async function checkOwnerAccessTab() {
+  try {
+    const response = await fetch("/api/admin/access");
 
+    if (response.ok) {
+      document.getElementById("userAccessTab").style.display = "inline-block";
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function loadUserAccess() {
+  const box = document.getElementById("userAccessList");
+  const message = document.getElementById("userAccessMessage");
+
+  box.textContent = "Loading...";
+  message.textContent = "";
+
+  try {
+    const response = await fetch("/api/admin/access");
+    const data = await response.json();
+
+    if (!response.ok) throw new Error(data.error || "Loading failed");
+
+    if (!data.users.length) {
+      box.textContent = "Abhi koi access request nahi hai.";
+      return;
+    }
+
+    box.innerHTML = data.users.map(user => `
+      <div class="order" style="margin:10px 0">
+        <b>${safe(user.email)}</b>
+        <p>Status: ${safe(user.status)}</p>
+        <button onclick="updateUserAccess('${safe(user.uid)}','approved')">APPROVE</button>
+        <button onclick="updateUserAccess('${safe(user.uid)}','rejected')">REJECT</button>
+        <button onclick="updateUserAccess('${safe(user.uid)}','revoked')">REVOKE</button>
+      </div>
+    `).join("");
+
+  } catch (error) {
+    box.textContent = error.message;
+  }
+}
+
+async function updateUserAccess(uid, status) {
+  const message = document.getElementById("userAccessMessage");
+
+  try {
+    const response = await fetch("/api/admin/access", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "decision", uid, status })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) throw new Error(data.error || "Update failed");
+
+    message.textContent = data.message;
+    await loadUserAccess();
+
+  } catch (error) {
+    message.textContent = error.message;
+  }
+}
 function safe(value){
  const span=document.createElement("span");
  span.textContent=value??"";
