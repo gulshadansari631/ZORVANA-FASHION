@@ -74,6 +74,8 @@ button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:whi
  .admin-product-image{height:230px}
 }
 </style>
+ <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 </head>
 <body>
 
@@ -81,16 +83,12 @@ button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:whi
 
 <div class="container">
 
-<div class="login" id="loginBox" style="display:none">
-<h2>Admin Login</h2>
-<p>Enter your admin email and password</p>
-<input type="email" id="email" placeholder="Admin Email">
-<div style="display:flex;gap:8px;align-items:center">
-<input type="password" id="password" placeholder="Admin Password" style="flex:1">
-<button type="button" onclick="toggleAdminPassword()" style="margin:8px 0">👁</button>
-</div>
-<button onclick="login()">LOGIN</button>
-<p id="message"></p>
+<div class="login" id="loginBox">
+  <h2>ZORVANA ADMIN LOGIN</h2>
+  <p>Apna verified email daalo. Login link email par aayega.</p>
+  <input type="email" id="email" placeholder="Admin Email" required>
+  <button onclick="login()">SEND LOGIN LINK</button>
+  <p id="message"></p>
 </div>
 
 <div class="dashboard" id="dashboard" style="display:none">
@@ -288,6 +286,7 @@ Loading delivery partners...
 </div>
 
 <script>
+
 let adminEmail = "";
 let adminPassword = "";
 let allProducts = [];
@@ -297,106 +296,160 @@ let existingProductImages = [];
 const CLOUDINARY_NAME = "opngws1m";
 const UPLOAD_PRESET = "zorvana_products";
 
-/* ===== 7 DAY ADMIN SESSION ===== */
-const ADMIN_SESSION_KEY = "zorvana_admin_session";
-const ADMIN_SESSION_DAYS = 7;
+const firebaseConfig = {
+  apiKey: "AIzaSyC6ljZWr8cDxEtPuziF7DhxQYiykFRocOc",
+  authDomain: "zorvana-fashion-new.firebaseapp.com",
+  projectId: "zorvana-fashion-new",
+  storageBucket: "zorvana-fashion-new.firebasestorage.app",
+  messagingSenderId: "328407308597",
+  appId: "1:328407308597:web:3a36dbb2e6c80e971ad47c"
+};
 
-function saveAdminSession(email,password){
- const expiresAt = Date.now() + ADMIN_SESSION_DAYS * 24 * 60 * 60 * 1000;
- localStorage.setItem(ADMIN_SESSION_KEY,JSON.stringify({
-  email:email,
-  password:password,
-  expiresAt:expiresAt
- }));
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
 }
 
+const auth = firebase.auth();
+const originalFetch = window.fetch.bind(window);
 
-function clearAdminSession(){
- localStorage.removeItem(ADMIN_SESSION_KEY);
- adminEmail = "";
- adminPassword = "";
-}
+window.fetch = async function(url, options = {}) {
+  const headers = new Headers(options.headers || {});
+  const user = auth.currentUser;
 
-
-async function verifyAdminSession(email,password){
- const response = await fetch("/api/admin/login",{
-  method:"POST",
-  headers:{
-   "Content-Type":"application/json",
-   "X-Admin-Email":email,
-   "X-Admin-Password":password
-  },
-  body:JSON.stringify({check:true})
- });
-
- const result = await response.json().catch(()=>({}));
-
- if(!response.ok){
-  throw new Error(result.error || "Admin login failed (HTTP "+response.status+")");
- }
-
- return true;
-}
-
-
-function toggleAdminPassword(){
- const field=document.getElementById("password");
- field.type=field.type==="password"?"text":"password";
-}
-async function login(){
-  const email=document.getElementById("email").value.trim();
-  const password=document.getElementById("password").value;
- if(!email || !password){
-  alert("Enter email and password");
-  return;
- }
-
- adminEmail=email;
- adminPassword=password;
-
- try{
-  await verifyAdminSession(adminEmail,adminPassword);
-  saveAdminSession(adminEmail,adminPassword);
-  document.getElementById("loginBox").style.display="none";
-  document.getElementById("dashboard").style.display="block";
-  showAdminTab("products");
- }catch(error){
-  clearAdminSession();
-  document.getElementById("message").textContent=error.message || "Login failed";
- }
-}
-
-async function restoreAdminSession(){
- try{
-  const saved=JSON.parse(localStorage.getItem(ADMIN_SESSION_KEY)||"null");
-
-  if(!saved||!saved.email||!saved.password||!saved.expiresAt||Date.now()>=saved.expiresAt){
-   clearAdminSession();
-   document.getElementById("loginBox").style.display="block";
-   return;
+  if (user && String(url).startsWith("/api/")) {
+    const token = await user.getIdToken();
+    headers.set("Authorization", "Bearer " + token);
   }
 
-  await verifyAdminSession(saved.email,saved.password);
-  adminEmail=saved.email;
-  adminPassword=saved.password;
+  return originalFetch(url, {
+    ...options,
+    headers
+  });
+};
 
-  document.getElementById("loginBox").style.display="none";
-  document.getElementById("dashboard").style.display="block";
-  showAdminTab("products");
+async function login() {
+  const email = document.getElementById("email").value.trim();
+  const message = document.getElementById("message");
 
- }catch(error){
-  clearAdminSession();
-  document.getElementById("loginBox").style.display="block";
- }
+  if (!email) {
+    message.textContent = "Apna email address daalo.";
+    return;
+  }
+
+  try {
+    await auth.sendSignInLinkToEmail(email, {
+      url: window.location.href,
+      handleCodeInApp: true
+    });
+
+    localStorage.setItem("zorvana_admin_email", email);
+    message.textContent =
+      "Login link email par bhej diya gaya hai. Apna email kholo.";
+
+  } catch (error) {
+    message.textContent = error.message;
+  }
 }
 
+async function completeEmailLogin() {
+  if (!auth.isSignInWithEmailLink(window.location.href)) return;
 
-function logout(){
- clearAdminSession();
- document.getElementById("dashboard").style.display="none";
- document.getElementById("loginBox").style.display="block";
- document.getElementById("message").textContent="";
- cancelEditProduct();
+  let email = localStorage.getItem("zorvana_admin_email");
+
+  if (!email) {
+    email = prompt("Apna email dobara daalo:");
+  }
+
+  if (!email) return;
+
+  try {
+    await auth.signInWithEmailLink(
+      email.trim(),
+      window.location.href
+    );
+
+    localStorage.removeItem("zorvana_admin_email");
+
+    window.history.replaceState(
+      {},
+      document.title,
+      window.location.pathname
+    );
+
+  } catch (error) {
+    document.getElementById("message").textContent = error.message;
+  }
+}
+
+auth.onAuthStateChanged(async user => {
+  const loginBox = document.getElementById("loginBox");
+  const dashboard = document.getElementById("dashboard");
+  const message = document.getElementById("message");
+
+  if (!user) {
+    adminEmail = "";
+    adminPassword = "";
+    dashboard.style.display = "none";
+    loginBox.style.display = "block";
+    return;
+  }
+
+  try {
+    await user.reload();
+
+    if (!user.emailVerified) {
+      throw new Error("Verified email se login karein.");
+    }
+
+    const token = await user.getIdToken(true);
+
+    const response = await originalFetch("/api/admin/access", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({
+        action: "request"
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || result.status !== "approved") {
+      loginBox.style.display = "block";
+      dashboard.style.display = "none";
+
+      message.textContent =
+        result.message || "Access request bhej di gayi hai. Owner approval ka wait karein.";
+
+      await auth.signOut();
+      return;
+    }
+
+    adminEmail = user.email;
+    adminPassword = "firebase-auth";
+
+    loginBox.style.display = "none";
+    dashboard.style.display = "block";
+
+    showAdminTab("products");
+
+  } catch (error) {
+    message.textContent = error.message;
+    await auth.signOut();
+  }
+});
+
+async function restoreAdminSession() {
+  await completeEmailLogin();
+}
+
+function logout() {
+  auth.signOut();
+  cancelEditProduct();
+}
+
 }
 function safe(value){
  const span=document.createElement("span");
