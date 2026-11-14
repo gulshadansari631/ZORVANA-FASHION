@@ -1,11 +1,4 @@
-function verifyAdmin(request, env) {
-  return Boolean(
-    env.ADMIN_EMAIL &&
-    env.ADMIN_PASSWORD &&
-    request.headers.get("X-Admin-Email") === env.ADMIN_EMAIL &&
-    request.headers.get("X-Admin-Password") === env.ADMIN_PASSWORD
-  );
-}
+import { verifyAdmin } from "../lib/admin-auth.js";
 
 async function createTable(db) {
   await db.prepare(`
@@ -55,7 +48,7 @@ export async function onRequest({ request, env }) {
 
     if (request.method === "GET") {
       if (url.searchParams.get("all") === "1") {
-        if (!verifyAdmin(request, env)) {
+        if (!await verifyAdmin(request, env)) {
           return Response.json({ error: "Unauthorized" }, { status: 401 });
         }
 
@@ -102,7 +95,7 @@ export async function onRequest({ request, env }) {
     }
 
     if (request.method === "POST") {
-      if (!verifyAdmin(request, env)) {
+      if (!await verifyAdmin(request, env)) {
         return Response.json({ error: "Unauthorized" }, { status: 401 });
       }
 
