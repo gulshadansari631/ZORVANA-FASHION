@@ -441,7 +441,7 @@ auth.onAuthStateChanged(async user => {
 
     loginBox.style.display = "none";
     dashboard.style.display = "block";
-
+   await checkOwnerAccessTab();
     showAdminTab("products");
 
   } catch (error) {
