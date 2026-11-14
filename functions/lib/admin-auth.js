@@ -1,215 +1,83 @@
 
-const encoder = new TextEncoder();
-const ITERATIONS = 10000;
+const ACCESS_TABLE_SQL = `
+  CREATE TABLE IF NOT EXISTS admin_access (
+    uid TEXT PRIMARY KEY,
+    email TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  )
+`;
 
-function safeEqual(a, b) {
-  if (typeof a !== "string" || typeof b !== "string") return false;
-
-  let difference = a.length ^ b.length;
-  const length = Math.max(a.length, b.length);
-
-  for (let i = 0; i < length; i++) {
-    difference |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
-  }
-
-  return difference === 0;
+export async function ensureAdminAccessTable(db) {
+  await db.prepare(ACCESS_TABLE_SQL).run();
 }
 
-function randomSalt() {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-
-  return Array.from(bytes, byte =>
-    byte.toString(16).padStart(2, "0")
-  ).join("");
-}
-
-async function hashPassword(password, salt) {
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(password),
-    "PBKDF2",
-    false,
-    ["deriveBits"]
+export function isOwner(email, env) {
+  return Boolean(
+    email &&
+    env.ADMIN_EMAIL &&
+    email.trim().toLowerCase() === env.ADMIN_EMAIL.trim().toLowerCase()
   );
-
-  const bits = await crypto.subtle.deriveBits(
-    {
-      name: "PBKDF2",
-      salt: encoder.encode(salt),
-      iterations: ITERATIONS,
-      hash: "SHA-256"
-    },
-    key,
-    256
-  );
-
-  return Array.from(new Uint8Array(bits), byte =>
-    byte.toString(16).padStart(2, "0")
-  ).join("");
 }
 
-async function setupCredentialsTable(db) {
-  await db.prepare(`
-    CREATE TABLE IF NOT EXISTS admin_credentials (
-      id INTEGER PRIMARY KEY CHECK (id = 1),
-      password_hash TEXT NOT NULL,
-      password_salt TEXT NOT NULL,
-      updated_at INTEGER NOT NULL
-    )
-  `).run();
-}
-
-export async function checkAdminCredentials(request, env) {
+export async function verifyFirebaseUser(request, env) {
   try {
-    const email = (request.headers.get("X-Admin-Email") || "")
-      .trim()
-      .toLowerCase();
+    const authorization = request.headers.get("Authorization") || "";
+    const match = authorization.match(/^Bearer\s+(.+)$/i);
+    const idToken = match?.[1];
 
-    const password =
-      request.headers.get("X-Admin-Password") || "";
+    if (!idToken || !env.FIREBASE_API_KEY) return null;
 
-    const configuredEmail = (env.ADMIN_EMAIL || "")
-      .trim()
-      .toLowerCase();
-
-    if (!env.DB) {
-      return {
-        ok: false,
-        code: "DB_BINDING_MISSING",
-        message: "Cloudflare DB binding missing."
-      };
-    }
-
-    if (!configuredEmail) {
-      return {
-        ok: false,
-        code: "ADMIN_EMAIL_MISSING",
-        message: "ADMIN_EMAIL Production variable missing."
-      };
-    }
-
-    if (!env.ADMIN_PASSWORD) {
-      return {
-        ok: false,
-        code: "ADMIN_PASSWORD_MISSING",
-        message: "ADMIN_PASSWORD Production secret missing."
-      };
-    }
-
-    if (!email || !password) {
-      return {
-        ok: false,
-        code: "FIELDS_MISSING",
-        message: "Email aur password enter karein."
-      };
-    }
-
-    if (!safeEqual(email, configuredEmail)) {
-      return {
-        ok: false,
-        code: "EMAIL_MISMATCH",
-        message: "Admin email Cloudflare ADMIN_EMAIL se match nahi karta."
-      };
-    }
-
-    // Cloudflare secret is the source of truth.
-    if (!safeEqual(password, env.ADMIN_PASSWORD)) {
-      return {
-        ok: false,
-        code: "SECRET_PASSWORD_MISMATCH",
-        message: "Entered password Cloudflare ADMIN_PASSWORD secret se match nahi karta."
-      };
-    }
-
-    await setupCredentialsTable(env.DB);
-
-    const saved = await env.DB.prepare(
-      "SELECT password_hash, password_salt FROM admin_credentials WHERE id = 1"
-    ).first();
-
-    // If the saved hash already matches, login succeeds.
-    if (saved) {
-      const submittedHash = await hashPassword(
-        password,
-        saved.password_salt
-      );
-
-      if (safeEqual(submittedHash, saved.password_hash)) {
-        return { ok: true };
+    const response = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${env.FIREBASE_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken })
       }
-    }
-
-    // First login or changed Cloudflare password:
-    // update only the admin credential row.
-    const salt = randomSalt();
-    const passwordHash = await hashPassword(password, salt);
-
-    await env.DB.prepare(`
-      INSERT INTO admin_credentials
-        (id, password_hash, password_salt, updated_at)
-      VALUES (1, ?, ?, ?)
-      ON CONFLICT(id) DO UPDATE SET
-        password_hash = excluded.password_hash,
-        password_salt = excluded.password_salt,
-        updated_at = excluded.updated_at
-    `).bind(passwordHash, salt, Date.now()).run();
-
-    const current = await env.DB.prepare(
-      "SELECT password_hash, password_salt FROM admin_credentials WHERE id = 1"
-    ).first();
-
-    if (!current) {
-      return {
-        ok: false,
-        code: "CREDENTIAL_SAVE_FAILED",
-        message: "Password verify hua, lekin database mein save nahi ho saka."
-      };
-    }
-
-    const finalHash = await hashPassword(
-      password,
-      current.password_salt
     );
 
-    if (!safeEqual(finalHash, current.password_hash)) {
-      return {
-        ok: false,
-        code: "CREDENTIAL_MISMATCH",
-        message: "Database password verification fail hui."
-      };
-    }
+    if (!response.ok) return null;
 
-    return { ok: true };
+    const data = await response.json();
+    const user = data.users?.[0];
 
-
-  } catch (error) {
-    const errorName =
-      error && typeof error.name === "string"
-        ? error.name
-        : "UnknownError";
-
-    const errorMessage =
-      error && typeof error.message === "string"
-        ? error.message
-        : "Unknown server error";
-
-    console.error("ADMIN_AUTH_DIAGNOSTIC", {
-      name: errorName,
-      message: errorMessage
-    });
+    if (!user || user.emailVerified !== true) return null;
 
     return {
-      ok: false,
-      code: "AUTH_SERVER_ERROR",
-      message:
-        "Admin authentication server error. Check Cloudflare Functions logs."
+      uid: user.localId,
+      email: (user.email || "").trim().toLowerCase(),
+      emailVerified: true
     };
+  } catch (error) {
+    console.error("FIREBASE_AUTH_ERROR", error);
+    return null;
   }
 }
 
-
 export async function verifyAdmin(request, env) {
-  const result = await checkAdminCredentials(request, env);
-  return result.ok === true;
+  try {
+    if (!env.DB) return false;
+
+    const user = await verifyFirebaseUser(request, env);
+    if (!user) return false;
+
+    if (isOwner(user.email, env)) return true;
+
+    await ensureAdminAccessTable(env.DB);
+
+    const approved = await env.DB.prepare(`
+      SELECT uid FROM admin_access
+      WHERE uid = ?
+        AND email = ?
+        AND status = 'approved'
+      LIMIT 1
+    `).bind(user.uid, user.email).first();
+
+    return Boolean(approved);
+  } catch (error) {
+    console.error("ADMIN_ACCESS_ERROR", error);
+    return false;
+  }
 }
