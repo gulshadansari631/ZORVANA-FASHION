@@ -2,7 +2,7 @@ import {
   verifyFirebaseUser,
   isOwner,
   ensureAdminAccessTable
-} from "../../lib/admin-auth.js";
+} from "../../../../../../lib/admin-auth.js";
 
 function json(data, status = 200) {
   return Response.json(data, {
