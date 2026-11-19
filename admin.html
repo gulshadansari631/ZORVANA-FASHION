@@ -398,6 +398,17 @@ async function finishAdminLogin(user) {
   }
 }
 
+function login() {
+  loginEmail();
+}
+
+function toggleAdminPassword() {
+  const passwordInput = document.getElementById("password");
+
+  passwordInput.type =
+    passwordInput.type === "password" ? "text" : "password";
+}
+
 async function loginGoogle() {
   try {
     const { auth, provider, authSdk } = await firebaseReady;
