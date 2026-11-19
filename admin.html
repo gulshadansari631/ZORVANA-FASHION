@@ -288,8 +288,11 @@ Loading delivery partners...
 </div>
 
 <script>
+ 
 let adminEmail = "";
 let adminPassword = "";
+let adminUser = null;
+
 let allProducts = [];
 let editingProductId = null;
 let existingProductImages = [];
@@ -297,107 +300,206 @@ let existingProductImages = [];
 const CLOUDINARY_NAME = "opngws1m";
 const UPLOAD_PRESET = "zorvana_products";
 
-/* ===== 7 DAY ADMIN SESSION ===== */
-const ADMIN_SESSION_KEY = "zorvana_admin_session";
-const ADMIN_SESSION_DAYS = 7;
+const firebaseConfig = {
+  apiKey: "AIzaSyC6ljZWr8cDxEtPuziF7DhxQYiykFRocOc",
+  authDomain: "zorvana-fashion-new.firebaseapp.com",
+  projectId: "zorvana-fashion-new",
+  storageBucket: "zorvana-fashion-new.firebasestorage.app",
+  messagingSenderId: "328407308597",
+  appId: "1:328407308597:web:3a36dbb2e6c80e971ad47c"
+};
 
-function saveAdminSession(email,password){
- const expiresAt = Date.now() + ADMIN_SESSION_DAYS * 24 * 60 * 60 * 1000;
- localStorage.setItem(ADMIN_SESSION_KEY,JSON.stringify({
-  email:email,
-  password:password,
-  expiresAt:expiresAt
- }));
-}
+const firebaseReady = (async () => {
+  const sdk = await import(
+    "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js"
+  );
 
+  const authSdk = await import(
+    "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js"
+  );
 
-function clearAdminSession(){
- localStorage.removeItem(ADMIN_SESSION_KEY);
- adminEmail = "";
- adminPassword = "";
-}
+  const app = sdk.initializeApp(firebaseConfig);
+  const auth = authSdk.getAuth(app);
 
+  const provider = new authSdk.GoogleAuthProvider();
+  provider.setCustomParameters({
+    prompt: "select_account"
+  });
 
-async function verifyAdminSession(email,password){
- const response = await fetch("/api/admin/login",{
-  method:"POST",
-  headers:{
-   "Content-Type":"application/json",
-   "X-Admin-Email":email,
-   "X-Admin-Password":password
-  },
-  body:JSON.stringify({check:true})
- });
+  return { auth, provider, authSdk };
+})();
 
- const result = await response.json().catch(()=>({}));
+/* Protected API requests automatically use Firebase ID token */
+const originalFetch = window.fetch.bind(window);
 
- if(!response.ok){
-  throw new Error(result.error || "Admin login failed (HTTP "+response.status+")");
- }
+window.fetch = async function(resource, options = {}) {
+  const url = typeof resource === "string"
+    ? resource
+    : resource.url;
 
- return true;
-}
+  if (url.startsWith("/api/") && adminUser) {
+    const headers = new Headers(
+      options.headers ||
+      (resource instanceof Request ? resource.headers : undefined)
+    );
 
+    const token = await adminUser.getIdToken();
 
-function toggleAdminPassword(){
- const field=document.getElementById("password");
- field.type=field.type==="password"?"text":"password";
-}
-async function login(){
-  const email=document.getElementById("email").value.trim();
-  const password=document.getElementById("password").value;
- if(!email || !password){
-  alert("Enter email and password");
-  return;
- }
+    headers.set("Authorization", "Bearer " + token);
+    headers.delete("X-Admin-Email");
+    headers.delete("X-Admin-Password");
 
- adminEmail=email;
- adminPassword=password;
-
- try{
-  await verifyAdminSession(adminEmail,adminPassword);
-  saveAdminSession(adminEmail,adminPassword);
-  document.getElementById("loginBox").style.display="none";
-  document.getElementById("dashboard").style.display="block";
-  showAdminTab("products");
- }catch(error){
-  clearAdminSession();
-  document.getElementById("message").textContent=error.message || "Login failed";
- }
-}
-
-async function restoreAdminSession(){
- try{
-  const saved=JSON.parse(localStorage.getItem(ADMIN_SESSION_KEY)||"null");
-
-  if(!saved||!saved.email||!saved.password||!saved.expiresAt||Date.now()>=saved.expiresAt){
-   clearAdminSession();
-   document.getElementById("loginBox").style.display="block";
-   return;
+    options = { ...options, headers };
   }
 
-  await verifyAdminSession(saved.email,saved.password);
-  adminEmail=saved.email;
-  adminPassword=saved.password;
+  return originalFetch(resource, options);
+};
 
-  document.getElementById("loginBox").style.display="none";
-  document.getElementById("dashboard").style.display="block";
-  showAdminTab("products");
+async function finishAdminLogin(user) {
+  adminUser = user;
+  adminEmail = (user.email || "").trim().toLowerCase();
+  adminPassword = "";
 
- }catch(error){
-  clearAdminSession();
-  document.getElementById("loginBox").style.display="block";
- }
+  if (!user.emailVerified) {
+    document.getElementById("message").textContent =
+      "Email verify karo. Verification link apne email mein check karo.";
+    return;
+  }
+
+  try {
+    const response = await originalFetch("/api/admin/login", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + await user.getIdToken(),
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({})
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || "Admin access denied");
+    }
+
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+    document.getElementById("message").textContent = "";
+
+    showAdminTab("products");
+
+  } catch (error) {
+    adminUser = null;
+    adminEmail = "";
+
+    document.getElementById("dashboard").style.display = "none";
+    document.getElementById("loginBox").style.display = "block";
+    document.getElementById("message").textContent = error.message;
+  }
 }
 
+async function loginGoogle() {
+  try {
+    const { auth, provider, authSdk } = await firebaseReady;
 
-function logout(){
- clearAdminSession();
- document.getElementById("dashboard").style.display="none";
- document.getElementById("loginBox").style.display="block";
- document.getElementById("message").textContent="";
- cancelEditProduct();
+    const result = await authSdk.signInWithPopup(auth, provider);
+
+    await finishAdminLogin(result.user);
+
+  } catch (error) {
+    document.getElementById("message").textContent =
+      error.message || "Google Login failed";
+  }
 }
+
+async function loginEmail() {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if (!email || !password) {
+    document.getElementById("message").textContent =
+      "Email aur password dono bharo.";
+    return;
+  }
+
+  try {
+    const { auth, authSdk } = await firebaseReady;
+
+    const result = await authSdk.signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
+    await finishAdminLogin(result.user);
+
+  } catch (error) {
+    document.getElementById("message").textContent =
+      error.message || "Email Login failed";
+  }
+}
+
+async function forgotAdminPassword() {
+  const email = document.getElementById("email").value.trim();
+
+  if (!email) {
+    document.getElementById("message").textContent =
+      "Pehle apna email likho.";
+    return;
+  }
+
+  try {
+    const { auth, authSdk } = await firebaseReady;
+
+    await authSdk.sendPasswordResetEmail(auth, email);
+
+    document.getElementById("message").textContent =
+      "Password reset email bhej diya gaya hai. Inbox check karo.";
+
+  } catch (error) {
+    document.getElementById("message").textContent =
+      error.message || "Reset email nahi bheja ja saka.";
+  }
+}
+
+async function restoreAdminSession() {
+  try {
+    const { auth, authSdk } = await firebaseReady;
+
+    authSdk.onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        await finishAdminLogin(user);
+      } else {
+        adminUser = null;
+        adminEmail = "";
+        adminPassword = "";
+
+        document.getElementById("dashboard").style.display = "none";
+        document.getElementById("loginBox").style.display = "block";
+      }
+    });
+
+  } catch (error) {
+    document.getElementById("loginBox").style.display = "block";
+    document.getElementById("message").textContent = error.message;
+  }
+}
+
+async function logout() {
+  const { auth, authSdk } = await firebaseReady;
+
+  await authSdk.signOut(auth);
+
+  adminUser = null;
+  adminEmail = "";
+  adminPassword = "";
+
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById("loginBox").style.display = "block";
+
+  cancelEditProduct();
+}
+
 function safe(value){
  const span=document.createElement("span");
  span.textContent=value??"";
