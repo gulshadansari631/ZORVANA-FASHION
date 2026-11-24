@@ -59,6 +59,7 @@ export async function onRequest({ request, env }) {
       const products = (result.results || []).map(p => ({
         ...p,
         images: parseJSON(p.images, p.image ? [p.image] : []),
+        collections: parseJSON(p.collections, []),
         highlights: parseJSON(p.highlights, {}),
         additional_details: parseJSON(p.additional_details, {}),
         sizes: parseJSON(p.sizes, [])
