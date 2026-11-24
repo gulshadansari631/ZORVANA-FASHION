@@ -35,6 +35,7 @@ export async function onRequest({ request, env }) {
       ["product_type", "TEXT DEFAULT ''"],
             ["variant_group_id", "TEXT DEFAULT ''"],
       ["subcategory", "TEXT DEFAULT ''"],
+      ["audience", "TEXT DEFAULT ''"],
 ["season", "TEXT DEFAULT 'All Season'"],
 ["collections", "TEXT DEFAULT '[]'"],
       ["images", "TEXT DEFAULT '[]'"],
