@@ -1271,6 +1271,7 @@ async function saveProduct(){
    product_type:productType,
        variant_group_id:document.getElementById("variantGroupId").value.trim(),
    category,
+   audience:document.getElementById("productAudience").value,
    subcategory:document.getElementById("productSubcategory").value.trim(),
 season:document.getElementById("productSeason").value,
 collections:Array.from(document.getElementById("productCollections").selectedOptions).map(option=>option.value),
