@@ -134,7 +134,7 @@ JSON.stringify(Array.isArray(p.collections) ? p.collections : []),
       if (request.method === "POST") {
         const result = await env.DB.prepare(`
           INSERT INTO products
-            (name, category, product_type, variant_group_id, subcategory, season, collections,
+            (name, category, product_type, audience, variant_group_id, subcategory, season, collections,
              image, images, selling_price, mrp, discount, description, stock,
              highlights, additional_details, sizes)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
