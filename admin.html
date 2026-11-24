@@ -343,7 +343,53 @@ let existingProductImages = [];
 
 const CLOUDINARY_NAME = "opngws1m";
 const UPLOAD_PRESET = "zorvana_products";
+const productTypeOptions = {
+ Men: {
+  Winter: ["Winter Jackets","Hoodies","Sweatshirts","Sweaters","Woolen Shirts","Winter T-Shirts","Thermal Wear","Winter Tracksuits","Winter Pants","Woolen Caps","Mufflers","Gloves","Winter Socks","Winter Shoes"],
+  Summer: ["Cotton T-Shirts","Polo T-Shirts","Casual Shirts","Formal Shirts","Summer Jackets","Cotton Pants","Shorts","Jeans","Summer Tracksuits","Vest / Sleeveless","Summer Kurtas","Caps","Sandals","Slippers"],
+  "All Season": ["T-Shirts","Shirts","Jeans","Trousers","Kurtas","Shoes","Sandals","Watches","Bags","Wallets","Belts","Sunglasses"]
+ },
+ Women: {
+  Winter: ["Winter Jackets","Hoodies","Sweatshirts","Sweaters","Cardigans","Winter Kurtis","Winter Suits","Woolen Tops","Thermal Wear","Winter Leggings","Winter Shawls","Woolen Stoles","Mufflers","Gloves","Winter Caps","Winter Socks","Winter Boots"],
+  Summer: ["Cotton Kurtis","Summer Suits","Cotton Tops","T-Shirts","Shirts","Summer Dresses","Maxi Dresses","Co-ord Sets","Palazzo","Leggings","Skirts","Shorts","Sarees","Sandals","Slippers"],
+  "All Season": ["Tops","Kurtis","Sarees","Dresses","Leggings","Jeans","Shoes","Bags","Jewellery","Watches","Sunglasses"]
+ },
+ Boys: {
+  Winter: ["Winter Jackets","Hoodies","Sweatshirts","Sweaters","Winter T-Shirts","Winter Pants","Thermal Wear","Winter Tracksuits","Woolen Caps","Gloves","Winter Socks","Winter Shoes"],
+  Summer: ["Cotton T-Shirts","Polo T-Shirts","Shirts","Shorts","Cotton Pants","Jeans","Summer Sets","Sleeveless T-Shirts","Sandals","Slippers"],
+  "All Season": ["T-Shirts","Shirts","Jeans","Pants","Shoes","Sandals","Watches","Bags"]
+ },
+ Girls: {
+  Winter: ["Winter Jackets","Hoodies","Sweaters","Cardigans","Winter Dresses","Winter Tops","Winter Kurtis","Thermal Wear","Winter Leggings","Woolen Caps","Gloves","Winter Socks","Winter Boots"],
+  Summer: ["Cotton Tops","T-Shirts","Frocks","Summer Dresses","Cotton Kurtis","Skirts","Shorts","Leggings","Summer Sets","Sandals","Slippers"],
+  "All Season": ["Tops","Dresses","Kurtis","Skirts","Leggings","Jeans","Shoes","Bags","Watches"]
+ }
+};
 
+function updateProductTypes() {
+ const audience = document.getElementById("productAudience").value;
+ const season = document.getElementById("productSeason").value;
+ const typeSelect = document.getElementById("productType");
+ const previousValue = typeSelect.value;
+
+ typeSelect.innerHTML = '<option value="">Select Product Type</option>';
+
+ const types = productTypeOptions[audience]?.[season] || [];
+
+ types.forEach(type => {
+  const option = document.createElement("option");
+  option.value = type;
+  option.textContent = type;
+  typeSelect.appendChild(option);
+ });
+
+ if (types.includes(previousValue)) {
+  typeSelect.value = previousValue;
+ }
+}
+
+document.getElementById("productAudience").addEventListener("change", updateProductTypes);
+document.getElementById("productSeason").addEventListener("change", updateProductTypes);
 const firebaseConfig = {
   apiKey: "AIzaSyC6ljZWr8cDxEtPuziF7DhxQYiykFRocOc",
   authDomain: "zorvana-fashion-new.firebaseapp.com",
