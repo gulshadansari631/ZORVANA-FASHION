@@ -114,6 +114,7 @@ export async function onRequest({ request, env }) {
         String(p.name).trim(),
         String(p.category),
                 String(p.product_type || ""),
+        String(p.audience || ""),
         String(p.variant_group_id || ""),
         String(p.subcategory || "").trim(),
 String(p.season || "All Season"),
