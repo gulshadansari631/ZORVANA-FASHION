@@ -150,9 +150,10 @@ JSON.stringify(Array.isArray(p.collections) ? p.collections : []),
 
       await env.DB.prepare(`
         UPDATE products SET
-                name=?, category=?, product_type=?, variant_group_id=?, image=?, images=?,
-        selling_price=?, mrp=?, discount=?, description=?, stock=?,
-        highlights=?, additional_details=?, sizes=?
+                          name=?, category=?, product_type=?, variant_group_id=?,
+          subcategory=?, season=?, collections=?,
+          image=?, images=?, selling_price=?, mrp=?, discount=?,
+          description=?, stock=?, highlights=?, additional_details=?, sizes=?
         WHERE id=?
       `).bind(...values, Number(p.id)).run();
 
