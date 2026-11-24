@@ -34,6 +34,9 @@ export async function onRequest({ request, env }) {
     const migrations = [
       ["product_type", "TEXT DEFAULT ''"],
             ["variant_group_id", "TEXT DEFAULT ''"],
+      ["subcategory", "TEXT DEFAULT ''"],
+["season", "TEXT DEFAULT 'All Season'"],
+["collections", "TEXT DEFAULT '[]'"],
       ["images", "TEXT DEFAULT '[]'"],
       ["highlights", "TEXT DEFAULT '{}'"],
       ["additional_details", "TEXT DEFAULT '{}'"],
