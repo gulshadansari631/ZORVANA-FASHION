@@ -152,7 +152,7 @@ JSON.stringify(Array.isArray(p.collections) ? p.collections : []),
 
       await env.DB.prepare(`
         UPDATE products SET
-                          name=?, category=?, product_type=?, variant_group_id=?,
+                          name=?, category=?, product_type=?, audience=?, variant_group_id=?,
           subcategory=?, season=?, collections=?,
           image=?, images=?, selling_price=?, mrp=?, discount=?,
           description=?, stock=?, highlights=?, additional_details=?, sizes=?
