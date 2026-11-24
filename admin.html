@@ -450,9 +450,17 @@ async function finishAdminLogin(user) {
   adminEmail = (user.email || "").trim().toLowerCase();
   adminPassword = "";
 
-  if (!user.emailVerified) {
-    document.getElementById("message").textContent =
-      "Email verify karo. Verification link apne email mein check karo.";
+   if (!user.emailVerified) {
+    try {
+      const { authSdk } = await firebaseReady;
+      await authSdk.sendEmailVerification(user);
+
+      document.getElementById("message").textContent =
+        "Verification email dobara bhej diya gaya hai. Gmail Inbox aur Spam check karo.";
+    } catch (error) {
+      document.getElementById("message").textContent =
+        "Verification email error: " + error.message;
+    }
     return;
   }
 
