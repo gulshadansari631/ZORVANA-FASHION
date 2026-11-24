@@ -802,7 +802,9 @@ function editProduct(id){
  document.getElementById("productName").value=p.name||"";
  document.getElementById("productSubcategory").value=p.subcategory||"";
 document.getElementById("productSeason").value=p.season||"All Season";
-
+document.getElementById("productAudience").value=p.audience||"";
+updateProductTypes();
+document.getElementById("productType").value=p.product_type||"";
 const savedCollections=Array.isArray(p.collections)?p.collections:[];
 Array.from(document.getElementById("productCollections").options).forEach(option=>{
  option.selected=savedCollections.includes(option.value);
