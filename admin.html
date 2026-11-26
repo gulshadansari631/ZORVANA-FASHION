@@ -475,59 +475,112 @@ window.fetch = async function(url, options = {}) {
   });
 };
 
+
+function showLoginMessage(message, isError = false) {
+  const box = document.getElementById("message");
+  if (!box) return;
+  box.textContent = message;
+  box.style.color = isError ? "red" : "green";
+}
+
+function togglePassword() {
+  const input = document.getElementById("password");
+  const button = input.parentElement.querySelector("button");
+
+  if (input.type === "password") {
+    input.type = "text";
+    button.textContent = "Hide";
+  } else {
+    input.type = "password";
+    button.textContent = "Show";
+  }
+}
+
 async function login() {
   const email = document.getElementById("email").value.trim();
-  const message = document.getElementById("message");
+  const password = document.getElementById("password").value;
 
-  if (!email) {
-    message.textContent = "Apna email address daalo.";
+  if (!email || !password) {
+    showLoginMessage("Email aur password daalein.", true);
     return;
   }
 
   try {
-    await auth.sendSignInLinkToEmail(email, {
-      url: window.location.href,
-      handleCodeInApp: true
-    });
-
-    localStorage.setItem("zorvana_admin_email", email);
-    message.textContent =
-      "Login link email par bhej diya gaya hai. Apna email kholo.";
-
+    showLoginMessage("Login ho raha hai...");
+    await auth.signInWithEmailAndPassword(email, password);
   } catch (error) {
-    message.textContent = error.message;
+    showLoginMessage(error.message, true);
+  }
+}
+
+async function forgotPassword() {
+  const email = document.getElementById("email").value.trim();
+
+  if (!email) {
+    showLoginMessage("Pehle email daalein.", true);
+    return;
+  }
+
+  try {
+    await auth.sendPasswordResetEmail(email);
+    showLoginMessage("Password reset link email par bhej diya gaya hai.");
+  } catch (error) {
+    showLoginMessage(error.message, true);
+  }
+}
+
+async function googleLogin() {
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+    showLoginMessage("Google login ho raha hai...");
+    await auth.signInWithPopup(provider);
+  } catch (error) {
+    showLoginMessage(error.message, true);
+  }
+}
+
+let isCreatingAdminAccount = false;
+
+async function createAdminAccount() {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if (!email || !password) {
+    showLoginMessage("Email aur password daalein.", true);
+    return;
+  }
+
+  if (password.length < 6) {
+    showLoginMessage("Password kam se kam 6 characters ka hona chahiye.", true);
+    return;
+  }
+
+  try {
+    isCreatingAdminAccount = true;
+
+    const result = await auth.createUserWithEmailAndPassword(
+      email,
+      password
+    );
+
+    await result.user.sendEmailVerification();
+    await auth.signOut();
+
+    showLoginMessage(
+      "Verification email bhej diya gaya hai. Email verify karke login karein."
+    );
+  } catch (error) {
+    showLoginMessage(error.message, true);
+  } finally {
+    isCreatingAdminAccount = false;
   }
 }
 
 async function completeEmailLogin() {
-  if (!auth.isSignInWithEmailLink(window.location.href)) return;
-
-  let email = localStorage.getItem("zorvana_admin_email");
-
-  if (!email) {
-    email = prompt("Apna email dobara daalo:");
-  }
-
-  if (!email) return;
-
-  try {
-    await auth.signInWithEmailLink(
-      email.trim(),
-      window.location.href
-    );
-
-    localStorage.removeItem("zorvana_admin_email");
-
-    window.history.replaceState(
-      {},
-      document.title,
-      window.location.pathname
-    );
-
-  } catch (error) {
-    document.getElementById("message").textContent = error.message;
-  }
+  return;
 }
+
 
 auth.onAuthStateChanged(async user => {
   const loginBox = document.getElementById("loginBox");
