@@ -27,7 +27,15 @@ export async function verifyFirebaseUser(request, env) {
     const match = authorization.match(/^Bearer\s+(.+)$/i);
     const idToken = match?.[1];
 
-    if (!idToken || !env.FIREBASE_API_KEY) return null;
+    if (!idToken) {
+      console.error("FIREBASE_AUTH_ERROR: Missing bearer ID token");
+      return null;
+    }
+
+    if (!env.FIREBASE_API_KEY) {
+      console.error("FIREBASE_AUTH_ERROR: FIREBASE_API_KEY is missing");
+      return null;
+    }
 
     const response = await fetch(
       `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${env.FIREBASE_API_KEY}`,
@@ -38,11 +46,27 @@ export async function verifyFirebaseUser(request, env) {
       }
     );
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      let firebaseError = "Unknown Firebase lookup error";
+      try {
+        const errorData = await response.json();
+        firebaseError = errorData.error?.message || firebaseError;
+      } catch (_) {}
+
+      console.error("FIREBASE_AUTH_LOOKUP_FAILED", {
+        status: response.status,
+        error: firebaseError
+      });
+      return null;
+    }
 
     const data = await response.json();
     const user = data.users?.[0];
-    if (!user) return null;
+
+    if (!user) {
+      console.error("FIREBASE_AUTH_ERROR: Firebase returned no user");
+      return null;
+    }
 
     return {
       uid: user.localId,
@@ -50,10 +74,11 @@ export async function verifyFirebaseUser(request, env) {
       emailVerified: true
     };
   } catch (error) {
-    console.error("FIREBASE_AUTH_ERROR", error);
+    console.error("FIREBASE_AUTH_ERROR", error?.message || "Unknown error");
     return null;
-    }
   }
+}
+
 export async function verifyAdmin(request, env) {
   try {
     const user = await verifyFirebaseUser(request, env);
@@ -61,8 +86,7 @@ export async function verifyAdmin(request, env) {
 
     return isOwner(user.email, env);
   } catch (error) {
-    console.error("ADMIN_ACCESS_ERROR", error);
+    console.error("ADMIN_ACCESS_ERROR", error?.message || "Unknown error");
     return false;
   }
 }
-
