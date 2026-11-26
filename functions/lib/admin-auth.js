@@ -54,8 +54,6 @@ export async function verifyFirebaseUser(request, env) {
     return null;
     }
   }
-}
-
 export async function verifyAdmin(request, env) {
   try {
     const user = await verifyFirebaseUser(request, env);
