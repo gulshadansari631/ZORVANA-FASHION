@@ -43,7 +43,6 @@ export async function verifyFirebaseUser(request, env) {
     const data = await response.json();
     const user = data.users?.[0];
 
-    if (!user || user.emailVerified !== true) return null;
 
     return {
       uid: user.localId,
