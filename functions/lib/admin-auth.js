@@ -52,10 +52,6 @@ export async function verifyFirebaseUser(request, env) {
   } catch (error) {
     console.error("FIREBASE_AUTH_ERROR", error);
     return null;
-  }
-}
-
-
 export async function verifyAdmin(request, env) {
   try {
     const user = await verifyFirebaseUser(request, env);
