@@ -48,35 +48,20 @@ export async function onRequest({ request, env }) {
 
     const body = await request.json().catch(() => ({}));
 
+
     if (body.action === "request") {
-      if (isOwner(user.email, env)) {
-        return json({ success: true, status: "approved", owner: true });
+      if (!isOwner(user.email, env)) {
+        return json({
+          success: false,
+          status: "denied",
+          message: "Sirf owner Gmail ko Admin access hai."
+        }, 403);
       }
-
-      const existing = await env.DB.prepare(`
-        SELECT status FROM admin_access WHERE uid = ? LIMIT 1
-      `).bind(user.uid).first();
-
-      if (existing?.status === "approved") {
-        return json({ success: true, status: "approved" });
-      }
-
-      const now = Date.now();
-
-      await env.DB.prepare(`
-        INSERT INTO admin_access
-          (uid, email, status, created_at, updated_at)
-        VALUES (?, ?, 'pending', ?, ?)
-        ON CONFLICT(uid) DO UPDATE SET
-          email = excluded.email,
-          status = 'pending',
-          updated_at = excluded.updated_at
-      `).bind(user.uid, user.email, now, now).run();
 
       return json({
         success: true,
-        status: "pending",
-        message: "Access request sent to owner."
+        status: "approved",
+        owner: true
       });
     }
 
