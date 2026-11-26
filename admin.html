@@ -583,6 +583,7 @@ async function completeEmailLogin() {
 
 
 auth.onAuthStateChanged(async user => {
+   if (isCreatingAdminAccount) return;
   const loginBox = document.getElementById("loginBox");
   const dashboard = document.getElementById("dashboard");
   const message = document.getElementById("message");
