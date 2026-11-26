@@ -614,7 +614,7 @@ auth.onAuthStateChanged(async user => {
       dashboard.style.display = "none";
 
       message.textContent =
-        result.message || "Access request bhej di gayi hai. Owner approval ka wait karein.";
+        result.message || result.error || "Admin login failed. Please try again.";
 
       await auth.signOut();
       return;
