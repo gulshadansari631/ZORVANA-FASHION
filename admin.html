@@ -283,7 +283,135 @@ let adminPassword = "";
 let allProducts = [];
 let editingProductId = null;
 let existingProductImages = [];
+const productCategoryMap = {
+  "Men Fashion": [
+    "Shirts", "T-Shirts", "Jeans", "Jackets", "Hoodies",
+    "Trousers", "Shorts", "Sweatshirts", "Track Pants"
+  ],
+  "Kurtis & Dresses": [
+    "Kurtis", "Kurti With Dupatta", "Anarkali Suits",
+    "Straight Suits", "Dresses", "Gowns", "Salwar Suits"
+  ],
+  "Kids": [
+    "Baby Clothes", "Boys Wear", "Girls Wear",
+    "Kids Footwear", "Kids Accessories", "Toys"
+  ],
+  "Home": [
+    "Bedsheets", "Curtains", "Home Decor", "Pillows",
+    "Blankets", "Wall Decor", "Storage"
+  ],
+  "Beauty": [
+    "Face Wash", "Sunscreen", "Skin Care", "Makeup",
+    "Hair Care", "Hair Color", "Perfume", "Beauty Tools"
+  ],
+  "Food": [
+    "Dates", "Dry Fruits", "Snacks", "Sweets",
+    "Beverages", "Packaged Food"
+  ],
+  "Kitchen Utility": [
+    "Cookware", "Kitchen Tools", "Containers",
+    "Dinner Sets", "Water Bottles", "Appliances"
+  ],
+  "Saree": [
+    "Cotton Sarees", "Silk Sarees", "Party Wear Sarees",
+    "Printed Sarees", "Saree With Blouse"
+  ],
+  "Western Wear": [
+    "Tops", "Western Dresses", "Jeans", "Trousers",
+    "Co-ord Sets", "Skirts", "Jumpsuits"
+  ],
+  "Jewellery": [
+    "Necklaces", "Earrings", "Rings", "Bangles",
+    "Bracelets", "Jewellery Sets"
+  ],
+  "Women Innerwear": [
+    "Bras", "Panties", "Shapewear", "Lingerie Sets",
+    "Camisoles", "Nightwear"
+  ],
+  "Footwear": [
+    "Shoes", "Sandals", "Slippers", "Heels",
+    "Flats", "Sports Shoes"
+  ],
+  "Ethnic Wear": [
+    "Lehengas", "Salwar Suits", "Anarkali Suits",
+    "Ethnic Sets", "Dupattas", "Kurtas"
+  ],
+  "Stationery": [
+    "Pens", "Notebooks", "School Supplies",
+    "Art Supplies", "Office Supplies"
+  ],
+  "Electronics": [
+    "Earphones", "Chargers", "Speakers", "Smart Watches",
+    "Power Banks", "Cables", "Other Electronics"
+  ],
+  "Car & Bikes": [
+    "Car Accessories", "Bike Accessories",
+    "Cleaning Kits", "Mobile Holders", "Covers"
+  ],
+  "Sports & Fitness": [
+    "Fitness Equipment", "Yoga Mats", "Sports Wear",
+    "Gym Accessories", "Outdoor Sports"
+  ],
+  "Books": [
+    "Educational Books", "Novels", "Children Books",
+    "Competitive Exam Books", "Other Books"
+  ],
+  "Gold": [
+    "Gold Coins", "Gold Jewellery",
+    "Gold Plated Jewellery", "Gold Accessories"
+  ],
+  "Healthcare": [
+    "Health Care Devices", "Personal Care", "First Aid",
+    "Wellness Products", "Healthcare Accessories"
+  ],
+  "Bags & Accessories": [
+    "Handbags", "Crossbody Bags", "Sling Bags",
+    "Backpacks", "Wallets", "Sunglasses", "Belts"
+  ],
+  "Furniture": [
+    "Chairs", "Tables", "Sofas", "Storage Furniture",
+    "Shelves", "Home Furniture"
+  ],
+  "Cases & Covers": [
+    "Mobile Cases", "Mobile Covers", "Tablet Covers",
+    "Laptop Sleeves", "Screen Guards"
+  ],
+  "Grocery": [
+    "Staples", "Pulses", "Rice & Flour", "Oils",
+    "Spices", "Dry Fruits", "Daily Essentials"
+  ]
+};
 
+const categorySelect = document.getElementById("productCategory");
+const subcategorySelect = document.getElementById("productType");
+
+Object.keys(productCategoryMap).forEach(category => {
+  const option = document.createElement("option");
+  option.value = category;
+  option.textContent = category;
+  categorySelect.appendChild(option);
+});
+
+categorySelect.addEventListener("change", function () {
+  const selectedCategory = this.value;
+
+  subcategorySelect.innerHTML =
+    '<option value="">Select Subcategory</option>';
+
+  if (!selectedCategory) {
+    subcategorySelect.disabled = true;
+    return;
+  }
+
+  productCategoryMap[selectedCategory].forEach(subcategory => {
+    const option = document.createElement("option");
+    option.value = subcategory;
+    option.textContent = subcategory;
+    subcategorySelect.appendChild(option);
+  });
+
+  subcategorySelect.disabled = false;
+});
 const CLOUDINARY_NAME = "opngws1m";
 const UPLOAD_PRESET = "zorvana_products";
 
