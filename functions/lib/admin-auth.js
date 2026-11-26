@@ -59,18 +59,8 @@ export async function verifyFirebaseUser(request, env) {
 export async function verifyAdmin(request, env) {
   try {
     if (!env.DB) return false;
-
-    const user = await verifyFirebaseUser(request, env);
-    if (!user) return false;
-
-    if (isOwner(user.email, env)) return true;
-
-    await ensureAdminAccessTable(env.DB);
-
-    const approved = await env.DB.prepare(`
-      SELECT uid FROM admin_access
-      WHERE uid = ?
-        AND email = ?
+return isOwner(user.email, env);
+    
         AND status = 'approved'
       LIMIT 1
     `).bind(user.uid, user.email).first();
