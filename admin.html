@@ -109,39 +109,21 @@ button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:whi
 <form id="productForm" onsubmit="event.preventDefault();saveProduct()">
 <input id="productName" placeholder="Product Name" required>
 
+<label for="productCategory">Main Category</label>
 <select id="productCategory" required>
- <option value="">Select Main Category</option>
- <option value="Men">Men</option>
- <option value="Women">Women</option>
- <option value="Kids">Kids</option>
- <option value="Electronics">Electronics</option>
- <option value="Accessories">Accessories</option>
+  <option value="">Select Main Category</option>
 </select>
 
-<select id="productType">
- <option value="">Select Product Type</option>
- <option value="Jackets">Jackets</option>
- <option value="Hoodies">Hoodies</option>
- <option value="T-Shirts">T-Shirts</option>
- <option value="Shirts">Shirts</option>
- <option value="Jeans">Jeans</option>
- <option value="Shoes">Shoes</option>
- <option value="Dresses">Dresses</option>
- <option value="Tops">Tops</option>
- <option value="Kurtis">Kurtis</option>
- <option value="Sarees">Sarees</option>
- <option value="Baby Clothes">Baby Clothes</option>
- <option value="Boys Wear">Boys Wear</option>
- <option value="Girls Wear">Girls Wear</option>
- <option value="Watches">Watches</option>
- <option value="Bags">Bags</option>
- <option value="Sunglasses">Sunglasses</option>
- <option value="Mobiles">Mobiles</option>
- <option value="Earphones">Earphones</option>
- <option value="Chargers">Chargers</option>
- <option value="Speakers">Speakers</option>
- <option value="Other Electronics">Other Electronics</option>
- <option value="Other Accessories">Other Accessories</option>
+<label for="productType">Related Subcategory</label>
+<select id="productType" required disabled>
+  <option value="">Pehle Main Category select karein</option>
+</select>
+
+<label for="productSeason">Season</label>
+<select id="productSeason" required>
+  <option value="All Season">All Season</option>
+  <option value="Summer">Summer</option>
+  <option value="Winter">Winter</option>
 </select>
 <label for="variantGroupId">Variant Group ID</label>
 <input
