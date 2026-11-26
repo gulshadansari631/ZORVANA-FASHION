@@ -594,10 +594,6 @@ auth.onAuthStateChanged(async user => {
   try {
     await user.reload();
 
-    if (!user.emailVerified) {
-      throw new Error("Verified email se login karein.");
-    }
-
     const token = await user.getIdToken(true);
 
     const response = await originalFetch("/api/admin/access", {
