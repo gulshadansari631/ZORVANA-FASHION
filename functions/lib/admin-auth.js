@@ -56,18 +56,16 @@ export async function verifyFirebaseUser(request, env) {
   }
 }
 
+
 export async function verifyAdmin(request, env) {
   try {
-    if (!env.DB) return false;
-return isOwner(user.email, env);
-    
-        AND status = 'approved'
-      LIMIT 1
-    `).bind(user.uid, user.email).first();
+    const user = await verifyFirebaseUser(request, env);
+    if (!user) return false;
 
-    return Boolean(approved);
+    return isOwner(user.email, env);
   } catch (error) {
     console.error("ADMIN_ACCESS_ERROR", error);
     return false;
   }
 }
+
