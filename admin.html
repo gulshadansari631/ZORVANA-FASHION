@@ -85,9 +85,38 @@ button{padding:11px 15px;border:0;border-radius:6px;background:#2874f0;color:whi
 
 <div class="login" id="loginBox">
   <h2>ZORVANA ADMIN LOGIN</h2>
-  <p>Apna verified email daalo. Login link email par aayega.</p>
-  <input type="email" id="email" placeholder="Admin Email" required>
-  <button onclick="login()">SEND LOGIN LINK</button>
+
+  <form onsubmit="event.preventDefault(); login();">
+    <input type="email" id="email"
+      placeholder="Email Address" required>
+
+    <div style="display:flex;gap:8px;align-items:center">
+      <input type="password" id="password"
+        placeholder="Password" required style="flex:1">
+      <button type="button" onclick="togglePassword()"
+        style="background:#555">Show</button>
+    </div>
+
+    <button type="button" onclick="forgotPassword()"
+      style="background:transparent;color:#2874f0">
+      Forgot Password?
+    </button>
+
+    <button type="submit" style="width:100%">
+      LOGIN WITH EMAIL
+    </button>
+  </form>
+
+  <button type="button" onclick="googleLogin()"
+    style="width:100%;background:#fff;color:#222;border:1px solid #ccc">
+    Continue with Google
+  </button>
+
+  <button type="button" onclick="createAdminAccount()"
+    style="width:100%;background:#555">
+    CREATE ACCOUNT
+  </button>
+
   <p id="message"></p>
 </div>
 
