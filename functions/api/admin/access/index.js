@@ -12,10 +12,6 @@ function json(data, status = 200) {
 }
 
 export async function onRequest({ request, env }) {
-  if (!env.DB) {
-    return json({ success: false, error: "Database missing" }, 500);
-  }
-
   const user = await verifyFirebaseUser(request, env);
 
   if (!user) {
@@ -23,6 +19,35 @@ export async function onRequest({ request, env }) {
       success: false,
       error: "Please sign in with your verified email."
     }, 401);
+  }
+
+  if (request.method !== "GET" && request.method !== "POST") {
+    return json({ success: false, error: "Method not allowed" }, 405);
+  }
+
+  let body = {};
+  if (request.method === "POST") {
+    body = await request.json().catch(() => ({}));
+  }
+
+  if (request.method === "POST" && body.action === "request") {
+    if (!isOwner(user.email, env)) {
+      return json({
+        success: false,
+        status: "denied",
+        message: "Sirf owner Gmail ko Admin access hai."
+      }, 403);
+    }
+
+    return json({
+      success: true,
+      status: "approved",
+      owner: true
+    });
+  }
+
+  if (!env.DB) {
+    return json({ success: false, error: "Database missing" }, 500);
   }
 
   try {
@@ -40,29 +65,6 @@ export async function onRequest({ request, env }) {
       `).all();
 
       return json({ success: true, users: result.results || [] });
-    }
-
-    if (request.method !== "POST") {
-      return json({ success: false, error: "Method not allowed" }, 405);
-    }
-
-    const body = await request.json().catch(() => ({}));
-
-
-    if (body.action === "request") {
-      if (!isOwner(user.email, env)) {
-        return json({
-          success: false,
-          status: "denied",
-          message: "Sirf owner Gmail ko Admin access hai."
-        }, 403);
-      }
-
-      return json({
-        success: true,
-        status: "approved",
-        owner: true
-      });
     }
 
     if (body.action === "decision") {
